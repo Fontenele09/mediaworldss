@@ -40,29 +40,40 @@
 }
 
 :root {
-  --radius: 0.75rem;
+  --radius: 0.875rem;
 
-  --background: oklch(0.09 0 0);          /* #0A0A0A */
+  --background: oklch(0.07 0 0);           /* #060606 — deeper */
   --foreground: oklch(1 0 0);              /* #FFFFFF */
-  --surface: oklch(0.12 0 0);              /* #111111 */
-  --card: oklch(0.145 0 0);                /* #161616 */
+  --surface: oklch(0.115 0 0);             /* #0F0F0F */
+  --card: oklch(0.168 0 0);                /* #1A1A1A — lighter for separation */
+  --card-elevated: oklch(0.195 0 0);       /* #1F1F1F */
   --card-foreground: oklch(1 0 0);
-  --primary: oklch(0.96 0 0);              /* near-white accent */
-  --primary-foreground: oklch(0.09 0 0);
-  --secondary: oklch(0.18 0 0);
+  --primary: oklch(0.96 0 0);
+  --primary-foreground: oklch(0.07 0 0);
+  --secondary: oklch(0.2 0 0);
   --secondary-foreground: oklch(0.96 0 0);
   --muted: oklch(0.16 0 0);
-  --muted-foreground: oklch(0.55 0 0);     /* #737373 */
-  --accent: oklch(0.87 0 0);               /* #D9D9D9 */
-  --accent-foreground: oklch(0.09 0 0);
+  --muted-foreground: oklch(0.55 0 0);
+  --accent: oklch(0.87 0 0);
+  --accent-foreground: oklch(0.07 0 0);
   --destructive: oklch(0.55 0.15 25);
 
-  --border: oklch(0.22 0 0);               /* #242424 */
-  --input: oklch(0.22 0 0);
+  --border: oklch(0.265 0 0);              /* #2E2E2E — stronger */
+  --border-strong: oklch(0.33 0 0);        /* #3A3A3A */
+  --input: oklch(0.265 0 0);
   --ring: oklch(0.87 0 0);
 
-  --text-secondary: oklch(0.72 0 0);       /* #A3A3A3 */
+  --text-secondary: oklch(0.72 0 0);
+
+  --shadow-card: 0 1px 0 0 rgba(255,255,255,0.04) inset, 0 8px 24px -12px rgba(0,0,0,0.7);
+  --shadow-hover: 0 1px 0 0 rgba(255,255,255,0.06) inset, 0 40px 80px -30px rgba(0,0,0,0.9);
+  --shadow-kpi: 0 1px 0 0 rgba(255,255,255,0.05) inset, 0 20px 50px -25px rgba(0,0,0,0.8);
+
+  --gradient-card: linear-gradient(180deg, rgba(255,255,255,0.025) 0%, rgba(255,255,255,0) 60%);
+  --gradient-kpi: linear-gradient(180deg, oklch(0.21 0 0) 0%, oklch(0.155 0 0) 100%);
+  --gradient-hairline: linear-gradient(90deg, transparent, oklch(0.33 0 0), transparent);
 }
+
 
 @layer base {
   * {
