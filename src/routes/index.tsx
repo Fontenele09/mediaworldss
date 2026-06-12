@@ -27,7 +27,6 @@ import {
   Users,
   Video,
   Wallet,
-  X,
 } from "lucide-react";
 
 import {
