@@ -57,7 +57,7 @@ import {
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Atelier — Sistema de Produção Audiovisual" },
+      { title: "Media World — Sistema de Controle " },
       {
         name: "description",
         content: "Sistema operacional para agências de produção audiovisual de alto padrão.",
@@ -99,11 +99,51 @@ type NavKey =
 /* ================================ Seed data ================================ */
 
 const initialProjects: Project[] = [
-  { id: "p1", name: "Hermès — Carré 90", client: "Maison Hermès", status: "Pós-produção", deadline: "25 jun", owner: "Léon B.", progress: 72 },
-  { id: "p2", name: "Porsche 911 GTS", client: "Porsche AG", status: "Gravação", deadline: "18 jun", owner: "Margaux T.", progress: 41 },
-  { id: "p3", name: "Dior — Couture FW26", client: "Christian Dior", status: "Pré-produção", deadline: "03 jul", owner: "Carla V.", progress: 18 },
-  { id: "p4", name: "Apple — Silence", client: "Apple Originals", status: "Aprovação", deadline: "15 jun", owner: "Élise M.", progress: 88 },
-  { id: "p5", name: "Natura — Ekos", client: "Natura & Co.", status: "Edição", deadline: "22 jun", owner: "Rafael S.", progress: 56 },
+  {
+    id: "p1",
+    name: "Hermès — Carré 90",
+    client: "Maison Hermès",
+    status: "Pós-produção",
+    deadline: "25 jun",
+    owner: "Léon B.",
+    progress: 72,
+  },
+  {
+    id: "p2",
+    name: "Porsche 911 GTS",
+    client: "Porsche AG",
+    status: "Gravação",
+    deadline: "18 jun",
+    owner: "Margaux T.",
+    progress: 41,
+  },
+  {
+    id: "p3",
+    name: "Dior — Couture FW26",
+    client: "Christian Dior",
+    status: "Pré-produção",
+    deadline: "03 jul",
+    owner: "Carla V.",
+    progress: 18,
+  },
+  {
+    id: "p4",
+    name: "Apple — Silence",
+    client: "Apple Originals",
+    status: "Aprovação",
+    deadline: "15 jun",
+    owner: "Élise M.",
+    progress: 88,
+  },
+  {
+    id: "p5",
+    name: "Natura — Ekos",
+    client: "Natura & Co.",
+    status: "Edição",
+    deadline: "22 jun",
+    owner: "Rafael S.",
+    progress: 56,
+  },
 ];
 
 /* ================================ Component ================================ */
@@ -193,7 +233,13 @@ function Dashboard() {
                 <TodayAgenda />
                 <UpcomingDeadlines />
                 <NotificationsCenter onNavigate={(key) => setActiveNav(key)} />
-                <FinancialSummary onOpenReport={() => toast.success("Relatório financeiro gerado", { description: "Disponível em Financeiro › Relatórios." })} />
+                <FinancialSummary
+                  onOpenReport={() =>
+                    toast.success("Relatório financeiro gerado", {
+                      description: "Disponível em Financeiro › Relatórios.",
+                    })
+                  }
+                />
               </div>
             </div>
             <Footer />
@@ -290,7 +336,15 @@ function Dashboard() {
 
 /* ================================== Sidebar ================================ */
 
-const navSections: { label: string; items: { key: NavKey; icon: ComponentType<{ className?: string; strokeWidth?: number }>; label: string; badge?: string }[] }[] = [
+const navSections: {
+  label: string;
+  items: {
+    key: NavKey;
+    icon: ComponentType<{ className?: string; strokeWidth?: number }>;
+    label: string;
+    badge?: string;
+  }[];
+}[] = [
   {
     label: "Operação",
     items: [
@@ -537,9 +591,7 @@ function Header({ period, onPeriodChange }: { period: Period; onPeriodChange: (p
             Visão geral · Sexta, 12 de junho de 2026
           </span>
         </div>
-        <h1 className="text-[40px] leading-[1.1] font-light tracking-[-0.025em] text-foreground">
-          Boa noite, Élise.
-        </h1>
+        <h1 className="text-[40px] leading-[1.1] font-light tracking-[-0.025em] text-foreground">Boa noite, Élise.</h1>
         <p className="text-[15px] text-muted-foreground mt-2 max-w-xl">
           Aqui está o panorama da operação — 12 projetos em andamento, 3 aguardando sua aprovação.
         </p>
@@ -570,7 +622,13 @@ function KpiGrid() {
     { label: "Aguardando aprovação", value: "3", delta: "Sua atenção", tone: "warn", icon: CheckCircle2 },
     { label: "Entregas da semana", value: "7", delta: "2 hoje", tone: "neutral", icon: Send },
     { label: "Gravações agendadas", value: "5", delta: "Próximos 14 dias", tone: "neutral", icon: Video },
-    { label: "Faturamento do mês", value: "R$ 482.350", delta: "+18,4% vs. mês anterior", tone: "up", icon: TrendingUp },
+    {
+      label: "Faturamento do mês",
+      value: "R$ 482.350",
+      delta: "+18,4% vs. mês anterior",
+      tone: "up",
+      icon: TrendingUp,
+    },
     { label: "Pagamentos pendentes", value: "R$ 96.200", delta: "4 faturas em aberto", tone: "warn", icon: Wallet },
   ];
 
@@ -785,9 +843,7 @@ function ProductionPipeline({ projects, onOpen }: { projects: Project[]; onOpen:
             Comercial · Operação
           </div>
           <h2 className="text-[18px] font-semibold tracking-[-0.015em]">Pipeline de produção</h2>
-          <p className="text-[12.5px] text-muted-foreground mt-1">
-            Quantidade de projetos por estágio do funil
-          </p>
+          <p className="text-[12.5px] text-muted-foreground mt-1">Quantidade de projetos por estágio do funil</p>
         </div>
         <button
           onClick={onOpen}
@@ -907,9 +963,7 @@ function TodayAgenda() {
     <section className="rounded-2xl border border-border bg-white shadow-sm overflow-hidden">
       <div className="flex items-center justify-between px-5 pt-5 pb-3 border-b border-border">
         <div>
-          <div className="text-[10.5px] uppercase tracking-[0.18em] text-muted-foreground font-semibold mb-1">
-            Hoje
-          </div>
+          <div className="text-[10.5px] uppercase tracking-[0.18em] text-muted-foreground font-semibold mb-1">Hoje</div>
           <h2 className="text-[16px] font-semibold tracking-[-0.015em]">Agenda do dia</h2>
         </div>
         <Calendar className="h-4 w-4 text-muted-foreground" strokeWidth={1.75} />
@@ -994,7 +1048,13 @@ function UpcomingDeadlines() {
 /* =========================== Notifications center ========================== */
 
 function NotificationsCenter({ onNavigate }: { onNavigate: (k: NavKey) => void }) {
-  const groups: { label: string; count: number; icon: ComponentType<{ className?: string; strokeWidth?: number }>; tone: "warn" | "alert" | "neutral"; nav: NavKey }[] = [
+  const groups: {
+    label: string;
+    count: number;
+    icon: ComponentType<{ className?: string; strokeWidth?: number }>;
+    tone: "warn" | "alert" | "neutral";
+    nav: NavKey;
+  }[] = [
     { label: "Aprovações pendentes", count: 3, icon: CheckCircle2, tone: "warn", nav: "deliveries" },
     { label: "Novas mensagens", count: 7, icon: MessageSquare, tone: "neutral", nav: "messages" },
     { label: "Alterações em projetos", count: 4, icon: Clapperboard, tone: "neutral", nav: "projects" },
@@ -1064,9 +1124,7 @@ function FinancialSummary({ onOpenReport }: { onOpenReport: () => void }) {
     <section className="rounded-2xl border border-border bg-[#111] text-white shadow-md overflow-hidden">
       <div className="flex items-center justify-between px-5 pt-5 pb-4 border-b border-white/10">
         <div>
-          <div className="text-[10.5px] uppercase tracking-[0.18em] text-white/50 font-semibold mb-1">
-            Financeiro
-          </div>
+          <div className="text-[10.5px] uppercase tracking-[0.18em] text-white/50 font-semibold mb-1">Financeiro</div>
           <h2 className="text-[16px] font-semibold tracking-[-0.015em]">Resumo do mês</h2>
         </div>
         <CreditCard className="h-4 w-4 text-white/70" strokeWidth={1.75} />
@@ -1208,9 +1266,7 @@ function ProjectDetailDialog({ project, onClose }: { project: Project | null; on
               <div className="text-[10.5px] uppercase tracking-[0.18em] text-muted-foreground font-semibold mb-1">
                 Projeto
               </div>
-              <DialogTitle className="text-[22px] font-semibold tracking-[-0.02em]">
-                {project.name}
-              </DialogTitle>
+              <DialogTitle className="text-[22px] font-semibold tracking-[-0.02em]">{project.name}</DialogTitle>
               <DialogDescription>{project.client}</DialogDescription>
             </DialogHeader>
             <div className="grid grid-cols-2 gap-3 mt-2">
@@ -1254,9 +1310,7 @@ function ProjectDetailDialog({ project, onClose }: { project: Project | null; on
 function Stat({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-lg border border-border bg-[#fafafa] p-3">
-      <div className="text-[10.5px] uppercase tracking-[0.18em] text-muted-foreground font-semibold mb-1">
-        {label}
-      </div>
+      <div className="text-[10.5px] uppercase tracking-[0.18em] text-muted-foreground font-semibold mb-1">{label}</div>
       <div className="text-[13.5px] font-medium text-foreground">{value}</div>
     </div>
   );
@@ -1297,9 +1351,7 @@ function NewProjectDialog({
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <div className="text-[10.5px] uppercase tracking-[0.18em] text-muted-foreground font-semibold mb-1">
-            Novo
-          </div>
+          <div className="text-[10.5px] uppercase tracking-[0.18em] text-muted-foreground font-semibold mb-1">Novo</div>
           <DialogTitle className="text-[20px] font-semibold tracking-[-0.02em]">Novo projeto</DialogTitle>
           <DialogDescription>Crie um novo projeto e adicione ao pipeline.</DialogDescription>
         </DialogHeader>
@@ -1421,9 +1473,7 @@ function Field({
 }) {
   return (
     <label className="block">
-      <div className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground font-semibold mb-1.5">
-        {label}
-      </div>
+      <div className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground font-semibold mb-1.5">{label}</div>
       <input
         type={type}
         value={value}
