@@ -1434,6 +1434,3 @@ function Field({
     </label>
   );
 }
-
-// Suppress unused-icon lint
-void X;
