@@ -148,9 +148,7 @@ function Sidebar() {
                   {badge && (
                     <span
                       className={`ml-auto text-[10.5px] font-semibold rounded-md px-1.5 py-0.5 ${
-                        active
-                          ? "bg-[#111] text-white"
-                          : "bg-[#eaeaea] text-[#444]"
+                        active ? "bg-[#111] text-white" : "bg-[#eaeaea] text-[#444]"
                       }`}
                     >
                       {badge}
@@ -224,12 +222,9 @@ function Header() {
             Visão geral · Quinta, 11 de junho de 2026
           </span>
         </div>
-        <h1 className="text-[40px] leading-[1.1] font-light tracking-[-0.025em] text-foreground">
-          Boa noite, Élise.
-        </h1>
+        <h1 className="text-[40px] leading-[1.1] font-light tracking-[-0.025em] text-foreground">Boa noite, Élise.</h1>
         <p className="text-[15px] text-muted-foreground mt-2 max-w-xl">
-          Aqui está o panorama da operação hoje — 12 projetos em andamento,
-          3 aguardando sua aprovação.
+          Aqui está o panorama da operação hoje — 12 projetos em andamento, 3 aguardando sua aprovação.
         </p>
       </div>
       <div className="flex items-center gap-2 text-[12.5px]">
@@ -256,7 +251,13 @@ function KpiGrid() {
     { label: "Aguardando aprovação", value: "3", delta: "Sua atenção", tone: "warn", icon: CheckCircle2 },
     { label: "Entregas da semana", value: "7", delta: "2 hoje", tone: "neutral", icon: Send },
     { label: "Gravações agendadas", value: "5", delta: "Próximos 14 dias", tone: "neutral", icon: Video },
-    { label: "Faturamento do mês", value: "R$ 482.350", delta: "+18,4% vs. mês anterior", tone: "up", icon: TrendingUp },
+    {
+      label: "Faturamento do mês",
+      value: "R$ 482.350",
+      delta: "+18,4% vs. mês anterior",
+      tone: "up",
+      icon: TrendingUp,
+    },
     { label: "Pagamentos pendentes", value: "R$ 96.200", delta: "4 faturas em aberto", tone: "warn", icon: Wallet },
   ];
 
@@ -284,11 +285,7 @@ function KpiGrid() {
               </div>
               <div
                 className={`mt-3 flex items-center gap-1 text-[11.5px] font-medium ${
-                  k.tone === "up"
-                    ? "text-[#1f7a4d]"
-                    : k.tone === "warn"
-                    ? "text-[#a8651f]"
-                    : "text-muted-foreground"
+                  k.tone === "up" ? "text-[#1f7a4d]" : k.tone === "warn" ? "text-[#a8651f]" : "text-muted-foreground"
                 }`}
               >
                 {k.tone === "up" && <ArrowUpRight className="h-3 w-3" strokeWidth={2} />}
@@ -338,21 +335,56 @@ function QuickActions() {
 /* ----------------------------- Recent projects ------------------------------ */
 
 const projectsData = [
-  { name: "Hermès — Carré 90", client: "Maison Hermès", status: "Pós-produção", deadline: "25 jun", owner: "Léon B.", progress: 72 },
-  { name: "Porsche 911 GTS", client: "Porsche AG", status: "Gravação", deadline: "18 jun", owner: "Margaux T.", progress: 41 },
-  { name: "Dior — Couture FW26", client: "Christian Dior", status: "Pré-produção", deadline: "03 jul", owner: "Carla V.", progress: 18 },
-  { name: "Apple — Silence", client: "Apple Originals", status: "Aprovação", deadline: "15 jun", owner: "Élise M.", progress: 88 },
-  { name: "Natura — Ekos", client: "Natura & Co.", status: "Edição", deadline: "22 jun", owner: "Rafael S.", progress: 56 },
+  {
+    name: "Hermès — Carré 90",
+    client: "Maison Hermès",
+    status: "Pós-produção",
+    deadline: "25 jun",
+    owner: "Léon B.",
+    progress: 72,
+  },
+  {
+    name: "Porsche 911 GTS",
+    client: "Porsche AG",
+    status: "Gravação",
+    deadline: "18 jun",
+    owner: "Margaux T.",
+    progress: 41,
+  },
+  {
+    name: "Dior — Couture FW26",
+    client: "Christian Dior",
+    status: "Pré-produção",
+    deadline: "03 jul",
+    owner: "Carla V.",
+    progress: 18,
+  },
+  {
+    name: "Apple — Silence",
+    client: "Apple Originals",
+    status: "Aprovação",
+    deadline: "15 jun",
+    owner: "Élise M.",
+    progress: 88,
+  },
+  {
+    name: "Natura — Ekos",
+    client: "Natura & Co.",
+    status: "Edição",
+    deadline: "22 jun",
+    owner: "Rafael S.",
+    progress: 56,
+  },
 ];
 
 function statusStyle(s: string) {
   const map: Record<string, string> = {
     "Pós-produção": "bg-[#eef2ff] text-[#3949ab] border-[#dde3fa]",
-    "Gravação": "bg-[#fff4e5] text-[#a8651f] border-[#f5e3c3]",
+    Gravação: "bg-[#fff4e5] text-[#a8651f] border-[#f5e3c3]",
     "Pré-produção": "bg-[#f1f5f9] text-[#475569] border-[#e2e8f0]",
-    "Aprovação": "bg-[#fef3c7] text-[#854d0e] border-[#fde68a]",
-    "Edição": "bg-[#ecfdf5] text-[#15803d] border-[#d1fae5]",
-    "Entregue": "bg-[#f5f5f5] text-[#525252] border-[#e5e5e5]",
+    Aprovação: "bg-[#fef3c7] text-[#854d0e] border-[#fde68a]",
+    Edição: "bg-[#ecfdf5] text-[#15803d] border-[#d1fae5]",
+    Entregue: "bg-[#f5f5f5] text-[#525252] border-[#e5e5e5]",
   };
   return map[s] || "bg-[#f5f5f5] text-[#525252] border-[#e5e5e5]";
 }
@@ -392,7 +424,9 @@ function RecentProjects() {
                 <td className="px-6 py-4 font-medium text-foreground">{p.name}</td>
                 <td className="px-4 py-4 text-muted-foreground">{p.client}</td>
                 <td className="px-4 py-4">
-                  <span className={`inline-flex items-center text-[11px] font-medium rounded-full border px-2.5 py-1 ${statusStyle(p.status)}`}>
+                  <span
+                    className={`inline-flex items-center text-[11px] font-medium rounded-full border px-2.5 py-1 ${statusStyle(p.status)}`}
+                  >
                     {p.status}
                   </span>
                 </td>
@@ -447,9 +481,7 @@ function ProductionPipeline() {
             Comercial · Operação
           </div>
           <h2 className="text-[18px] font-semibold tracking-[-0.015em]">Pipeline de produção</h2>
-          <p className="text-[12.5px] text-muted-foreground mt-1">
-            Quantidade de projetos por estágio do funil
-          </p>
+          <p className="text-[12.5px] text-muted-foreground mt-1">Quantidade de projetos por estágio do funil</p>
         </div>
         <button className="text-[12.5px] text-foreground font-medium flex items-center gap-1 hover:gap-1.5 transition-all">
           Abrir pipeline <ArrowRight className="h-3.5 w-3.5" strokeWidth={1.75} />
@@ -530,7 +562,10 @@ function ActiveClients() {
                 Última interação · {c.last}
               </div>
             </div>
-            <ArrowUpRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" strokeWidth={1.75} />
+            <ArrowUpRight
+              className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity"
+              strokeWidth={1.75}
+            />
           </div>
         ))}
       </div>
@@ -552,9 +587,7 @@ function TodayAgenda() {
     <section className="rounded-2xl border border-border bg-white shadow-sm overflow-hidden">
       <div className="flex items-center justify-between px-5 pt-5 pb-3 border-b border-border">
         <div>
-          <div className="text-[10.5px] uppercase tracking-[0.18em] text-muted-foreground font-semibold mb-1">
-            Hoje
-          </div>
+          <div className="text-[10.5px] uppercase tracking-[0.18em] text-muted-foreground font-semibold mb-1">Hoje</div>
           <h2 className="text-[16px] font-semibold tracking-[-0.015em]">Agenda do dia</h2>
         </div>
         <Calendar className="h-4 w-4 text-muted-foreground" strokeWidth={1.75} />
@@ -612,7 +645,9 @@ function UpcomingDeadlines() {
               <div className="text-[12.5px] font-medium text-foreground truncate">{d.project}</div>
               <div className="text-[11.5px] text-muted-foreground truncate mt-0.5">{d.task}</div>
             </div>
-            <div className={`text-[11px] font-semibold whitespace-nowrap ${d.urgent ? "text-[#b91c1c]" : "text-muted-foreground"}`}>
+            <div
+              className={`text-[11px] font-semibold whitespace-nowrap ${d.urgent ? "text-[#b91c1c]" : "text-muted-foreground"}`}
+            >
               {d.in}
             </div>
           </li>
@@ -655,8 +690,8 @@ function NotificationsCenter() {
                   g.tone === "warn"
                     ? "bg-[#fef3c7] text-[#854d0e]"
                     : g.tone === "alert"
-                    ? "bg-[#fee2e2] text-[#b91c1c]"
-                    : "bg-[#f5f5f5] text-foreground"
+                      ? "bg-[#fee2e2] text-[#b91c1c]"
+                      : "bg-[#f5f5f5] text-foreground"
                 }`}
               >
                 <Icon className="h-4 w-4" strokeWidth={1.75} />
@@ -665,7 +700,10 @@ function NotificationsCenter() {
               <span className="text-[11px] font-semibold rounded-md bg-[#111] text-white px-1.5 py-0.5 min-w-[22px] text-center">
                 {g.count}
               </span>
-              <ChevronRight className="h-3.5 w-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" strokeWidth={2} />
+              <ChevronRight
+                className="h-3.5 w-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity"
+                strokeWidth={2}
+              />
             </li>
           );
         })}
@@ -687,19 +725,14 @@ function FinancialSummary() {
     <section className="rounded-2xl border border-border bg-[#111] text-white shadow-md overflow-hidden">
       <div className="flex items-center justify-between px-5 pt-5 pb-4 border-b border-white/10">
         <div>
-          <div className="text-[10.5px] uppercase tracking-[0.18em] text-white/50 font-semibold mb-1">
-            Financeiro
-          </div>
+          <div className="text-[10.5px] uppercase tracking-[0.18em] text-white/50 font-semibold mb-1">Financeiro</div>
           <h2 className="text-[16px] font-semibold tracking-[-0.015em]">Resumo do mês</h2>
         </div>
         <CreditCard className="h-4 w-4 text-white/70" strokeWidth={1.75} />
       </div>
       <ul>
         {rows.map((r, i) => (
-          <li
-            key={i}
-            className="flex items-center justify-between px-5 py-3.5 border-b border-white/10 last:border-0"
-          >
+          <li key={i} className="flex items-center justify-between px-5 py-3.5 border-b border-white/10 last:border-0">
             <div className="text-[12.5px] text-white/70">{r.label}</div>
             <div className="flex items-center gap-2">
               <div className="text-[14px] font-semibold tabular-nums">{r.value}</div>
