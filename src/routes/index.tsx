@@ -547,8 +547,8 @@ function App() {
               <AgendaScreen
                 gravacoes={gravacoes}
                 onNew={() => setGravacaoModal({ open: true, editing: null })}
-                onEdit={(g) => setGravacaoModal({ open: true, editing: g })}
-                onDelete={(id) => setGravacoes((g) => g.filter((x) => x.id !== id))}
+                onEdit={(g: Gravacao) => setGravacaoModal({ open: true, editing: g })}
+                onDelete={(id: number) => setGravacoes((g) => g.filter((x) => x.id !== id))}
               />
             )}
             {screen === "entregas" && (
