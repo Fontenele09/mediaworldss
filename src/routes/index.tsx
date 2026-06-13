@@ -538,8 +538,8 @@ function App() {
                 projects={projects}
                 clients={clients}
                 onNew={() => setProjectModal({ open: true, editing: null })}
-                onEdit={(p) => setProjectModal({ open: true, editing: p })}
-                onDelete={(id) => setProjects((p) => p.filter((x) => x.id !== id))}
+                onEdit={(p: Project) => setProjectModal({ open: true, editing: p })}
+                onDelete={(id: number) => setProjects((p) => p.filter((x) => x.id !== id))}
               />
             )}
             {screen === "pipeline" && <PipelineScreen projects={projects} />}
