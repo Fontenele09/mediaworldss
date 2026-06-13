@@ -519,18 +519,18 @@ function App() {
                 onNewProject={() => setProjectModal({ open: true, editing: null })}
                 onNewClient={() => setClientModal({ open: true, editing: null })}
                 onNewGravacao={() => setGravacaoModal({ open: true, editing: null })}
-                onEditProject={(p) => setProjectModal({ open: true, editing: p })}
-                onDeleteProject={(id) => setProjects((p) => p.filter((x) => x.id !== id))}
-                onEditClient={(c) => setClientModal({ open: true, editing: c })}
-                onDeleteClient={(id) => setClients((c) => c.filter((x) => x.id !== id))}
+                onEditProject={(p: Project) => setProjectModal({ open: true, editing: p })}
+                onDeleteProject={(id: number) => setProjects((p) => p.filter((x) => x.id !== id))}
+                onEditClient={(c: Client) => setClientModal({ open: true, editing: c })}
+                onDeleteClient={(id: number) => setClients((c) => c.filter((x) => x.id !== id))}
               />
             )}
             {screen === "clientes" && (
               <ClientesScreen
                 clients={clients}
                 onNew={() => setClientModal({ open: true, editing: null })}
-                onEdit={(c) => setClientModal({ open: true, editing: c })}
-                onDelete={(id) => setClients((c) => c.filter((x) => x.id !== id))}
+                onEdit={(c: Client) => setClientModal({ open: true, editing: c })}
+                onDelete={(id: number) => setClients((c) => c.filter((x) => x.id !== id))}
               />
             )}
             {screen === "projetos" && (
@@ -538,8 +538,8 @@ function App() {
                 projects={projects}
                 clients={clients}
                 onNew={() => setProjectModal({ open: true, editing: null })}
-                onEdit={(p) => setProjectModal({ open: true, editing: p })}
-                onDelete={(id) => setProjects((p) => p.filter((x) => x.id !== id))}
+                onEdit={(p: Project) => setProjectModal({ open: true, editing: p })}
+                onDelete={(id: number) => setProjects((p) => p.filter((x) => x.id !== id))}
               />
             )}
             {screen === "pipeline" && <PipelineScreen projects={projects} />}
@@ -547,24 +547,24 @@ function App() {
               <AgendaScreen
                 gravacoes={gravacoes}
                 onNew={() => setGravacaoModal({ open: true, editing: null })}
-                onEdit={(g) => setGravacaoModal({ open: true, editing: g })}
-                onDelete={(id) => setGravacoes((g) => g.filter((x) => x.id !== id))}
+                onEdit={(g: Gravacao) => setGravacaoModal({ open: true, editing: g })}
+                onDelete={(id: number) => setGravacoes((g) => g.filter((x) => x.id !== id))}
               />
             )}
             {screen === "entregas" && (
               <EntregasScreen
                 entregas={entregas}
                 onNew={() => setEntregaModal({ open: true, editing: null })}
-                onEdit={(e) => setEntregaModal({ open: true, editing: e })}
-                onDelete={(id) => setEntregas((e) => e.filter((x) => x.id !== id))}
+                onEdit={(e: Entrega) => setEntregaModal({ open: true, editing: e })}
+                onDelete={(id: number) => setEntregas((e) => e.filter((x) => x.id !== id))}
               />
             )}
             {screen === "propostas" && (
               <PropostasScreen
                 propostas={propostas}
                 onNew={() => setPropostaModal({ open: true, editing: null })}
-                onEdit={(p) => setPropostaModal({ open: true, editing: p })}
-                onDelete={(id) => setPropostas((p) => p.filter((x) => x.id !== id))}
+                onEdit={(p: Proposta) => setPropostaModal({ open: true, editing: p })}
+                onDelete={(id: number) => setPropostas((p) => p.filter((x) => x.id !== id))}
               />
             )}
             {screen === "financeiro" && <FinanceiroScreen />}
@@ -753,7 +753,7 @@ function TopBar({
         <div className="flex items-center gap-2 text-[12px] text-muted-foreground">
           <span>Media World</span>
           <ChevronRight className="h-3 w-3" strokeWidth={1.75} />
-          <span className="text-foreground font-medium">{screenLabels[screen]}</span>
+          <span className="text-foreground font-medium">{screenLabels[screen as Screen]}</span>
         </div>
         <div className="ml-auto flex items-center gap-2.5">
           {/* Search */}
@@ -2397,5 +2397,172 @@ function GravacaoModal({ editing, clients, onSave, onClose }: any) {
         />
       </Field>
     </ModalShell>
+  );
+}
+
+/* ══════════════ DASHBOARD WIDGETS (stubs) ══════════════ */
+function SectionCard({ title, caption, children }: { title: string; caption?: string; children: React.ReactNode }) {
+  return (
+    <div className="rounded-2xl border border-border bg-white p-5 shadow-sm">
+      <div className="flex items-end justify-between mb-4">
+        <div>
+          <div className="text-[10.5px] uppercase tracking-[0.18em] text-muted-foreground font-semibold">{title}</div>
+          {caption && <div className="text-[12px] text-muted-foreground mt-1">{caption}</div>}
+        </div>
+      </div>
+      {children}
+    </div>
+  );
+}
+
+function ProjectsTable({
+  projects,
+  onEdit,
+  onDelete,
+}: {
+  projects: Project[];
+  onEdit: (p: Project) => void;
+  onDelete: (id: number) => void;
+}) {
+  return (
+    <SectionCard title="Projetos recentes" caption={`${projects.length} projetos`}>
+      <div className="divide-y divide-border">
+        {projects.slice(0, 6).map((p) => (
+          <div key={p.id} className="flex items-center gap-4 py-3">
+            <div className="min-w-0 flex-1">
+              <div className="text-[13.5px] font-medium truncate">{p.name}</div>
+              <div className="text-[11.5px] text-muted-foreground truncate">
+                {p.client} · {p.status} · {p.deadline}
+              </div>
+            </div>
+            <div className="w-28 h-1.5 rounded-full bg-[#f1f1f1] overflow-hidden">
+              <div className="h-full bg-[#111]" style={{ width: `${p.progress}%` }} />
+            </div>
+            <button onClick={() => onEdit(p)} className="text-[11.5px] text-muted-foreground hover:text-foreground">
+              Editar
+            </button>
+            <button onClick={() => onDelete(p.id)} className="text-[11.5px] text-muted-foreground hover:text-foreground">
+              Excluir
+            </button>
+          </div>
+        ))}
+      </div>
+    </SectionCard>
+  );
+}
+
+function PipelineMini({ projects }: { projects: Project[] }) {
+  const stages: ProjectStatus[] = ["Pré-produção", "Gravação", "Edição", "Pós-produção", "Aprovação", "Entregue"];
+  return (
+    <SectionCard title="Pipeline" caption="Distribuição por etapa">
+      <div className="grid grid-cols-6 gap-2">
+        {stages.map((s) => {
+          const count = projects.filter((p) => p.status === s).length;
+          return (
+            <div key={s} className="rounded-lg border border-border bg-[#fafafa] p-3 text-center">
+              <div className="text-[20px] font-semibold tabular-nums">{count}</div>
+              <div className="text-[10px] uppercase tracking-[0.12em] text-muted-foreground mt-1">{s}</div>
+            </div>
+          );
+        })}
+      </div>
+    </SectionCard>
+  );
+}
+
+function ClientsTable({
+  clients,
+  onEdit,
+  onDelete,
+}: {
+  clients: Client[];
+  onEdit: (c: Client) => void;
+  onDelete: (id: number) => void;
+}) {
+  return (
+    <SectionCard title="Clientes" caption={`${clients.length} ativos`}>
+      <div className="divide-y divide-border">
+        {clients.slice(0, 5).map((c) => (
+          <div key={c.id} className="flex items-center gap-4 py-3">
+            <div className="min-w-0 flex-1">
+              <div className="text-[13.5px] font-medium truncate">{c.name}</div>
+              <div className="text-[11.5px] text-muted-foreground truncate">
+                {c.project} · {c.status} · {c.last}
+              </div>
+            </div>
+            <button onClick={() => onEdit(c)} className="text-[11.5px] text-muted-foreground hover:text-foreground">
+              Editar
+            </button>
+            <button onClick={() => onDelete(c.id)} className="text-[11.5px] text-muted-foreground hover:text-foreground">
+              Excluir
+            </button>
+          </div>
+        ))}
+      </div>
+    </SectionCard>
+  );
+}
+
+function AgendaWidget({ gravacoes }: { gravacoes: Gravacao[] }) {
+  return (
+    <SectionCard title="Agenda" caption="Próximas gravações">
+      <div className="space-y-3">
+        {gravacoes.slice(0, 4).map((g) => (
+          <div key={g.id} className="flex items-start gap-3">
+            <div className="h-9 w-9 rounded-lg bg-[#f5f5f5] flex items-center justify-center shrink-0">
+              <Video className="h-4 w-4" strokeWidth={1.75} />
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="text-[12.5px] font-medium truncate">{g.title}</div>
+              <div className="text-[11px] text-muted-foreground truncate">
+                {g.date} · {g.time} · {g.local}
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </SectionCard>
+  );
+}
+
+function DeadlinesWidget() {
+  return (
+    <SectionCard title="Prazos próximos" caption="Atenção esta semana">
+      <div className="text-[12.5px] text-muted-foreground">Nenhum prazo crítico.</div>
+    </SectionCard>
+  );
+}
+
+function NotificationsWidget() {
+  return (
+    <SectionCard title="Notificações" caption="Atualizações recentes">
+      <div className="text-[12.5px] text-muted-foreground">Tudo em dia.</div>
+    </SectionCard>
+  );
+}
+
+function FinancialWidget() {
+  return (
+    <div className="rounded-2xl border border-[#1a1a1a] bg-[#111] text-white p-5 shadow-sm">
+      <div className="text-[10.5px] uppercase tracking-[0.18em] text-white/60 font-semibold">Resumo financeiro</div>
+      <div className="mt-4 space-y-3">
+        <div className="flex items-baseline justify-between">
+          <span className="text-[12px] text-white/60">Faturamento do mês</span>
+          <span className="text-[16px] font-semibold tabular-nums">R$ 482.350</span>
+        </div>
+        <div className="flex items-baseline justify-between">
+          <span className="text-[12px] text-white/60">Mês anterior</span>
+          <span className="text-[14px] tabular-nums text-white/80">R$ 407.120</span>
+        </div>
+        <div className="flex items-baseline justify-between">
+          <span className="text-[12px] text-white/60">Pagamentos pendentes</span>
+          <span className="text-[14px] tabular-nums text-white/80">R$ 96.200</span>
+        </div>
+        <div className="flex items-baseline justify-between">
+          <span className="text-[12px] text-white/60">Receita prevista</span>
+          <span className="text-[14px] tabular-nums text-white/80">R$ 612.000</span>
+        </div>
+      </div>
+    </div>
   );
 }
