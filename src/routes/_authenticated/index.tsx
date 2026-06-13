@@ -198,12 +198,6 @@ function ProgressBar({ value }: { value: number }) {
 
 /* ── Initial data (empty — populated from Supabase) ── */
 const initNotifs: Notif[] = [];
-const initNotifs: Notif[] = [
-  { id: 1, text: "Apple aprovou o corte final de Silence.", type: "info", read: false, time: "há 10min" },
-  { id: 2, text: "Prazo de entrega Porsche em 4 dias.", type: "warn", read: false, time: "há 1h" },
-  { id: 3, text: "Nova mensagem de Maison Hermès.", type: "info", read: false, time: "há 2h" },
-  { id: 4, text: "Fatura de Hermès vence em 2 dias.", type: "alert", read: false, time: "há 3h" },
-];
 const initConvs = [
   {
     id: 1,
@@ -247,11 +241,30 @@ const initConvs = [
 ══════════════════════════════════════════ */
 function App() {
   const [screen, setScreen] = useState<Screen>("dashboard");
-  const [projects, setProjects] = useState(initProjects);
-  const [clients, setClients] = useState(initClients);
-  const [entregas, setEntregas] = useState(initEntregas);
-  const [propostas, setPropostas] = useState(initPropostas);
-  const [gravacoes, setGravacoes] = useState(initGravacoes);
+
+  const projectsQ = projectsApi.useList();
+  const clientsQ = clientsApi.useList();
+  const entregasQ = entregasApi.useList();
+  const propostasQ = propostasApi.useList();
+  const gravacoesQ = gravacoesApi.useList();
+
+  const projects = (projectsQ.data ?? []) as unknown as Project[];
+  const clients = (clientsQ.data ?? []) as unknown as Client[];
+  const entregas = (entregasQ.data ?? []) as unknown as Entrega[];
+  const propostas = (propostasQ.data ?? []) as unknown as Proposta[];
+  const gravacoes = (gravacoesQ.data ?? []) as unknown as Gravacao[];
+
+  const saveProjectM = projectsApi.useSave();
+  const deleteProjectM = projectsApi.useRemove();
+  const saveClientM = clientsApi.useSave();
+  const deleteClientM = clientsApi.useRemove();
+  const saveEntregaM = entregasApi.useSave();
+  const deleteEntregaM = entregasApi.useRemove();
+  const savePropostaM = propostasApi.useSave();
+  const deletePropostaM = propostasApi.useRemove();
+  const saveGravacaoM = gravacoesApi.useSave();
+  const deleteGravacaoM = gravacoesApi.useRemove();
+
   const [notifs, setNotifs] = useState(initNotifs);
   const [convs, setConvs] = useState(initConvs);
   const [searchQ, setSearchQ] = useState("");
@@ -266,36 +279,27 @@ function App() {
 
   const unread = notifs.filter((n) => !n.read).length;
 
-  const saveProject = (d: Omit<Project, "id">) => {
-    projModal.e
-      ? setProjects((p) => p.map((x) => (x.id === projModal.e!.id ? { ...d, id: x.id } : x)))
-      : setProjects((p) => [...p, { ...d, id: Date.now() }]);
+  const saveProject = async (d: Omit<Project, "id">) => {
+    await saveProjectM.mutateAsync(projModal.e ? { ...d, id: projModal.e.id } : d);
     setProjModal({ open: false, e: null });
   };
-  const saveClient = (d: Omit<Client, "id">) => {
-    clientModal.e
-      ? setClients((p) => p.map((x) => (x.id === clientModal.e!.id ? { ...d, id: x.id } : x)))
-      : setClients((p) => [...p, { ...d, id: Date.now() }]);
+  const saveClient = async (d: Omit<Client, "id">) => {
+    await saveClientM.mutateAsync(clientModal.e ? { ...d, id: clientModal.e.id } : d);
     setClientModal({ open: false, e: null });
   };
-  const saveEntrega = (d: Omit<Entrega, "id">) => {
-    entregaModal.e
-      ? setEntregas((p) => p.map((x) => (x.id === entregaModal.e!.id ? { ...d, id: x.id } : x)))
-      : setEntregas((p) => [...p, { ...d, id: Date.now() }]);
+  const saveEntrega = async (d: Omit<Entrega, "id">) => {
+    await saveEntregaM.mutateAsync(entregaModal.e ? { ...d, id: entregaModal.e.id } : d);
     setEntregaModal({ open: false, e: null });
   };
-  const saveProposta = (d: Omit<Proposta, "id">) => {
-    propModal.e
-      ? setPropostas((p) => p.map((x) => (x.id === propModal.e!.id ? { ...d, id: x.id } : x)))
-      : setPropostas((p) => [...p, { ...d, id: Date.now() }]);
+  const saveProposta = async (d: Omit<Proposta, "id">) => {
+    await savePropostaM.mutateAsync(propModal.e ? { ...d, id: propModal.e.id } : d);
     setPropModal({ open: false, e: null });
   };
-  const saveGravacao = (d: Omit<Gravacao, "id">) => {
-    gravModal.e
-      ? setGravacoes((p) => p.map((x) => (x.id === gravModal.e!.id ? { ...d, id: x.id } : x)))
-      : setGravacoes((p) => [...p, { ...d, id: Date.now() }]);
+  const saveGravacao = async (d: Omit<Gravacao, "id">) => {
+    await saveGravacaoM.mutateAsync(gravModal.e ? { ...d, id: gravModal.e.id } : d);
     setGravModal({ open: false, e: null });
   };
+
 
   const sendMsg = (cid: number, text: string) => {
     const now = new Date();
