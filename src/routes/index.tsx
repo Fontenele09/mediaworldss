@@ -529,8 +529,8 @@ function App() {
               <ClientesScreen
                 clients={clients}
                 onNew={() => setClientModal({ open: true, editing: null })}
-                onEdit={(c) => setClientModal({ open: true, editing: c })}
-                onDelete={(id) => setClients((c) => c.filter((x) => x.id !== id))}
+                onEdit={(c: Client) => setClientModal({ open: true, editing: c })}
+                onDelete={(id: number) => setClients((c) => c.filter((x) => x.id !== id))}
               />
             )}
             {screen === "projetos" && (
