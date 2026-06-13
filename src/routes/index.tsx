@@ -753,7 +753,7 @@ function TopBar({
         <div className="flex items-center gap-2 text-[12px] text-muted-foreground">
           <span>Media World</span>
           <ChevronRight className="h-3 w-3" strokeWidth={1.75} />
-          <span className="text-foreground font-medium">{screenLabels[screen]}</span>
+          <span className="text-foreground font-medium">{screenLabels[screen as Screen]}</span>
         </div>
         <div className="ml-auto flex items-center gap-2.5">
           {/* Search */}
