@@ -519,10 +519,10 @@ function App() {
                 onNewProject={() => setProjectModal({ open: true, editing: null })}
                 onNewClient={() => setClientModal({ open: true, editing: null })}
                 onNewGravacao={() => setGravacaoModal({ open: true, editing: null })}
-                onEditProject={(p) => setProjectModal({ open: true, editing: p })}
-                onDeleteProject={(id) => setProjects((p) => p.filter((x) => x.id !== id))}
-                onEditClient={(c) => setClientModal({ open: true, editing: c })}
-                onDeleteClient={(id) => setClients((c) => c.filter((x) => x.id !== id))}
+                onEditProject={(p: Project) => setProjectModal({ open: true, editing: p })}
+                onDeleteProject={(id: string) => setProjects((p) => p.filter((x) => x.id !== id))}
+                onEditClient={(c: Client) => setClientModal({ open: true, editing: c })}
+                onDeleteClient={(id: string) => setClients((c) => c.filter((x) => x.id !== id))}
               />
             )}
             {screen === "clientes" && (
