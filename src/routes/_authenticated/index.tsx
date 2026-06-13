@@ -84,7 +84,7 @@ type Screen =
 type ProjectStatus = "Pré-produção" | "Gravação" | "Edição" | "Pós-produção" | "Aprovação" | "Entregue";
 
 interface Project {
-  id: number;
+  id: string;
   name: string;
   client: string;
   status: ProjectStatus;
@@ -93,14 +93,14 @@ interface Project {
   progress: number;
 }
 interface Client {
-  id: number;
+  id: string;
   name: string;
   project: string;
   status: string;
   last: string;
 }
 interface Entrega {
-  id: number;
+  id: string;
   project: string;
   client: string;
   file: string;
@@ -110,7 +110,7 @@ interface Entrega {
   urgent: boolean;
 }
 interface Proposta {
-  id: number;
+  id: string;
   title: string;
   client: string;
   value: string;
@@ -118,7 +118,7 @@ interface Proposta {
   date: string;
 }
 interface Gravacao {
-  id: number;
+  id: string;
   title: string;
   client: string;
   local: string;
