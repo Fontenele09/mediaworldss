@@ -497,18 +497,18 @@ function App() {
                 onNewProject={() => setProjModal({ open: true, e: null })}
                 onNewClient={() => setClientModal({ open: true, e: null })}
                 onNewGravacao={() => setGravModal({ open: true, e: null })}
-                onEditProject={(p) => setProjModal({ open: true, e: p })}
-                onDeleteProject={(id) => setProjects((p) => p.filter((x) => x.id !== id))}
-                onEditClient={(c) => setClientModal({ open: true, e: c })}
-                onDeleteClient={(id) => setClients((p) => p.filter((x) => x.id !== id))}
+                onEditProject={(p: any) => setProjModal({ open: true, e: p })}
+                onDeleteProject={(id: any) => setProjects((p) => p.filter((x) => x.id !== id))}
+                onEditClient={(c: any) => setClientModal({ open: true, e: c })}
+                onDeleteClient={(id: any) => setClients((p) => p.filter((x) => x.id !== id))}
               />
             )}
             {screen === "clientes" && (
               <ClientesScreen
                 clients={clients}
                 onNew={() => setClientModal({ open: true, e: null })}
-                onEdit={(c) => setClientModal({ open: true, e: c })}
-                onDelete={(id) => setClients((p) => p.filter((x) => x.id !== id))}
+                onEdit={(c: any) => setClientModal({ open: true, e: c })}
+                onDelete={(id: any) => setClients((p) => p.filter((x) => x.id !== id))}
               />
             )}
             {screen === "projetos" && (
@@ -516,8 +516,8 @@ function App() {
                 projects={projects}
                 clients={clients}
                 onNew={() => setProjModal({ open: true, e: null })}
-                onEdit={(p) => setProjModal({ open: true, e: p })}
-                onDelete={(id) => setProjects((p) => p.filter((x) => x.id !== id))}
+                onEdit={(p: any) => setProjModal({ open: true, e: p })}
+                onDelete={(id: any) => setProjects((p) => p.filter((x) => x.id !== id))}
               />
             )}
             {screen === "pipeline" && <PipelineScreen projects={projects} />}
@@ -526,8 +526,8 @@ function App() {
                 gravacoes={gravacoes}
                 clients={clients}
                 onNew={() => setGravModal({ open: true, e: null })}
-                onEdit={(g) => setGravModal({ open: true, e: g })}
-                onDelete={(id) => setGravacoes((p) => p.filter((x) => x.id !== id))}
+                onEdit={(g: any) => setGravModal({ open: true, e: g })}
+                onDelete={(id: any) => setGravacoes((p) => p.filter((x) => x.id !== id))}
               />
             )}
             {screen === "entregas" && (
@@ -535,8 +535,8 @@ function App() {
                 entregas={entregas}
                 projects={projects}
                 onNew={() => setEntregaModal({ open: true, e: null })}
-                onEdit={(e) => setEntregaModal({ open: true, e: e })}
-                onDelete={(id) => setEntregas((p) => p.filter((x) => x.id !== id))}
+                onEdit={(e: any) => setEntregaModal({ open: true, e: e })}
+                onDelete={(id: any) => setEntregas((p) => p.filter((x) => x.id !== id))}
               />
             )}
             {screen === "propostas" && (
@@ -544,8 +544,8 @@ function App() {
                 propostas={propostas}
                 clients={clients}
                 onNew={() => setPropModal({ open: true, e: null })}
-                onEdit={(p) => setPropModal({ open: true, e: p })}
-                onDelete={(id) => setPropostas((p) => p.filter((x) => x.id !== id))}
+                onEdit={(p: any) => setPropModal({ open: true, e: p })}
+                onDelete={(id: any) => setPropostas((p) => p.filter((x) => x.id !== id))}
               />
             )}
             {screen === "financeiro" && <FinanceiroScreen />}
@@ -766,7 +766,7 @@ function TopBar({
       <div className="flex items-center gap-2 text-[12px]" style={{ color: C.muted }}>
         <span style={{ color: C.em, fontWeight: 500 }}>MW</span>
         <ChevronRight className="h-3 w-3" strokeWidth={1.75} />
-        <span style={{ color: C.fg }}>{screenLabels[screen]}</span>
+        <span style={{ color: C.fg }}>{screenLabels[screen as Screen]}</span>
       </div>
 
       <div className="ml-auto flex items-center gap-2">
@@ -913,9 +913,9 @@ function TopBar({
 /* ══════════════════════════════════════════
    SHARED COMPONENTS
 ══════════════════════════════════════════ */
-function Card({ children, className = "" }: { children: React.ReactNode; className?: string }) {
+function Card({ children, className = "", style }: { children: React.ReactNode; className?: string; style?: React.CSSProperties }) {
   return (
-    <div className={`rounded-2xl ${className}`} style={{ background: C.card, border: `1px solid ${C.border}` }}>
+    <div className={`rounded-2xl ${className}`} style={{ background: C.card, border: `1px solid ${C.border}`, ...style }}>
       {children}
     </div>
   );
