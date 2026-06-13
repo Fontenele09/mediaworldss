@@ -563,8 +563,8 @@ function App() {
               <PropostasScreen
                 propostas={propostas}
                 onNew={() => setPropostaModal({ open: true, editing: null })}
-                onEdit={(p) => setPropostaModal({ open: true, editing: p })}
-                onDelete={(id) => setPropostas((p) => p.filter((x) => x.id !== id))}
+                onEdit={(p: Proposta) => setPropostaModal({ open: true, editing: p })}
+                onDelete={(id: number) => setPropostas((p) => p.filter((x) => x.id !== id))}
               />
             )}
             {screen === "financeiro" && <FinanceiroScreen />}
