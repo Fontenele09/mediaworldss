@@ -368,9 +368,9 @@ function App() {
                 onNewClient={() => setClientModal({ open: true, e: null })}
                 onNewGravacao={() => setGravModal({ open: true, e: null })}
                 onEditProject={(p: any) => setProjModal({ open: true, e: p })}
-                onDeleteProject={(id: any) => setProjects((p) => p.filter((x) => x.id !== id))}
+                onDeleteProject={(id: string) => deleteProjectM.mutate(id)}
                 onEditClient={(c: any) => setClientModal({ open: true, e: c })}
-                onDeleteClient={(id: any) => setClients((p) => p.filter((x) => x.id !== id))}
+                onDeleteClient={(id: string) => deleteClientM.mutate(id)}
               />
             )}
             {screen === "clientes" && (
@@ -378,7 +378,7 @@ function App() {
                 clients={clients}
                 onNew={() => setClientModal({ open: true, e: null })}
                 onEdit={(c: any) => setClientModal({ open: true, e: c })}
-                onDelete={(id: any) => setClients((p) => p.filter((x) => x.id !== id))}
+                onDelete={(id: string) => deleteClientM.mutate(id)}
               />
             )}
             {screen === "projetos" && (
@@ -387,7 +387,7 @@ function App() {
                 clients={clients}
                 onNew={() => setProjModal({ open: true, e: null })}
                 onEdit={(p: any) => setProjModal({ open: true, e: p })}
-                onDelete={(id: any) => setProjects((p) => p.filter((x) => x.id !== id))}
+                onDelete={(id: string) => deleteProjectM.mutate(id)}
               />
             )}
             {screen === "pipeline" && <PipelineScreen projects={projects} />}
@@ -397,7 +397,7 @@ function App() {
                 clients={clients}
                 onNew={() => setGravModal({ open: true, e: null })}
                 onEdit={(g: any) => setGravModal({ open: true, e: g })}
-                onDelete={(id: any) => setGravacoes((p) => p.filter((x) => x.id !== id))}
+                onDelete={(id: string) => deleteGravacaoM.mutate(id)}
               />
             )}
             {screen === "entregas" && (
@@ -406,7 +406,7 @@ function App() {
                 projects={projects}
                 onNew={() => setEntregaModal({ open: true, e: null })}
                 onEdit={(e: any) => setEntregaModal({ open: true, e: e })}
-                onDelete={(id: any) => setEntregas((p) => p.filter((x) => x.id !== id))}
+                onDelete={(id: string) => deleteEntregaM.mutate(id)}
               />
             )}
             {screen === "propostas" && (
@@ -415,7 +415,7 @@ function App() {
                 clients={clients}
                 onNew={() => setPropModal({ open: true, e: null })}
                 onEdit={(p: any) => setPropModal({ open: true, e: p })}
-                onDelete={(id: any) => setPropostas((p) => p.filter((x) => x.id !== id))}
+                onDelete={(id: string) => deletePropostaM.mutate(id)}
               />
             )}
             {screen === "financeiro" && <FinanceiroScreen />}
