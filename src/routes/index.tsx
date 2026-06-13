@@ -766,7 +766,7 @@ function TopBar({
       <div className="flex items-center gap-2 text-[12px]" style={{ color: C.muted }}>
         <span style={{ color: C.em, fontWeight: 500 }}>MW</span>
         <ChevronRight className="h-3 w-3" strokeWidth={1.75} />
-        <span style={{ color: C.fg }}>{screenLabels[screen]}</span>
+        <span style={{ color: C.fg }}>{screenLabels[screen as Screen]}</span>
       </div>
 
       <div className="ml-auto flex items-center gap-2">
@@ -913,9 +913,9 @@ function TopBar({
 /* ══════════════════════════════════════════
    SHARED COMPONENTS
 ══════════════════════════════════════════ */
-function Card({ children, className = "" }: { children: React.ReactNode; className?: string }) {
+function Card({ children, className = "", style }: { children: React.ReactNode; className?: string; style?: React.CSSProperties }) {
   return (
-    <div className={`rounded-2xl ${className}`} style={{ background: C.card, border: `1px solid ${C.border}` }}>
+    <div className={`rounded-2xl ${className}`} style={{ background: C.card, border: `1px solid ${C.border}`, ...style }}>
       {children}
     </div>
   );
