@@ -38,7 +38,7 @@ import {
   User,
 } from "lucide-react";
 
-export const Route = createFileRoute("/")({
+export const Route = createFileRoute("/_authenticated/")({
   head: () => ({
     meta: [
       { title: "MW Studio — Media World" },
