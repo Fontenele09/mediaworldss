@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useRef, useEffect } from "react";
+import { projectsApi, clientsApi, entregasApi, propostasApi, gravacoesApi } from "@/hooks/use-data";
 import {
   ArrowRight,
   ArrowUpRight,
@@ -83,7 +84,7 @@ type Screen =
 type ProjectStatus = "Pré-produção" | "Gravação" | "Edição" | "Pós-produção" | "Aprovação" | "Entregue";
 
 interface Project {
-  id: number;
+  id: string;
   name: string;
   client: string;
   status: ProjectStatus;
@@ -92,14 +93,14 @@ interface Project {
   progress: number;
 }
 interface Client {
-  id: number;
+  id: string;
   name: string;
   project: string;
   status: string;
   last: string;
 }
 interface Entrega {
-  id: number;
+  id: string;
   project: string;
   client: string;
   file: string;
@@ -109,7 +110,7 @@ interface Entrega {
   urgent: boolean;
 }
 interface Proposta {
-  id: number;
+  id: string;
   title: string;
   client: string;
   value: string;
@@ -117,7 +118,7 @@ interface Proposta {
   date: string;
 }
 interface Gravacao {
-  id: number;
+  id: string;
   title: string;
   client: string;
   local: string;
@@ -195,149 +196,8 @@ function ProgressBar({ value }: { value: number }) {
   );
 }
 
-/* ── Initial data ── */
-const initProjects: Project[] = [
-  {
-    id: 1,
-    name: "Hermès — Carré 90",
-    client: "Maison Hermès",
-    status: "Pós-produção",
-    deadline: "25 jun",
-    owner: "Léon B.",
-    progress: 72,
-  },
-  {
-    id: 2,
-    name: "Porsche 911 GTS",
-    client: "Porsche AG",
-    status: "Gravação",
-    deadline: "18 jun",
-    owner: "Margaux T.",
-    progress: 41,
-  },
-  {
-    id: 3,
-    name: "Dior — Couture FW26",
-    client: "Christian Dior",
-    status: "Pré-produção",
-    deadline: "03 jul",
-    owner: "Carla V.",
-    progress: 18,
-  },
-  {
-    id: 4,
-    name: "Apple — Silence",
-    client: "Apple Originals",
-    status: "Aprovação",
-    deadline: "15 jun",
-    owner: "Élise M.",
-    progress: 88,
-  },
-  {
-    id: 5,
-    name: "Natura — Ekos",
-    client: "Natura & Co.",
-    status: "Edição",
-    deadline: "22 jun",
-    owner: "Rafael S.",
-    progress: 56,
-  },
-];
-const initClients: Client[] = [
-  { id: 1, name: "Maison Hermès", project: "Carré 90", status: "Em produção", last: "há 2h" },
-  { id: 2, name: "Porsche AG", project: "911 Carrera GTS", status: "Gravando", last: "há 35min" },
-  { id: 3, name: "Christian Dior", project: "Couture FW26", status: "Reunião amanhã", last: "ontem" },
-  { id: 4, name: "Apple Originals", project: "Silence — long form", status: "Aguardando aprovação", last: "há 4h" },
-  { id: 5, name: "Natura & Co.", project: "Ekos — Filme institucional", status: "Edição", last: "há 1d" },
-];
-const initEntregas: Entrega[] = [
-  {
-    id: 1,
-    project: "Apple — Silence",
-    client: "Apple Originals",
-    file: "Corte_Final_v3.mp4",
-    status: "Aguardando aprovação",
-    date: "15 jun",
-    size: "4.2 GB",
-    urgent: true,
-  },
-  {
-    id: 2,
-    project: "Hermès — Carré 90",
-    client: "Maison Hermès",
-    file: "Hermes_Color_v2.mov",
-    status: "Em revisão",
-    date: "25 jun",
-    size: "8.7 GB",
-    urgent: false,
-  },
-  {
-    id: 3,
-    project: "Natura — Ekos",
-    client: "Natura & Co.",
-    file: "Ekos_Teaser_v1.mp4",
-    status: "Enviado",
-    date: "22 jun",
-    size: "1.1 GB",
-    urgent: false,
-  },
-  {
-    id: 4,
-    project: "Porsche 911 GTS",
-    client: "Porsche AG",
-    file: "Porsche_Brutos.zip",
-    status: "Pendente",
-    date: "18 jun",
-    size: "22 GB",
-    urgent: true,
-  },
-];
-const initPropostas: Proposta[] = [
-  { id: 1, title: "Campanha Verão 2026", client: "Nike Brasil", value: "R$ 84.000", status: "Enviada", date: "10 jun" },
-  {
-    id: 2,
-    title: "Série documental",
-    client: "Natura & Co.",
-    value: "R$ 210.000",
-    status: "Em negociação",
-    date: "08 jun",
-  },
-  { id: 3, title: "Conteúdo redes Q3", client: "Havaianas", value: "R$ 36.500", status: "Aprovada", date: "05 jun" },
-  {
-    id: 4,
-    title: "Filme institucional 2026",
-    client: "Itaú BBA",
-    value: "R$ 320.000",
-    status: "Rascunho",
-    date: "12 jun",
-  },
-];
-const initGravacoes: Gravacao[] = [
-  {
-    id: 1,
-    title: "Gravação Studio A — Hermès",
-    client: "Maison Hermès",
-    local: "Studio A",
-    date: "11 jun",
-    time: "11:30",
-    crew: "Léon B., Margaux T.",
-  },
-  {
-    id: 2,
-    title: "Gravação externa — Porsche",
-    client: "Porsche AG",
-    local: "São Paulo",
-    date: "20 jun",
-    time: "08:00",
-    crew: "Rafael S., Carla V.",
-  },
-];
-const initNotifs: Notif[] = [
-  { id: 1, text: "Apple aprovou o corte final de Silence.", type: "info", read: false, time: "há 10min" },
-  { id: 2, text: "Prazo de entrega Porsche em 4 dias.", type: "warn", read: false, time: "há 1h" },
-  { id: 3, text: "Nova mensagem de Maison Hermès.", type: "info", read: false, time: "há 2h" },
-  { id: 4, text: "Fatura de Hermès vence em 2 dias.", type: "alert", read: false, time: "há 3h" },
-];
+/* ── Initial data (empty — populated from Supabase) ── */
+const initNotifs: Notif[] = [];
 const initConvs = [
   {
     id: 1,
@@ -381,11 +241,30 @@ const initConvs = [
 ══════════════════════════════════════════ */
 function App() {
   const [screen, setScreen] = useState<Screen>("dashboard");
-  const [projects, setProjects] = useState(initProjects);
-  const [clients, setClients] = useState(initClients);
-  const [entregas, setEntregas] = useState(initEntregas);
-  const [propostas, setPropostas] = useState(initPropostas);
-  const [gravacoes, setGravacoes] = useState(initGravacoes);
+
+  const projectsQ = projectsApi.useList();
+  const clientsQ = clientsApi.useList();
+  const entregasQ = entregasApi.useList();
+  const propostasQ = propostasApi.useList();
+  const gravacoesQ = gravacoesApi.useList();
+
+  const projects = (projectsQ.data ?? []) as unknown as Project[];
+  const clients = (clientsQ.data ?? []) as unknown as Client[];
+  const entregas = (entregasQ.data ?? []) as unknown as Entrega[];
+  const propostas = (propostasQ.data ?? []) as unknown as Proposta[];
+  const gravacoes = (gravacoesQ.data ?? []) as unknown as Gravacao[];
+
+  const saveProjectM = projectsApi.useSave();
+  const deleteProjectM = projectsApi.useRemove();
+  const saveClientM = clientsApi.useSave();
+  const deleteClientM = clientsApi.useRemove();
+  const saveEntregaM = entregasApi.useSave();
+  const deleteEntregaM = entregasApi.useRemove();
+  const savePropostaM = propostasApi.useSave();
+  const deletePropostaM = propostasApi.useRemove();
+  const saveGravacaoM = gravacoesApi.useSave();
+  const deleteGravacaoM = gravacoesApi.useRemove();
+
   const [notifs, setNotifs] = useState(initNotifs);
   const [convs, setConvs] = useState(initConvs);
   const [searchQ, setSearchQ] = useState("");
@@ -400,36 +279,27 @@ function App() {
 
   const unread = notifs.filter((n) => !n.read).length;
 
-  const saveProject = (d: Omit<Project, "id">) => {
-    projModal.e
-      ? setProjects((p) => p.map((x) => (x.id === projModal.e!.id ? { ...d, id: x.id } : x)))
-      : setProjects((p) => [...p, { ...d, id: Date.now() }]);
+  const saveProject = async (d: Omit<Project, "id">) => {
+    await saveProjectM.mutateAsync(projModal.e ? { ...d, id: projModal.e.id } : d);
     setProjModal({ open: false, e: null });
   };
-  const saveClient = (d: Omit<Client, "id">) => {
-    clientModal.e
-      ? setClients((p) => p.map((x) => (x.id === clientModal.e!.id ? { ...d, id: x.id } : x)))
-      : setClients((p) => [...p, { ...d, id: Date.now() }]);
+  const saveClient = async (d: Omit<Client, "id">) => {
+    await saveClientM.mutateAsync(clientModal.e ? { ...d, id: clientModal.e.id } : d);
     setClientModal({ open: false, e: null });
   };
-  const saveEntrega = (d: Omit<Entrega, "id">) => {
-    entregaModal.e
-      ? setEntregas((p) => p.map((x) => (x.id === entregaModal.e!.id ? { ...d, id: x.id } : x)))
-      : setEntregas((p) => [...p, { ...d, id: Date.now() }]);
+  const saveEntrega = async (d: Omit<Entrega, "id">) => {
+    await saveEntregaM.mutateAsync(entregaModal.e ? { ...d, id: entregaModal.e.id } : d);
     setEntregaModal({ open: false, e: null });
   };
-  const saveProposta = (d: Omit<Proposta, "id">) => {
-    propModal.e
-      ? setPropostas((p) => p.map((x) => (x.id === propModal.e!.id ? { ...d, id: x.id } : x)))
-      : setPropostas((p) => [...p, { ...d, id: Date.now() }]);
+  const saveProposta = async (d: Omit<Proposta, "id">) => {
+    await savePropostaM.mutateAsync(propModal.e ? { ...d, id: propModal.e.id } : d);
     setPropModal({ open: false, e: null });
   };
-  const saveGravacao = (d: Omit<Gravacao, "id">) => {
-    gravModal.e
-      ? setGravacoes((p) => p.map((x) => (x.id === gravModal.e!.id ? { ...d, id: x.id } : x)))
-      : setGravacoes((p) => [...p, { ...d, id: Date.now() }]);
+  const saveGravacao = async (d: Omit<Gravacao, "id">) => {
+    await saveGravacaoM.mutateAsync(gravModal.e ? { ...d, id: gravModal.e.id } : d);
     setGravModal({ open: false, e: null });
   };
+
 
   const sendMsg = (cid: number, text: string) => {
     const now = new Date();
@@ -498,9 +368,9 @@ function App() {
                 onNewClient={() => setClientModal({ open: true, e: null })}
                 onNewGravacao={() => setGravModal({ open: true, e: null })}
                 onEditProject={(p: any) => setProjModal({ open: true, e: p })}
-                onDeleteProject={(id: any) => setProjects((p) => p.filter((x) => x.id !== id))}
+                onDeleteProject={(id: string) => deleteProjectM.mutate(id)}
                 onEditClient={(c: any) => setClientModal({ open: true, e: c })}
-                onDeleteClient={(id: any) => setClients((p) => p.filter((x) => x.id !== id))}
+                onDeleteClient={(id: string) => deleteClientM.mutate(id)}
               />
             )}
             {screen === "clientes" && (
@@ -508,7 +378,7 @@ function App() {
                 clients={clients}
                 onNew={() => setClientModal({ open: true, e: null })}
                 onEdit={(c: any) => setClientModal({ open: true, e: c })}
-                onDelete={(id: any) => setClients((p) => p.filter((x) => x.id !== id))}
+                onDelete={(id: string) => deleteClientM.mutate(id)}
               />
             )}
             {screen === "projetos" && (
@@ -517,7 +387,7 @@ function App() {
                 clients={clients}
                 onNew={() => setProjModal({ open: true, e: null })}
                 onEdit={(p: any) => setProjModal({ open: true, e: p })}
-                onDelete={(id: any) => setProjects((p) => p.filter((x) => x.id !== id))}
+                onDelete={(id: string) => deleteProjectM.mutate(id)}
               />
             )}
             {screen === "pipeline" && <PipelineScreen projects={projects} />}
@@ -527,7 +397,7 @@ function App() {
                 clients={clients}
                 onNew={() => setGravModal({ open: true, e: null })}
                 onEdit={(g: any) => setGravModal({ open: true, e: g })}
-                onDelete={(id: any) => setGravacoes((p) => p.filter((x) => x.id !== id))}
+                onDelete={(id: string) => deleteGravacaoM.mutate(id)}
               />
             )}
             {screen === "entregas" && (
@@ -536,7 +406,7 @@ function App() {
                 projects={projects}
                 onNew={() => setEntregaModal({ open: true, e: null })}
                 onEdit={(e: any) => setEntregaModal({ open: true, e: e })}
-                onDelete={(id: any) => setEntregas((p) => p.filter((x) => x.id !== id))}
+                onDelete={(id: string) => deleteEntregaM.mutate(id)}
               />
             )}
             {screen === "propostas" && (
@@ -545,7 +415,7 @@ function App() {
                 clients={clients}
                 onNew={() => setPropModal({ open: true, e: null })}
                 onEdit={(p: any) => setPropModal({ open: true, e: p })}
-                onDelete={(id: any) => setPropostas((p) => p.filter((x) => x.id !== id))}
+                onDelete={(id: string) => deletePropostaM.mutate(id)}
               />
             )}
             {screen === "financeiro" && <FinanceiroScreen />}
