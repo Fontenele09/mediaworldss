@@ -14,6 +14,120 @@ export type Database = {
   }
   public: {
     Tables: {
+      clients: {
+        Row: {
+          created_at: string
+          id: string
+          last: string | null
+          name: string
+          project: string | null
+          status: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          last?: string | null
+          name: string
+          project?: string | null
+          status?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          last?: string | null
+          name?: string
+          project?: string | null
+          status?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      entregas: {
+        Row: {
+          client: string | null
+          created_at: string
+          date: string | null
+          file: string | null
+          id: string
+          project: string | null
+          size: string | null
+          status: string | null
+          updated_at: string
+          urgent: boolean
+          user_id: string
+        }
+        Insert: {
+          client?: string | null
+          created_at?: string
+          date?: string | null
+          file?: string | null
+          id?: string
+          project?: string | null
+          size?: string | null
+          status?: string | null
+          updated_at?: string
+          urgent?: boolean
+          user_id: string
+        }
+        Update: {
+          client?: string | null
+          created_at?: string
+          date?: string | null
+          file?: string | null
+          id?: string
+          project?: string | null
+          size?: string | null
+          status?: string | null
+          updated_at?: string
+          urgent?: boolean
+          user_id?: string
+        }
+        Relationships: []
+      }
+      gravacoes: {
+        Row: {
+          client: string | null
+          created_at: string
+          crew: string | null
+          date: string | null
+          id: string
+          local: string | null
+          time: string | null
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          client?: string | null
+          created_at?: string
+          crew?: string | null
+          date?: string | null
+          id?: string
+          local?: string | null
+          time?: string | null
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          client?: string | null
+          created_at?: string
+          crew?: string | null
+          date?: string | null
+          id?: string
+          local?: string | null
+          time?: string | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -41,6 +155,81 @@ export type Database = {
           id?: string
           preferred_name?: string | null
           updated_at?: string
+        }
+        Relationships: []
+      }
+      projects: {
+        Row: {
+          client: string | null
+          created_at: string
+          deadline: string | null
+          id: string
+          name: string
+          owner: string | null
+          progress: number
+          status: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          client?: string | null
+          created_at?: string
+          deadline?: string | null
+          id?: string
+          name: string
+          owner?: string | null
+          progress?: number
+          status?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          client?: string | null
+          created_at?: string
+          deadline?: string | null
+          id?: string
+          name?: string
+          owner?: string | null
+          progress?: number
+          status?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      propostas: {
+        Row: {
+          client: string | null
+          created_at: string
+          date: string | null
+          id: string
+          status: string | null
+          title: string
+          updated_at: string
+          user_id: string
+          value: number | null
+        }
+        Insert: {
+          client?: string | null
+          created_at?: string
+          date?: string | null
+          id?: string
+          status?: string | null
+          title: string
+          updated_at?: string
+          user_id: string
+          value?: number | null
+        }
+        Update: {
+          client?: string | null
+          created_at?: string
+          date?: string | null
+          id?: string
+          status?: string | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+          value?: number | null
         }
         Relationships: []
       }
