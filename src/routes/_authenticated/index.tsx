@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useRef, useEffect } from "react";
+import { projectsApi, clientsApi, entregasApi, propostasApi, gravacoesApi } from "@/hooks/use-data";
 import {
   ArrowRight,
   ArrowUpRight,
