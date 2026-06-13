@@ -555,8 +555,8 @@ function App() {
               <EntregasScreen
                 entregas={entregas}
                 onNew={() => setEntregaModal({ open: true, editing: null })}
-                onEdit={(e) => setEntregaModal({ open: true, editing: e })}
-                onDelete={(id) => setEntregas((e) => e.filter((x) => x.id !== id))}
+                onEdit={(e: Entrega) => setEntregaModal({ open: true, editing: e })}
+                onDelete={(id: number) => setEntregas((e) => e.filter((x) => x.id !== id))}
               />
             )}
             {screen === "propostas" && (
