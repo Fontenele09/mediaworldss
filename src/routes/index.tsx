@@ -32,26 +32,42 @@ import {
   AlertCircle,
   Check,
   Info,
-  ChevronDown,
-  Filter,
-  BarChart2,
-  LogOut,
-  User,
-  Lock,
-  Palette,
-  Globe,
   Save,
+  LogOut,
+  Lock,
+  User,
 } from "lucide-react";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Media World — Sistema de Produção Audiovisual" },
-      { name: "description", content: "Sistema operacional para agências de produção audiovisual de alto padrão." },
+      { title: "MW Studio — Media World" },
+      { name: "description", content: "Sistema interno de produção audiovisual — Media World." },
     ],
   }),
   component: App,
 });
+
+/* ── Tokens ── */
+const C = {
+  bg: "#0D1612",
+  surface: "#141F1A",
+  card: "#1A2820",
+  border: "#243028",
+  hover: "#1F2E28",
+  em: "#00C896",
+  emDim: "#00C89622",
+  emText: "#00C896",
+  muted: "#6B8A7E",
+  fg: "#E8F0EC",
+  fgDim: "#A8C4B8",
+  warn: "#F5A623",
+  warnDim: "#F5A62322",
+  danger: "#FF5252",
+  dangerDim: "#FF525222",
+  info: "#4A9EFF",
+  infoDim: "#4A9EFF22",
+};
 
 type Screen =
   | "dashboard"
@@ -109,45 +125,77 @@ interface Gravacao {
   time: string;
   crew: string;
 }
-interface Notification {
+interface Notif {
   id: number;
   text: string;
   type: "info" | "warn" | "alert";
   read: boolean;
   time: string;
 }
-interface Message {
+interface Msg {
   from: string;
   text: string;
   time: string;
 }
 
 const STATUS_OPTIONS: ProjectStatus[] = ["Pré-produção", "Gravação", "Edição", "Pós-produção", "Aprovação", "Entregue"];
-const inputCls =
-  "w-full rounded-lg border border-border bg-white px-3 py-2 text-[13px] text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-[#111] transition-shadow";
+
+/* ── Helpers ── */
+const inp =
+  `w-full rounded-xl border px-3 py-2 text-[13px] outline-none transition-all placeholder:opacity-40` +
+  ` bg-[${C.card}] border-[${C.border}] text-[${C.fg}] focus:border-[${C.em}] focus:ring-1 focus:ring-[${C.em}]`;
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="space-y-1.5">
-      <label className="text-[11.5px] font-semibold text-muted-foreground uppercase tracking-[0.12em]">{label}</label>
+      <label style={{ color: C.muted }} className="text-[10.5px] font-semibold uppercase tracking-[0.14em]">
+        {label}
+      </label>
       {children}
     </div>
   );
 }
 
-function statusStyle(s: string) {
-  const map: Record<string, string> = {
-    "Pós-produção": "bg-[#eef2ff] text-[#3949ab] border-[#dde3fa]",
-    Gravação: "bg-[#fff4e5] text-[#a8651f] border-[#f5e3c3]",
-    "Pré-produção": "bg-[#f1f5f9] text-[#475569] border-[#e2e8f0]",
-    Aprovação: "bg-[#fef3c7] text-[#854d0e] border-[#fde68a]",
-    Edição: "bg-[#ecfdf5] text-[#15803d] border-[#d1fae5]",
-    Entregue: "bg-[#f5f5f5] text-[#525252] border-[#e5e5e5]",
-  };
-  return map[s] || "bg-[#f5f5f5] text-[#525252] border-[#e5e5e5]";
+function Badge({ label, color }: { label: string; color: string }) {
+  return (
+    <span
+      className="inline-flex items-center text-[10.5px] font-semibold rounded-full px-2.5 py-0.5 border"
+      style={{ background: `${color}18`, color, borderColor: `${color}35` }}
+    >
+      {label}
+    </span>
+  );
 }
 
-/* ══════════════ INITIAL DATA ══════════════ */
+function statusColor(s: string) {
+  const m: Record<string, string> = {
+    "Pré-produção": C.muted,
+    Gravação: C.warn,
+    Edição: C.info,
+    "Pós-produção": "#A78BFA",
+    Aprovação: C.warn,
+    Entregue: C.em,
+  };
+  return m[s] || C.muted;
+}
+
+function ProgressBar({ value }: { value: number }) {
+  return (
+    <div className="flex items-center gap-2">
+      <div className="flex-1 h-1 rounded-full overflow-hidden" style={{ background: C.border }}>
+        <div
+          className="h-full rounded-full transition-all"
+          style={{ width: `${value}%`, background: `linear-gradient(90deg, ${C.em}, #00E8B0)` }}
+        />
+      </div>
+      <span className="text-[11px] tabular-nums w-8 text-right" style={{ color: C.fgDim }}>
+        {value}%
+      </span>
+    </div>
+  );
+}
+
+/* ── Initial data ── */
 const initProjects: Project[] = [
   {
     id: 1,
@@ -243,35 +291,18 @@ const initEntregas: Entrega[] = [
     size: "22 GB",
     urgent: true,
   },
-  {
-    id: 5,
-    project: "Dior — Couture FW26",
-    client: "Christian Dior",
-    file: "Dior_Roteiro_v1.pdf",
-    status: "Aprovado",
-    date: "03 jul",
-    size: "2.4 MB",
-    urgent: false,
-  },
 ];
 const initPropostas: Proposta[] = [
   { id: 1, title: "Campanha Verão 2026", client: "Nike Brasil", value: "R$ 84.000", status: "Enviada", date: "10 jun" },
   {
     id: 2,
-    title: "Série documental — Sustentabilidade",
+    title: "Série documental",
     client: "Natura & Co.",
     value: "R$ 210.000",
     status: "Em negociação",
     date: "08 jun",
   },
-  {
-    id: 3,
-    title: "Conteúdo redes sociais Q3",
-    client: "Havaianas",
-    value: "R$ 36.500",
-    status: "Aprovada",
-    date: "05 jun",
-  },
+  { id: 3, title: "Conteúdo redes Q3", client: "Havaianas", value: "R$ 36.500", status: "Aprovada", date: "05 jun" },
   {
     id: 4,
     title: "Filme institucional 2026",
@@ -279,14 +310,6 @@ const initPropostas: Proposta[] = [
     value: "R$ 320.000",
     status: "Rascunho",
     date: "12 jun",
-  },
-  {
-    id: 5,
-    title: "Campanha lançamento produto",
-    client: "Ambev",
-    value: "R$ 155.000",
-    status: "Recusada",
-    date: "01 jun",
   },
 ];
 const initGravacoes: Gravacao[] = [
@@ -309,22 +332,13 @@ const initGravacoes: Gravacao[] = [
     crew: "Rafael S., Carla V.",
   },
 ];
-const initNotifications: Notification[] = [
+const initNotifs: Notif[] = [
   { id: 1, text: "Apple aprovou o corte final de Silence.", type: "info", read: false, time: "há 10min" },
   { id: 2, text: "Prazo de entrega Porsche em 4 dias.", type: "warn", read: false, time: "há 1h" },
   { id: 3, text: "Nova mensagem de Maison Hermès.", type: "info", read: false, time: "há 2h" },
   { id: 4, text: "Fatura de Hermès vence em 2 dias.", type: "alert", read: false, time: "há 3h" },
-  { id: 5, text: "Dior enviou revisão do roteiro.", type: "info", read: true, time: "ontem" },
 ];
-const initConvs: {
-  id: number;
-  name: string;
-  project: string;
-  last: string;
-  time: string;
-  unread: number;
-  msgs: Message[];
-}[] = [
+const initConvs = [
   {
     id: 1,
     name: "Maison Hermès",
@@ -333,9 +347,8 @@ const initConvs: {
     time: "14:32",
     unread: 2,
     msgs: [
-      { from: "Hermès", text: "Olá! Podemos revisar o color grading da cena 3?", time: "14:10" },
-      { from: "Você", text: "Claro, vou verificar agora e te retorno em breve.", time: "14:15" },
-      { from: "Hermès", text: "Perfeito. O tom dourado ficou incrível!", time: "14:28" },
+      { from: "Hermès", text: "Podemos revisar o color grading da cena 3?", time: "14:10" },
+      { from: "Você", text: "Claro, vou verificar agora.", time: "14:15" },
       { from: "Hermès", text: "Aprovado o grade final ✓", time: "14:32" },
     ],
   },
@@ -346,7 +359,7 @@ const initConvs: {
     last: "Quando ficam prontos os brutos?",
     time: "13:05",
     unread: 1,
-    msgs: [{ from: "Porsche", text: "Boa tarde! Quando ficam prontos os brutos?", time: "13:05" }],
+    msgs: [{ from: "Porsche", text: "Quando ficam prontos os brutos?", time: "13:05" }],
   },
   {
     id: 3,
@@ -361,18 +374,11 @@ const initConvs: {
       { from: "Apple", text: "Reunião amanhã às 14h?", time: "11:48" },
     ],
   },
-  {
-    id: 4,
-    name: "Christian Dior",
-    project: "Couture FW26",
-    last: "Aguardando roteiro revisado",
-    time: "ontem",
-    unread: 0,
-    msgs: [{ from: "Dior", text: "Aguardando roteiro revisado", time: "ontem" }],
-  },
 ];
 
-/* ══════════════ ROOT ══════════════ */
+/* ══════════════════════════════════════════
+   APP ROOT
+══════════════════════════════════════════ */
 function App() {
   const [screen, setScreen] = useState<Screen>("dashboard");
   const [projects, setProjects] = useState(initProjects);
@@ -380,251 +386,228 @@ function App() {
   const [entregas, setEntregas] = useState(initEntregas);
   const [propostas, setPropostas] = useState(initPropostas);
   const [gravacoes, setGravacoes] = useState(initGravacoes);
-  const [notifications, setNotifications] = useState(initNotifications);
+  const [notifs, setNotifs] = useState(initNotifs);
   const [convs, setConvs] = useState(initConvs);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQ, setSearchQ] = useState("");
   const [showSearch, setShowSearch] = useState(false);
   const [showNotifs, setShowNotifs] = useState(false);
 
-  // Modals
-  const [projectModal, setProjectModal] = useState<{ open: boolean; editing: Project | null }>({
-    open: false,
-    editing: null,
-  });
-  const [clientModal, setClientModal] = useState<{ open: boolean; editing: Client | null }>({
-    open: false,
-    editing: null,
-  });
-  const [entregaModal, setEntregaModal] = useState<{ open: boolean; editing: Entrega | null }>({
-    open: false,
-    editing: null,
-  });
-  const [propostaModal, setPropostaModal] = useState<{ open: boolean; editing: Proposta | null }>({
-    open: false,
-    editing: null,
-  });
-  const [gravacaoModal, setGravacaoModal] = useState<{ open: boolean; editing: Gravacao | null }>({
-    open: false,
-    editing: null,
-  });
+  const [projModal, setProjModal] = useState<{ open: boolean; e: Project | null }>({ open: false, e: null });
+  const [clientModal, setClientModal] = useState<{ open: boolean; e: Client | null }>({ open: false, e: null });
+  const [entregaModal, setEntregaModal] = useState<{ open: boolean; e: Entrega | null }>({ open: false, e: null });
+  const [propModal, setPropModal] = useState<{ open: boolean; e: Proposta | null }>({ open: false, e: null });
+  const [gravModal, setGravModal] = useState<{ open: boolean; e: Gravacao | null }>({ open: false, e: null });
 
-  const unreadCount = notifications.filter((n) => !n.read).length;
+  const unread = notifs.filter((n) => !n.read).length;
 
-  // Project CRUD
-  const saveProject = (data: Omit<Project, "id">) => {
-    if (projectModal.editing)
-      setProjects((p) => p.map((x) => (x.id === projectModal.editing!.id ? { ...data, id: x.id } : x)));
-    else setProjects((p) => [...p, { ...data, id: Date.now() }]);
-    setProjectModal({ open: false, editing: null });
+  const saveProject = (d: Omit<Project, "id">) => {
+    projModal.e
+      ? setProjects((p) => p.map((x) => (x.id === projModal.e!.id ? { ...d, id: x.id } : x)))
+      : setProjects((p) => [...p, { ...d, id: Date.now() }]);
+    setProjModal({ open: false, e: null });
   };
-  // Client CRUD
-  const saveClient = (data: Omit<Client, "id">) => {
-    if (clientModal.editing)
-      setClients((c) => c.map((x) => (x.id === clientModal.editing!.id ? { ...data, id: x.id } : x)));
-    else setClients((c) => [...c, { ...data, id: Date.now() }]);
-    setClientModal({ open: false, editing: null });
+  const saveClient = (d: Omit<Client, "id">) => {
+    clientModal.e
+      ? setClients((p) => p.map((x) => (x.id === clientModal.e!.id ? { ...d, id: x.id } : x)))
+      : setClients((p) => [...p, { ...d, id: Date.now() }]);
+    setClientModal({ open: false, e: null });
   };
-  // Entrega CRUD
-  const saveEntrega = (data: Omit<Entrega, "id">) => {
-    if (entregaModal.editing)
-      setEntregas((e) => e.map((x) => (x.id === entregaModal.editing!.id ? { ...data, id: x.id } : x)));
-    else setEntregas((e) => [...e, { ...data, id: Date.now() }]);
-    setEntregaModal({ open: false, editing: null });
+  const saveEntrega = (d: Omit<Entrega, "id">) => {
+    entregaModal.e
+      ? setEntregas((p) => p.map((x) => (x.id === entregaModal.e!.id ? { ...d, id: x.id } : x)))
+      : setEntregas((p) => [...p, { ...d, id: Date.now() }]);
+    setEntregaModal({ open: false, e: null });
   };
-  // Proposta CRUD
-  const saveProposta = (data: Omit<Proposta, "id">) => {
-    if (propostaModal.editing)
-      setPropostas((p) => p.map((x) => (x.id === propostaModal.editing!.id ? { ...data, id: x.id } : x)));
-    else setPropostas((p) => [...p, { ...data, id: Date.now() }]);
-    setPropostaModal({ open: false, editing: null });
+  const saveProposta = (d: Omit<Proposta, "id">) => {
+    propModal.e
+      ? setPropostas((p) => p.map((x) => (x.id === propModal.e!.id ? { ...d, id: x.id } : x)))
+      : setPropostas((p) => [...p, { ...d, id: Date.now() }]);
+    setPropModal({ open: false, e: null });
   };
-  // Gravacao CRUD
-  const saveGravacao = (data: Omit<Gravacao, "id">) => {
-    if (gravacaoModal.editing)
-      setGravacoes((g) => g.map((x) => (x.id === gravacaoModal.editing!.id ? { ...data, id: x.id } : x)));
-    else setGravacoes((g) => [...g, { ...data, id: Date.now() }]);
-    setGravacaoModal({ open: false, editing: null });
+  const saveGravacao = (d: Omit<Gravacao, "id">) => {
+    gravModal.e
+      ? setGravacoes((p) => p.map((x) => (x.id === gravModal.e!.id ? { ...d, id: x.id } : x)))
+      : setGravacoes((p) => [...p, { ...d, id: Date.now() }]);
+    setGravModal({ open: false, e: null });
   };
-  // Messages
-  const sendMessage = (convId: number, text: string) => {
+
+  const sendMsg = (cid: number, text: string) => {
     const now = new Date();
-    const time = `${now.getHours().toString().padStart(2, "0")}:${now.getMinutes().toString().padStart(2, "0")}`;
-    setConvs((prev) =>
-      prev.map((c) =>
-        c.id === convId ? { ...c, last: text, time, msgs: [...c.msgs, { from: "Você", text, time }] } : c,
+    const t = `${now.getHours().toString().padStart(2, "0")}:${now.getMinutes().toString().padStart(2, "0")}`;
+    setConvs((p) =>
+      p.map((c) =>
+        c.id === cid ? { ...c, last: text, time: t, msgs: [...c.msgs, { from: "Você", text, time: t }] } : c,
       ),
     );
   };
-  // Mark notifs read
-  const markAllRead = () => setNotifications((n) => n.map((x) => ({ ...x, read: true })));
 
-  // Search results
   const searchResults =
-    searchQuery.length > 1
+    searchQ.length > 1
       ? [
           ...projects
             .filter(
               (p) =>
-                p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                p.client.toLowerCase().includes(searchQuery.toLowerCase()),
+                p.name.toLowerCase().includes(searchQ.toLowerCase()) ||
+                p.client.toLowerCase().includes(searchQ.toLowerCase()),
             )
             .map((p) => ({ type: "Projeto", label: p.name, sub: p.client })),
           ...clients
-            .filter((c) => c.name.toLowerCase().includes(searchQuery.toLowerCase()))
+            .filter((c) => c.name.toLowerCase().includes(searchQ.toLowerCase()))
             .map((c) => ({ type: "Cliente", label: c.name, sub: c.project })),
-          ...propostas
-            .filter((p) => p.title.toLowerCase().includes(searchQuery.toLowerCase()))
-            .map((p) => ({ type: "Proposta", label: p.title, sub: p.client })),
         ]
       : [];
 
+  const nav = (s: Screen) => {
+    setScreen(s);
+    setShowSearch(false);
+    setShowNotifs(false);
+  };
+
   return (
-    <div className="min-h-screen bg-background text-foreground font-sans">
+    <div style={{ background: C.bg, color: C.fg, minHeight: "100vh", fontFamily: "Inter,sans-serif" }}>
       <div className="flex min-h-screen">
-        <Sidebar
-          current={screen}
-          onNavigate={(s) => {
-            setScreen(s);
-            setShowSearch(false);
-            setShowNotifs(false);
-          }}
-        />
+        <Sidebar current={screen} onNavigate={nav} />
         <main className="flex-1 min-w-0">
           <TopBar
             screen={screen}
-            unreadCount={unreadCount}
+            unread={unread}
+            notifs={notifs}
             showNotifs={showNotifs}
-            notifications={notifications}
             onToggleNotifs={() => {
               setShowNotifs((v) => !v);
               setShowSearch(false);
             }}
-            onMarkAllRead={markAllRead}
+            onMarkRead={() => setNotifs((n) => n.map((x) => ({ ...x, read: true })))}
             showSearch={showSearch}
-            searchQuery={searchQuery}
+            searchQ={searchQ}
             searchResults={searchResults}
             onToggleSearch={() => {
               setShowSearch((v) => !v);
               setShowNotifs(false);
             }}
-            onSearchChange={setSearchQuery}
-            onNewProject={() => setProjectModal({ open: true, editing: null })}
+            onSearchChange={setSearchQ}
+            onNewProject={() => setProjModal({ open: true, e: null })}
           />
-          <div className="px-8 lg:px-10 py-8 lg:py-10 max-w-[1480px]">
+          <div className="px-8 py-8 max-w-[1480px]">
             {screen === "dashboard" && (
               <DashboardScreen
                 projects={projects}
                 clients={clients}
                 gravacoes={gravacoes}
-                onNewProject={() => setProjectModal({ open: true, editing: null })}
-                onNewClient={() => setClientModal({ open: true, editing: null })}
-                onNewGravacao={() => setGravacaoModal({ open: true, editing: null })}
-                onEditProject={(p: Project) => setProjectModal({ open: true, editing: p })}
-                onDeleteProject={(id: number) => setProjects((p) => p.filter((x) => x.id !== id))}
-                onEditClient={(c: Client) => setClientModal({ open: true, editing: c })}
-                onDeleteClient={(id: number) => setClients((c) => c.filter((x) => x.id !== id))}
+                onNewProject={() => setProjModal({ open: true, e: null })}
+                onNewClient={() => setClientModal({ open: true, e: null })}
+                onNewGravacao={() => setGravModal({ open: true, e: null })}
+                onEditProject={(p) => setProjModal({ open: true, e: p })}
+                onDeleteProject={(id) => setProjects((p) => p.filter((x) => x.id !== id))}
+                onEditClient={(c) => setClientModal({ open: true, e: c })}
+                onDeleteClient={(id) => setClients((p) => p.filter((x) => x.id !== id))}
               />
             )}
             {screen === "clientes" && (
               <ClientesScreen
                 clients={clients}
-                onNew={() => setClientModal({ open: true, editing: null })}
-                onEdit={(c: Client) => setClientModal({ open: true, editing: c })}
-                onDelete={(id: number) => setClients((c) => c.filter((x) => x.id !== id))}
+                onNew={() => setClientModal({ open: true, e: null })}
+                onEdit={(c) => setClientModal({ open: true, e: c })}
+                onDelete={(id) => setClients((p) => p.filter((x) => x.id !== id))}
               />
             )}
             {screen === "projetos" && (
               <ProjetosScreen
                 projects={projects}
                 clients={clients}
-                onNew={() => setProjectModal({ open: true, editing: null })}
-                onEdit={(p: Project) => setProjectModal({ open: true, editing: p })}
-                onDelete={(id: number) => setProjects((p) => p.filter((x) => x.id !== id))}
+                onNew={() => setProjModal({ open: true, e: null })}
+                onEdit={(p) => setProjModal({ open: true, e: p })}
+                onDelete={(id) => setProjects((p) => p.filter((x) => x.id !== id))}
               />
             )}
             {screen === "pipeline" && <PipelineScreen projects={projects} />}
             {screen === "agenda" && (
               <AgendaScreen
                 gravacoes={gravacoes}
-                onNew={() => setGravacaoModal({ open: true, editing: null })}
-                onEdit={(g: Gravacao) => setGravacaoModal({ open: true, editing: g })}
-                onDelete={(id: number) => setGravacoes((g) => g.filter((x) => x.id !== id))}
+                clients={clients}
+                onNew={() => setGravModal({ open: true, e: null })}
+                onEdit={(g) => setGravModal({ open: true, e: g })}
+                onDelete={(id) => setGravacoes((p) => p.filter((x) => x.id !== id))}
               />
             )}
             {screen === "entregas" && (
               <EntregasScreen
                 entregas={entregas}
-                onNew={() => setEntregaModal({ open: true, editing: null })}
-                onEdit={(e: Entrega) => setEntregaModal({ open: true, editing: e })}
-                onDelete={(id: number) => setEntregas((e) => e.filter((x) => x.id !== id))}
+                projects={projects}
+                onNew={() => setEntregaModal({ open: true, e: null })}
+                onEdit={(e) => setEntregaModal({ open: true, e: e })}
+                onDelete={(id) => setEntregas((p) => p.filter((x) => x.id !== id))}
               />
             )}
             {screen === "propostas" && (
               <PropostasScreen
                 propostas={propostas}
-                onNew={() => setPropostaModal({ open: true, editing: null })}
-                onEdit={(p: Proposta) => setPropostaModal({ open: true, editing: p })}
-                onDelete={(id: number) => setPropostas((p) => p.filter((x) => x.id !== id))}
+                clients={clients}
+                onNew={() => setPropModal({ open: true, e: null })}
+                onEdit={(p) => setPropModal({ open: true, e: p })}
+                onDelete={(id) => setPropostas((p) => p.filter((x) => x.id !== id))}
               />
             )}
             {screen === "financeiro" && <FinanceiroScreen />}
-            {screen === "mensagens" && <MensagensScreen convs={convs} onSend={sendMessage} />}
+            {screen === "mensagens" && <MensagensScreen convs={convs} onSend={sendMsg} />}
             {screen === "configuracoes" && <ConfiguracoesScreen />}
           </div>
         </main>
       </div>
 
-      {projectModal.open && (
+      {projModal.open && (
         <ProjectModal
-          editing={projectModal.editing}
+          editing={projModal.e}
           clients={clients}
           onSave={saveProject}
-          onClose={() => setProjectModal({ open: false, editing: null })}
+          onClose={() => setProjModal({ open: false, e: null })}
         />
       )}
       {clientModal.open && (
         <ClientModal
-          editing={clientModal.editing}
+          editing={clientModal.e}
           onSave={saveClient}
-          onClose={() => setClientModal({ open: false, editing: null })}
+          onClose={() => setClientModal({ open: false, e: null })}
         />
       )}
       {entregaModal.open && (
         <EntregaModal
-          editing={entregaModal.editing}
+          editing={entregaModal.e}
           projects={projects}
           onSave={saveEntrega}
-          onClose={() => setEntregaModal({ open: false, editing: null })}
+          onClose={() => setEntregaModal({ open: false, e: null })}
         />
       )}
-      {propostaModal.open && (
+      {propModal.open && (
         <PropostaModal
-          editing={propostaModal.editing}
+          editing={propModal.e}
           clients={clients}
           onSave={saveProposta}
-          onClose={() => setPropostaModal({ open: false, editing: null })}
+          onClose={() => setPropModal({ open: false, e: null })}
         />
       )}
-      {gravacaoModal.open && (
+      {gravModal.open && (
         <GravacaoModal
-          editing={gravacaoModal.editing}
+          editing={gravModal.e}
           clients={clients}
           onSave={saveGravacao}
-          onClose={() => setGravacaoModal({ open: false, editing: null })}
+          onClose={() => setGravModal({ open: false, e: null })}
         />
       )}
     </div>
   );
 }
 
-/* ══════════════ SIDEBAR ══════════════ */
+/* ══════════════════════════════════════════
+   SIDEBAR
+══════════════════════════════════════════ */
 function Sidebar({ current, onNavigate }: { current: Screen; onNavigate: (s: Screen) => void }) {
   const sections = [
     {
       label: "Operação",
       items: [
         { icon: LayoutDashboard, label: "Visão geral", screen: "dashboard" as Screen },
-        { icon: Clapperboard, label: "Projetos", screen: "projetos" as Screen, badge: "" },
+        { icon: Clapperboard, label: "Projetos", screen: "projetos" as Screen },
         { icon: Users, label: "Clientes", screen: "clientes" as Screen },
         { icon: Video, label: "Gravações", screen: "agenda" as Screen },
         { icon: Send, label: "Entregas", screen: "entregas" as Screen },
@@ -648,44 +631,59 @@ function Sidebar({ current, onNavigate }: { current: Screen; onNavigate: (s: Scr
     },
   ];
   return (
-    <aside className="w-[252px] shrink-0 border-r border-border bg-[#F8F8F8] sticky top-0 h-screen flex flex-col">
+    <aside
+      style={{ width: 248, background: C.surface, borderRight: `1px solid ${C.border}` }}
+      className="shrink-0 sticky top-0 h-screen flex flex-col"
+    >
+      {/* Logo */}
       <div className="px-5 pt-6 pb-5">
-        <div className="flex items-center gap-2.5">
-          <div className="h-9 w-9 rounded-lg bg-[#111111] flex items-center justify-center shadow-sm">
+        <div className="flex items-center gap-3">
+          <div
+            className="h-9 w-9 rounded-xl flex items-center justify-center shadow-lg"
+            style={{ background: `linear-gradient(135deg,${C.em},#00A87A)` }}
+          >
             <Film className="h-4 w-4 text-white" strokeWidth={1.75} />
           </div>
           <div className="leading-tight">
-            <div className="text-[14px] font-semibold tracking-tight">Media World</div>
-            <div className="text-[10.5px] uppercase tracking-[0.18em] text-muted-foreground font-medium">
-              Production Studio
+            <div className="text-[14px] font-semibold tracking-tight" style={{ color: C.fg }}>
+              MW Studio
+            </div>
+            <div className="text-[10px] uppercase tracking-[0.2em] font-medium" style={{ color: C.muted }}>
+              Media World
             </div>
           </div>
         </div>
       </div>
-      <nav className="flex-1 px-2 py-3 space-y-5 overflow-y-auto">
-        {sections.map((section) => (
-          <div key={section.label}>
-            <div className="px-3 mb-1.5 text-[10px] uppercase tracking-[0.18em] text-muted-foreground/80 font-semibold">
-              {section.label}
+
+      <nav className="flex-1 px-3 py-2 space-y-5 overflow-y-auto">
+        {sections.map((sec) => (
+          <div key={sec.label}>
+            <div className="px-2 mb-2 text-[9.5px] uppercase tracking-[0.2em] font-semibold" style={{ color: C.muted }}>
+              {sec.label}
             </div>
             <div className="space-y-0.5">
-              {section.items.map(({ icon: Icon, label, screen, badge }: any) => {
+              {sec.items.map(({ icon: Icon, label, screen }: any) => {
                 const active = current === screen;
                 return (
                   <button
                     key={label}
                     onClick={() => onNavigate(screen)}
-                    className={`group w-full flex items-center gap-2.5 rounded-lg px-3 py-2 text-[13px] transition-colors ${active ? "bg-white text-foreground border border-border shadow-xs font-medium" : "text-[#444] hover:text-foreground hover:bg-white border border-transparent"}`}
+                    style={{
+                      background: active ? C.emDim : "transparent",
+                      color: active ? C.em : C.fgDim,
+                      border: `1px solid ${active ? `${C.em}30` : "transparent"}`,
+                    }}
+                    className="w-full flex items-center gap-2.5 rounded-xl px-3 py-2 text-[13px] transition-all hover:opacity-100"
+                    onMouseEnter={(e) => {
+                      if (!active) (e.currentTarget as HTMLElement).style.background = C.hover;
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!active) (e.currentTarget as HTMLElement).style.background = "transparent";
+                    }}
                   >
-                    <Icon className="h-4 w-4" strokeWidth={1.75} />
-                    <span>{label}</span>
-                    {badge && (
-                      <span
-                        className={`ml-auto text-[10.5px] font-semibold rounded-md px-1.5 py-0.5 ${active ? "bg-[#111] text-white" : "bg-[#eaeaea] text-[#444]"}`}
-                      >
-                        {badge}
-                      </span>
-                    )}
+                    <Icon className="h-4 w-4 shrink-0" strokeWidth={active ? 2 : 1.75} />
+                    <span className={active ? "font-medium" : ""}>{label}</span>
+                    {active && <span className="ml-auto h-1.5 w-1.5 rounded-full" style={{ background: C.em }} />}
                   </button>
                 );
               })}
@@ -693,21 +691,37 @@ function Sidebar({ current, onNavigate }: { current: Screen; onNavigate: (s: Scr
           </div>
         ))}
       </nav>
-      <div className="p-3 border-t border-border">
-        <div className="rounded-xl bg-white border border-border p-3 shadow-xs flex items-center gap-3">
-          <div className="h-9 w-9 rounded-full bg-gradient-to-br from-[#2a2a2a] to-[#111] shrink-0" />
-          <div className="min-w-0 flex-1">
-            <div className="text-[12.5px] font-medium truncate">Élise Marchand</div>
-            <div className="text-[11px] text-muted-foreground truncate">Produtora Executiva</div>
+
+      {/* User */}
+      <div className="p-3" style={{ borderTop: `1px solid ${C.border}` }}>
+        <div
+          className="rounded-xl p-3 flex items-center gap-3"
+          style={{ background: C.card, border: `1px solid ${C.border}` }}
+        >
+          <div
+            className="h-8 w-8 rounded-full flex items-center justify-center text-white text-[12px] font-semibold shrink-0"
+            style={{ background: `linear-gradient(135deg,${C.em},#00A87A)` }}
+          >
+            É
           </div>
-          <Settings className="h-3.5 w-3.5 text-muted-foreground shrink-0" strokeWidth={1.75} />
+          <div className="min-w-0 flex-1">
+            <div className="text-[12.5px] font-medium truncate" style={{ color: C.fg }}>
+              Élise Marchand
+            </div>
+            <div className="text-[11px] truncate" style={{ color: C.muted }}>
+              Produtora Executiva
+            </div>
+          </div>
+          <Settings className="h-3.5 w-3.5 shrink-0" style={{ color: C.muted }} strokeWidth={1.75} />
         </div>
       </div>
     </aside>
   );
 }
 
-/* ══════════════ TOPBAR ══════════════ */
+/* ══════════════════════════════════════════
+   TOPBAR
+══════════════════════════════════════════ */
 const screenLabels: Record<Screen, string> = {
   dashboard: "Visão geral",
   clientes: "Clientes",
@@ -723,148 +737,275 @@ const screenLabels: Record<Screen, string> = {
 
 function TopBar({
   screen,
-  unreadCount,
+  unread,
+  notifs,
   showNotifs,
-  notifications,
   onToggleNotifs,
-  onMarkAllRead,
+  onMarkRead,
   showSearch,
-  searchQuery,
+  searchQ,
   searchResults,
   onToggleSearch,
   onSearchChange,
   onNewProject,
 }: any) {
-  const searchRef = useRef<HTMLDivElement>(null);
-  const notifsRef = useRef<HTMLDivElement>(null);
-
+  const nRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
-    function handler(e: MouseEvent) {
-      if (searchRef.current && !searchRef.current.contains(e.target as Node)) onSearchChange("");
-      if (notifsRef.current && !notifsRef.current.contains(e.target as Node) && showNotifs) onToggleNotifs();
-    }
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
+    const h = (e: MouseEvent) => {
+      if (nRef.current && !nRef.current.contains(e.target as Node) && showNotifs) onToggleNotifs();
+    };
+    document.addEventListener("mousedown", h);
+    return () => document.removeEventListener("mousedown", h);
   }, [showNotifs]);
 
   return (
-    <div className="sticky top-0 z-30 border-b border-border bg-white/90 backdrop-blur-xl">
-      <div className="flex items-center gap-6 px-8 lg:px-10 py-3.5">
-        <div className="flex items-center gap-2 text-[12px] text-muted-foreground">
-          <span>Media World</span>
-          <ChevronRight className="h-3 w-3" strokeWidth={1.75} />
-          <span className="text-foreground font-medium">{screenLabels[screen as Screen]}</span>
-        </div>
-        <div className="ml-auto flex items-center gap-2.5">
-          {/* Search */}
-          <div ref={searchRef} className="relative">
-            <button
-              onClick={onToggleSearch}
-              className="hidden md:flex items-center gap-2.5 rounded-lg border border-border bg-white px-3.5 py-1.5 text-[12.5px] text-muted-foreground hover:text-foreground hover:border-[#d4d4d4] transition-colors shadow-xs w-[240px]"
-            >
-              <Search className="h-3.5 w-3.5" strokeWidth={1.75} />
-              {showSearch ? (
-                <input
-                  autoFocus
-                  className="flex-1 bg-transparent outline-none text-foreground placeholder:text-muted-foreground"
-                  placeholder="Buscar…"
-                  value={searchQuery}
-                  onChange={(e) => onSearchChange(e.target.value)}
-                  onClick={(e) => e.stopPropagation()}
-                />
-              ) : (
-                <span>Buscar projetos, clientes…</span>
-              )}
-              <span className="ml-auto flex items-center gap-0.5 text-[10.5px] border border-border rounded px-1.5 py-0.5">
-                <Command className="h-2.5 w-2.5" strokeWidth={2} />K
-              </span>
-            </button>
-            {searchQuery.length > 1 && (
-              <div className="absolute top-full left-0 mt-2 w-[320px] bg-white border border-border rounded-xl shadow-xl overflow-hidden z-50">
-                {searchResults.length === 0 ? (
-                  <div className="px-4 py-6 text-center text-[13px] text-muted-foreground">
-                    Nenhum resultado encontrado.
-                  </div>
-                ) : (
-                  searchResults.map((r: any, i: number) => (
-                    <div
-                      key={i}
-                      className="flex items-center gap-3 px-4 py-2.5 hover:bg-[#fafafa] cursor-pointer transition-colors"
-                    >
-                      <span className="text-[10.5px] font-semibold uppercase tracking-[0.1em] text-muted-foreground w-14">
-                        {r.type}
-                      </span>
-                      <div className="min-w-0 flex-1">
-                        <div className="text-[13px] font-medium text-foreground truncate">{r.label}</div>
-                        <div className="text-[11.5px] text-muted-foreground truncate">{r.sub}</div>
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
-            )}
-          </div>
+    <div
+      className="sticky top-0 z-30 flex items-center gap-4 px-8 py-3.5"
+      style={{ background: `${C.surface}E8`, borderBottom: `1px solid ${C.border}`, backdropFilter: "blur(16px)" }}
+    >
+      <div className="flex items-center gap-2 text-[12px]" style={{ color: C.muted }}>
+        <span style={{ color: C.em, fontWeight: 500 }}>MW</span>
+        <ChevronRight className="h-3 w-3" strokeWidth={1.75} />
+        <span style={{ color: C.fg }}>{screenLabels[screen]}</span>
+      </div>
 
-          {/* Notifications */}
-          <div ref={notifsRef} className="relative">
-            <button
-              onClick={onToggleNotifs}
-              className="relative h-9 w-9 rounded-lg border border-border bg-white flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors shadow-xs"
-            >
-              <Bell className="h-4 w-4" strokeWidth={1.75} />
-              {unreadCount > 0 && <span className="absolute top-1.5 right-1.5 h-1.5 w-1.5 rounded-full bg-[#111]" />}
-            </button>
-            {showNotifs && (
-              <div className="absolute top-full right-0 mt-2 w-[320px] bg-white border border-border rounded-xl shadow-xl overflow-hidden z-50">
-                <div className="flex items-center justify-between px-4 py-3 border-b border-border">
-                  <span className="text-[13px] font-semibold">Notificações</span>
-                  <button
-                    onClick={onMarkAllRead}
-                    className="text-[11.5px] text-muted-foreground hover:text-foreground transition-colors"
-                  >
-                    Marcar todas como lidas
-                  </button>
-                </div>
-                <div className="divide-y divide-border max-h-[320px] overflow-y-auto">
-                  {notifications.map((n: Notification) => (
-                    <div key={n.id} className={`flex items-start gap-3 px-4 py-3 ${n.read ? "opacity-50" : ""}`}>
-                      <div
-                        className={`h-7 w-7 rounded-lg flex items-center justify-center shrink-0 mt-0.5 ${n.type === "alert" ? "bg-[#fee2e2] text-[#b91c1c]" : n.type === "warn" ? "bg-[#fef3c7] text-[#854d0e]" : "bg-[#eef2ff] text-[#3949ab]"}`}
-                      >
-                        {n.type === "alert" ? (
-                          <AlertCircle className="h-3.5 w-3.5" strokeWidth={1.75} />
-                        ) : n.type === "warn" ? (
-                          <Clock className="h-3.5 w-3.5" strokeWidth={1.75} />
-                        ) : (
-                          <Info className="h-3.5 w-3.5" strokeWidth={1.75} />
-                        )}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="text-[12.5px] text-foreground">{n.text}</div>
-                        <div className="text-[11px] text-muted-foreground mt-0.5">{n.time}</div>
-                      </div>
-                      {!n.read && <span className="h-1.5 w-1.5 rounded-full bg-[#111] shrink-0 mt-1.5" />}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-
-          <button
-            onClick={onNewProject}
-            className="flex items-center gap-2 rounded-lg bg-[#111] text-white px-3.5 py-2 text-[12.5px] font-semibold hover:bg-black transition-colors shadow-sm"
+      <div className="ml-auto flex items-center gap-2">
+        {/* Search */}
+        <div className="relative">
+          <div
+            className="flex items-center gap-2 rounded-xl px-3 py-1.5 text-[12.5px] w-[220px] cursor-text"
+            style={{ background: C.card, border: `1px solid ${C.border}`, color: C.muted }}
+            onClick={onToggleSearch}
           >
-            <Plus className="h-3.5 w-3.5" strokeWidth={2.5} />
-            Novo projeto
-          </button>
+            <Search className="h-3.5 w-3.5 shrink-0" strokeWidth={1.75} />
+            {showSearch ? (
+              <input
+                autoFocus
+                className="flex-1 bg-transparent outline-none text-[12.5px]"
+                style={{ color: C.fg }}
+                placeholder="Buscar…"
+                value={searchQ}
+                onChange={(e) => onSearchChange(e.target.value)}
+                onClick={(e) => e.stopPropagation()}
+              />
+            ) : (
+              <span>Buscar…</span>
+            )}
+            <span className="ml-auto text-[10px] flex items-center gap-0.5 opacity-50">
+              <Command className="h-2.5 w-2.5" strokeWidth={2} />K
+            </span>
+          </div>
+          {searchQ.length > 1 && (
+            <div
+              className="absolute top-full left-0 mt-2 w-[300px] rounded-2xl overflow-hidden z-50 shadow-2xl"
+              style={{ background: C.card, border: `1px solid ${C.border}` }}
+            >
+              {searchResults.length === 0 ? (
+                <div className="px-4 py-6 text-center text-[13px]" style={{ color: C.muted }}>
+                  Nenhum resultado.
+                </div>
+              ) : (
+                searchResults.map((r: any, i: number) => (
+                  <div
+                    key={i}
+                    className="flex items-center gap-3 px-4 py-2.5 transition-colors cursor-pointer"
+                    style={{ borderBottom: `1px solid ${C.border}` }}
+                    onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.background = C.hover)}
+                    onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.background = "transparent")}
+                  >
+                    <span className="text-[10px] font-semibold uppercase tracking-[0.1em] w-12" style={{ color: C.em }}>
+                      {r.type}
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <div className="text-[13px] font-medium truncate" style={{ color: C.fg }}>
+                        {r.label}
+                      </div>
+                      <div className="text-[11.5px] truncate" style={{ color: C.muted }}>
+                        {r.sub}
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          )}
         </div>
+
+        {/* Notifs */}
+        <div ref={nRef} className="relative">
+          <button
+            onClick={onToggleNotifs}
+            className="relative h-8 w-8 rounded-xl flex items-center justify-center transition-colors"
+            style={{ background: C.card, border: `1px solid ${C.border}`, color: C.muted }}
+          >
+            <Bell className="h-4 w-4" strokeWidth={1.75} />
+            {unread > 0 && (
+              <span className="absolute top-1 right-1 h-1.5 w-1.5 rounded-full" style={{ background: C.em }} />
+            )}
+          </button>
+          {showNotifs && (
+            <div
+              className="absolute top-full right-0 mt-2 w-[300px] rounded-2xl overflow-hidden z-50 shadow-2xl"
+              style={{ background: C.card, border: `1px solid ${C.border}` }}
+            >
+              <div
+                className="flex items-center justify-between px-4 py-3"
+                style={{ borderBottom: `1px solid ${C.border}` }}
+              >
+                <span className="text-[13px] font-semibold" style={{ color: C.fg }}>
+                  Notificações
+                </span>
+                <button onClick={onMarkRead} className="text-[11.5px]" style={{ color: C.em }}>
+                  Marcar lidas
+                </button>
+              </div>
+              {notifs.map((n: Notif) => (
+                <div
+                  key={n.id}
+                  className="flex items-start gap-3 px-4 py-3"
+                  style={{ borderBottom: `1px solid ${C.border}`, opacity: n.read ? 0.4 : 1 }}
+                >
+                  <div
+                    className="h-7 w-7 rounded-lg flex items-center justify-center shrink-0 mt-0.5"
+                    style={{
+                      background: n.type === "alert" ? C.dangerDim : n.type === "warn" ? C.warnDim : C.infoDim,
+                      color: n.type === "alert" ? C.danger : n.type === "warn" ? C.warn : C.info,
+                    }}
+                  >
+                    {n.type === "alert" ? (
+                      <AlertCircle className="h-3.5 w-3.5" strokeWidth={1.75} />
+                    ) : n.type === "warn" ? (
+                      <Clock className="h-3.5 w-3.5" strokeWidth={1.75} />
+                    ) : (
+                      <Info className="h-3.5 w-3.5" strokeWidth={1.75} />
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-[12.5px]" style={{ color: C.fg }}>
+                      {n.text}
+                    </div>
+                    <div className="text-[11px] mt-0.5" style={{ color: C.muted }}>
+                      {n.time}
+                    </div>
+                  </div>
+                  {!n.read && (
+                    <span className="h-1.5 w-1.5 rounded-full mt-1.5 shrink-0" style={{ background: C.em }} />
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <button
+          onClick={onNewProject}
+          className="flex items-center gap-2 rounded-xl px-4 py-2 text-[12.5px] font-semibold transition-all shadow-lg"
+          style={{ background: `linear-gradient(135deg,${C.em},#00A87A)`, color: "#0D1612" }}
+        >
+          <Plus className="h-3.5 w-3.5" strokeWidth={2.5} />
+          Novo projeto
+        </button>
       </div>
     </div>
   );
 }
 
-/* ══════════════ DASHBOARD ══════════════ */
+/* ══════════════════════════════════════════
+   SHARED COMPONENTS
+══════════════════════════════════════════ */
+function Card({ children, className = "" }: { children: React.ReactNode; className?: string }) {
+  return (
+    <div className={`rounded-2xl ${className}`} style={{ background: C.card, border: `1px solid ${C.border}` }}>
+      {children}
+    </div>
+  );
+}
+
+function ActionButtons({ onEdit, onDelete }: { onEdit: () => void; onDelete: () => void }) {
+  return (
+    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+      <button
+        onClick={onEdit}
+        className="h-7 w-7 rounded-lg flex items-center justify-center transition-colors"
+        style={{ color: C.muted }}
+        onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.color = C.fg)}
+        onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.color = C.muted)}
+      >
+        <Pencil className="h-3.5 w-3.5" strokeWidth={1.75} />
+      </button>
+      <button
+        onClick={onDelete}
+        className="h-7 w-7 rounded-lg flex items-center justify-center transition-colors"
+        style={{ color: C.muted }}
+        onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.color = C.danger)}
+        onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.color = C.muted)}
+      >
+        <Trash2 className="h-3.5 w-3.5" strokeWidth={1.75} />
+      </button>
+    </div>
+  );
+}
+
+function PageHeader({
+  eyebrow,
+  title,
+  sub,
+  action,
+}: {
+  eyebrow: string;
+  title: string;
+  sub: string;
+  action?: React.ReactNode;
+}) {
+  return (
+    <div className="flex items-end justify-between mb-8">
+      <div>
+        <div className="text-[10px] uppercase tracking-[0.2em] font-semibold mb-2" style={{ color: C.em }}>
+          {eyebrow}
+        </div>
+        <h1 className="text-[30px] font-light tracking-[-0.02em]" style={{ color: C.fg }}>
+          {title}
+        </h1>
+        <p className="text-[13px] mt-1" style={{ color: C.muted }}>
+          {sub}
+        </p>
+      </div>
+      {action}
+    </div>
+  );
+}
+
+function Btn({
+  children,
+  onClick,
+  variant = "primary",
+}: {
+  children: React.ReactNode;
+  onClick?: () => void;
+  variant?: "primary" | "ghost";
+}) {
+  return variant === "primary" ? (
+    <button
+      onClick={onClick}
+      className="flex items-center gap-2 rounded-xl px-4 py-2 text-[13px] font-semibold shadow-lg transition-opacity hover:opacity-90"
+      style={{ background: `linear-gradient(135deg,${C.em},#00A87A)`, color: "#0D1612" }}
+    >
+      {children}
+    </button>
+  ) : (
+    <button
+      onClick={onClick}
+      className="flex items-center gap-2 rounded-xl px-4 py-2 text-[13px] font-medium transition-colors"
+      style={{ background: C.card, border: `1px solid ${C.border}`, color: C.fgDim }}
+    >
+      {children}
+    </button>
+  );
+}
+
+/* ══════════════════════════════════════════
+   DASHBOARD
+══════════════════════════════════════════ */
 function DashboardScreen({
   projects,
   clients,
@@ -881,15 +1022,9 @@ function DashboardScreen({
   const pending = projects.filter((p: Project) => p.status === "Aprovação").length;
   const delivered = projects.filter((p: Project) => p.status === "Entregue").length;
   const kpis = [
+    { label: "Clientes ativos", value: String(clients.length), delta: `+4 este mês`, tone: "up", icon: Users },
     {
-      label: "Clientes ativos",
-      value: String(clients.length),
-      delta: `${clients.length} cadastrados`,
-      tone: "up",
-      icon: Users,
-    },
-    {
-      label: "Projetos em andamento",
+      label: "Em andamento",
       value: String(active),
       delta: `${projects.length} no total`,
       tone: "up",
@@ -898,65 +1033,70 @@ function DashboardScreen({
     {
       label: "Aguardando aprovação",
       value: String(pending),
-      delta: pending > 0 ? "Sua atenção" : "Tudo ok",
-      tone: pending > 0 ? "warn" : "neutral",
+      delta: pending > 0 ? "Atenção" : "OK",
+      tone: pending > 0 ? "warn" : "up",
       icon: CheckCircle2,
     },
-    { label: "Entregas realizadas", value: String(delivered), delta: "Concluídos", tone: "neutral", icon: Send },
-    { label: "Gravações agendadas", value: String(gravacoes.length), delta: "Próximas", tone: "neutral", icon: Video },
-    { label: "Faturamento do mês", value: "R$ 482.350", delta: "+18,4%", tone: "up", icon: TrendingUp },
-    { label: "Pagamentos pendentes", value: "R$ 96.200", delta: "4 faturas", tone: "warn", icon: Wallet },
+    { label: "Entregues", value: String(delivered), delta: "Concluídos", tone: "neutral", icon: Send },
+    { label: "Gravações", value: String(gravacoes.length), delta: "Agendadas", tone: "neutral", icon: Video },
+    { label: "Faturamento", value: "R$ 482k", delta: "+18,4%", tone: "up", icon: TrendingUp },
+    { label: "A receber", value: "R$ 96k", delta: "4 faturas", tone: "warn", icon: Wallet },
   ];
   return (
-    <div className="space-y-10">
-      <section className="flex items-end justify-between gap-6 flex-wrap">
-        <div>
-          <div className="text-[10.5px] uppercase tracking-[0.22em] text-muted-foreground font-semibold mb-3">
-            Visão geral · Quinta, 11 de junho de 2026
-          </div>
-          <h1 className="text-[40px] leading-[1.1] font-light tracking-[-0.025em]">Boa noite, Élise.</h1>
-          <p className="text-[15px] text-muted-foreground mt-2 max-w-xl">Aqui está o panorama da operação hoje.</p>
+    <div className="space-y-8">
+      <div>
+        <div className="text-[10px] uppercase tracking-[0.2em] font-semibold mb-2" style={{ color: C.em }}>
+          Visão geral · 11 jun 2026
         </div>
-      </section>
-      <section>
-        <div className="text-[10.5px] uppercase tracking-[0.18em] text-muted-foreground font-semibold mb-4">
-          Indicadores principais
-        </div>
-        <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
-          {kpis.map((k) => {
-            const Icon = k.icon;
-            return (
-              <div
-                key={k.label}
-                className="group rounded-2xl border border-border bg-white p-5 shadow-sm hover:shadow-md hover:border-[#d4d4d4] hover:-translate-y-0.5 transition-all duration-300"
-              >
-                <div className="flex items-center justify-between">
-                  <div className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground font-semibold">
-                    {k.label}
-                  </div>
-                  <div className="h-7 w-7 rounded-lg bg-[#f5f5f5] flex items-center justify-center group-hover:bg-[#111] group-hover:text-white transition-colors">
-                    <Icon className="h-3.5 w-3.5" strokeWidth={1.75} />
-                  </div>
-                </div>
-                <div className="mt-4 text-[28px] font-semibold tracking-[-0.02em] tabular-nums leading-none">
-                  {k.value}
-                </div>
+        <h1 className="text-[36px] font-light tracking-[-0.025em]" style={{ color: C.fg }}>
+          Boa noite, Élise.
+        </h1>
+        <p className="text-[14px] mt-1" style={{ color: C.muted }}>
+          Aqui está o panorama da operação hoje.
+        </p>
+      </div>
+
+      {/* KPIs */}
+      <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-7 gap-3">
+        {kpis.map((k) => {
+          const Icon = k.icon;
+          return (
+            <Card key={k.label} className="p-4 group hover:-translate-y-0.5 transition-all duration-300 cursor-default">
+              <div className="flex items-center justify-between mb-3">
                 <div
-                  className={`mt-3 flex items-center gap-1 text-[11.5px] font-medium ${k.tone === "up" ? "text-[#1f7a4d]" : k.tone === "warn" ? "text-[#a8651f]" : "text-muted-foreground"}`}
+                  className="h-7 w-7 rounded-lg flex items-center justify-center transition-colors"
+                  style={{ background: C.emDim, color: C.em }}
                 >
-                  {k.tone === "up" && <ArrowUpRight className="h-3 w-3" strokeWidth={2} />}
-                  {k.delta}
+                  <Icon className="h-3.5 w-3.5" strokeWidth={1.75} />
                 </div>
               </div>
-            );
-          })}
-        </div>
-      </section>
-      <section className="rounded-2xl border border-border bg-[#fafafa] p-2 flex flex-wrap items-center gap-2">
-        <div className="px-3 py-1.5 text-[10.5px] uppercase tracking-[0.18em] text-muted-foreground font-semibold">
+              <div className="text-[24px] font-semibold tabular-nums leading-none" style={{ color: C.fg }}>
+                {k.value}
+              </div>
+              <div className="text-[10.5px] mt-1.5 font-medium" style={{ color: C.muted }}>
+                {k.label}
+              </div>
+              <div
+                className="text-[10.5px] mt-1 font-semibold flex items-center gap-0.5"
+                style={{ color: k.tone === "up" ? C.em : k.tone === "warn" ? C.warn : C.muted }}
+              >
+                {k.tone === "up" && <ArrowUpRight className="h-3 w-3" strokeWidth={2} />}
+                {k.delta}
+              </div>
+            </Card>
+          );
+        })}
+      </div>
+
+      {/* Quick actions */}
+      <div
+        className="flex flex-wrap items-center gap-2 rounded-2xl p-3"
+        style={{ background: C.card, border: `1px solid ${C.border}` }}
+      >
+        <span className="text-[10px] uppercase tracking-[0.18em] font-semibold px-2" style={{ color: C.muted }}>
           Ações rápidas
-        </div>
-        <div className="h-5 w-px bg-border mx-1" />
+        </span>
+        <div className="h-4 w-px mx-1" style={{ background: C.border }} />
         {[
           { icon: Plus, label: "Novo projeto", onClick: onNewProject, primary: true },
           { icon: UserPlus, label: "Novo cliente", onClick: onNewClient, primary: false },
@@ -966,23 +1106,28 @@ function DashboardScreen({
           <button
             key={label}
             onClick={onClick}
-            className={`flex items-center gap-2 rounded-lg px-3.5 py-2 text-[13px] font-medium transition-all ${primary ? "bg-[#111] text-white hover:bg-black shadow-sm" : "bg-white text-foreground border border-border hover:border-[#d4d4d4] hover:shadow-sm"}`}
+            className="flex items-center gap-2 rounded-xl px-3.5 py-1.5 text-[12.5px] font-medium transition-all"
+            style={
+              primary
+                ? { background: `linear-gradient(135deg,${C.em},#00A87A)`, color: "#0D1612" }
+                : { background: C.hover, border: `1px solid ${C.border}`, color: C.fgDim }
+            }
           >
             <Icon className="h-3.5 w-3.5" strokeWidth={1.75} />
             {label}
           </button>
         ))}
-      </section>
+      </div>
+
       <div className="grid grid-cols-12 gap-6">
         <div className="col-span-12 xl:col-span-8 space-y-6">
           <ProjectsTable projects={projects} onEdit={onEditProject} onDelete={onDeleteProject} />
           <PipelineMini projects={projects} />
           <ClientsTable clients={clients} onEdit={onEditClient} onDelete={onDeleteClient} />
         </div>
-        <div className="col-span-12 xl:col-span-4 space-y-6">
-          <AgendaWidget gravacoes={gravacoes} />
+        <div className="col-span-12 xl:col-span-4 space-y-4">
+          <AgendaWidget />
           <DeadlinesWidget />
-          <NotificationsWidget />
           <FinancialWidget />
         </div>
       </div>
@@ -990,82 +1135,382 @@ function DashboardScreen({
   );
 }
 
-/* ══════════════ CLIENTES ══════════════ */
+function ProjectsTable({ projects, onEdit, onDelete }: any) {
+  return (
+    <Card>
+      <div
+        className="flex items-center justify-between px-5 pt-5 pb-4"
+        style={{ borderBottom: `1px solid ${C.border}` }}
+      >
+        <div>
+          <div className="text-[9.5px] uppercase tracking-[0.2em] font-semibold mb-1" style={{ color: C.em }}>
+            Operação
+          </div>
+          <h2 className="text-[16px] font-semibold" style={{ color: C.fg }}>
+            Projetos recentes
+          </h2>
+        </div>
+      </div>
+      {projects.length === 0 ? (
+        <div className="py-12 text-center text-[13px]" style={{ color: C.muted }}>
+          Nenhum projeto.
+        </div>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="w-full text-[12.5px]">
+            <thead>
+              <tr style={{ borderBottom: `1px solid ${C.border}`, color: C.muted }}>
+                {["Projeto", "Cliente", "Status", "Prazo", "Progresso", ""].map((h) => (
+                  <th key={h} className="px-5 py-3 text-left text-[10px] uppercase tracking-[0.15em] font-semibold">
+                    {h}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {projects.map((p: Project, i: number) => (
+                <tr
+                  key={p.id}
+                  className="group transition-colors"
+                  style={{ borderBottom: i < projects.length - 1 ? `1px solid ${C.border}` : "none" }}
+                  onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.background = C.hover)}
+                  onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.background = "transparent")}
+                >
+                  <td className="px-5 py-3.5 font-medium" style={{ color: C.fg }}>
+                    {p.name}
+                  </td>
+                  <td className="px-5 py-3.5" style={{ color: C.muted }}>
+                    {p.client}
+                  </td>
+                  <td className="px-5 py-3.5">
+                    <Badge label={p.status} color={statusColor(p.status)} />
+                  </td>
+                  <td className="px-5 py-3.5 tabular-nums" style={{ color: C.fgDim }}>
+                    {p.deadline}
+                  </td>
+                  <td className="px-5 py-3.5 w-[140px]">
+                    <ProgressBar value={p.progress} />
+                  </td>
+                  <td className="px-5 py-3.5">
+                    <ActionButtons onEdit={() => onEdit(p)} onDelete={() => onDelete(p.id)} />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </Card>
+  );
+}
+
+function PipelineMini({ projects }: any) {
+  const stages: ProjectStatus[] = ["Pré-produção", "Gravação", "Edição", "Pós-produção", "Aprovação", "Entregue"];
+  const max = Math.max(...stages.map((s) => projects.filter((p: Project) => p.status === s).length), 1);
+  return (
+    <Card className="p-5">
+      <div className="text-[9.5px] uppercase tracking-[0.2em] font-semibold mb-1" style={{ color: C.em }}>
+        Comercial
+      </div>
+      <h2 className="text-[16px] font-semibold mb-5" style={{ color: C.fg }}>
+        Pipeline
+      </h2>
+      <div className="flex gap-2">
+        {stages.map((stage, i) => {
+          const count = projects.filter((p: Project) => p.status === stage).length;
+          const intensity = 0.1 + (count / max) * 0.15;
+          return (
+            <div
+              key={stage}
+              className="flex-1 min-w-0 rounded-xl p-3 transition-all cursor-pointer"
+              style={{
+                background: `rgba(0,200,150,${intensity})`,
+                border: `1px solid ${count > 0 ? `${C.em}30` : C.border}`,
+              }}
+            >
+              <div
+                className="text-[20px] font-semibold tabular-nums leading-none"
+                style={{ color: count > 0 ? C.em : C.muted }}
+              >
+                {count}
+              </div>
+              <div
+                className="text-[10.5px] font-medium mt-1.5 leading-tight"
+                style={{ color: count > 0 ? C.fgDim : C.muted }}
+              >
+                {stage}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </Card>
+  );
+}
+
+function ClientsTable({ clients, onEdit, onDelete }: any) {
+  return (
+    <Card>
+      <div className="px-5 pt-5 pb-4" style={{ borderBottom: `1px solid ${C.border}` }}>
+        <div className="text-[9.5px] uppercase tracking-[0.2em] font-semibold mb-1" style={{ color: C.em }}>
+          Relacionamento
+        </div>
+        <h2 className="text-[16px] font-semibold" style={{ color: C.fg }}>
+          Clientes ativos
+        </h2>
+      </div>
+      {clients.map((c: Client) => (
+        <div
+          key={c.id}
+          className="flex items-center gap-4 px-5 py-3.5 group transition-colors"
+          style={{ borderBottom: `1px solid ${C.border}` }}
+          onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.background = C.hover)}
+          onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.background = "transparent")}
+        >
+          <div
+            className="h-8 w-8 rounded-full flex items-center justify-center text-[12px] font-semibold shrink-0"
+            style={{ background: `linear-gradient(135deg,${C.em},#00A87A)`, color: "#0D1612" }}
+          >
+            {c.name.charAt(0)}
+          </div>
+          <div className="flex-1 min-w-0 grid grid-cols-3 gap-4 items-center">
+            <div>
+              <div className="text-[13px] font-semibold truncate" style={{ color: C.fg }}>
+                {c.name}
+              </div>
+              <div className="text-[11px] truncate" style={{ color: C.muted }}>
+                {c.project}
+              </div>
+            </div>
+            <div className="text-[12px]" style={{ color: C.fgDim }}>
+              {c.status}
+            </div>
+            <div className="text-[11.5px] text-right tabular-nums" style={{ color: C.muted }}>
+              {c.last}
+            </div>
+          </div>
+          <ActionButtons onEdit={() => onEdit(c)} onDelete={() => onDelete(c.id)} />
+        </div>
+      ))}
+    </Card>
+  );
+}
+
+function AgendaWidget() {
+  const items = [
+    { time: "09:00", title: "Kickoff Porsche", icon: Users },
+    { time: "11:30", title: "Gravação Studio A", icon: Video },
+    { time: "14:00", title: "Chamada Apple", icon: Phone },
+    { time: "16:00", title: "Entrega corte Dior", icon: Send },
+  ];
+  return (
+    <Card>
+      <div
+        className="flex items-center justify-between px-4 pt-4 pb-3"
+        style={{ borderBottom: `1px solid ${C.border}` }}
+      >
+        <h2 className="text-[14px] font-semibold" style={{ color: C.fg }}>
+          Agenda do dia
+        </h2>
+        <Calendar className="h-4 w-4" style={{ color: C.muted }} strokeWidth={1.75} />
+      </div>
+      <ul>
+        {items.map((item, i) => {
+          const Icon = item.icon;
+          return (
+            <li
+              key={i}
+              className="flex items-center gap-3 px-4 py-2.5 transition-colors"
+              style={{ borderBottom: i < items.length - 1 ? `1px solid ${C.border}` : "none" }}
+              onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.background = C.hover)}
+              onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.background = "transparent")}
+            >
+              <span className="text-[11.5px] font-semibold tabular-nums w-10" style={{ color: C.em }}>
+                {item.time}
+              </span>
+              <div
+                className="h-6 w-6 rounded-lg flex items-center justify-center shrink-0"
+                style={{ background: C.emDim, color: C.em }}
+              >
+                <Icon className="h-3 w-3" strokeWidth={1.75} />
+              </div>
+              <span className="text-[12.5px] font-medium" style={{ color: C.fgDim }}>
+                {item.title}
+              </span>
+            </li>
+          );
+        })}
+      </ul>
+    </Card>
+  );
+}
+
+function DeadlinesWidget() {
+  const items = [
+    { project: "Apple — Silence", task: "Aprovação corte final", in: "Em 2 dias", urgent: true },
+    { project: "Porsche 911 GTS", task: "Entrega dos brutos", in: "Em 4 dias", urgent: true },
+    { project: "Hermès — Carré 90", task: "Color grading", in: "Em 1 sem", urgent: false },
+    { project: "Natura — Ekos", task: "Aprovação roteiro", in: "Em 10 dias", urgent: false },
+  ];
+  return (
+    <Card>
+      <div
+        className="flex items-center justify-between px-4 pt-4 pb-3"
+        style={{ borderBottom: `1px solid ${C.border}` }}
+      >
+        <h2 className="text-[14px] font-semibold" style={{ color: C.fg }}>
+          Prazos
+        </h2>
+        <Clock className="h-4 w-4" style={{ color: C.muted }} strokeWidth={1.75} />
+      </div>
+      <ul>
+        {items.map((d, i) => (
+          <li
+            key={i}
+            className="flex items-start gap-3 px-4 py-3 transition-colors"
+            style={{ borderBottom: i < items.length - 1 ? `1px solid ${C.border}` : "none" }}
+            onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.background = C.hover)}
+            onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.background = "transparent")}
+          >
+            <span
+              className="mt-1.5 h-1.5 w-1.5 rounded-full shrink-0"
+              style={{ background: d.urgent ? C.danger : C.border }}
+            />
+            <div className="flex-1 min-w-0">
+              <div className="text-[12.5px] font-medium truncate" style={{ color: C.fg }}>
+                {d.project}
+              </div>
+              <div className="text-[11px] truncate mt-0.5" style={{ color: C.muted }}>
+                {d.task}
+              </div>
+            </div>
+            <span
+              className="text-[11px] font-semibold whitespace-nowrap"
+              style={{ color: d.urgent ? C.danger : C.muted }}
+            >
+              {d.in}
+            </span>
+          </li>
+        ))}
+      </ul>
+    </Card>
+  );
+}
+
+function FinancialWidget() {
+  const rows = [
+    { label: "Faturamento", value: "R$ 482.350", delta: "+18,4%" },
+    { label: "Mês anterior", value: "R$ 407.420", delta: null },
+    { label: "A receber", value: "R$ 96.200", delta: "4 faturas" },
+    { label: "Previsto", value: "R$ 612.000", delta: "+27%" },
+  ];
+  return (
+    <Card className="overflow-hidden">
+      <div
+        className="px-4 pt-4 pb-3"
+        style={{ borderBottom: `1px solid ${C.border}`, background: `linear-gradient(135deg,${C.emDim},transparent)` }}
+      >
+        <div className="text-[9.5px] uppercase tracking-[0.2em] font-semibold mb-1" style={{ color: C.em }}>
+          Financeiro
+        </div>
+        <h2 className="text-[14px] font-semibold" style={{ color: C.fg }}>
+          Resumo do mês
+        </h2>
+      </div>
+      <ul>
+        {rows.map((r, i) => (
+          <li
+            key={i}
+            className="flex items-center justify-between px-4 py-3"
+            style={{ borderBottom: i < rows.length - 1 ? `1px solid ${C.border}` : "none" }}
+          >
+            <span className="text-[12px]" style={{ color: C.muted }}>
+              {r.label}
+            </span>
+            <div className="flex items-center gap-2">
+              <span className="text-[13px] font-semibold tabular-nums" style={{ color: C.fg }}>
+                {r.value}
+              </span>
+              {r.delta && (
+                <span
+                  className="text-[10px] font-semibold rounded-lg px-1.5 py-0.5"
+                  style={{ background: C.emDim, color: C.em }}
+                >
+                  {r.delta}
+                </span>
+              )}
+            </div>
+          </li>
+        ))}
+      </ul>
+    </Card>
+  );
+}
+
+/* ══════════════════════════════════════════
+   CLIENTES
+══════════════════════════════════════════ */
 function ClientesScreen({ clients, onNew, onEdit, onDelete }: any) {
   const [q, setQ] = useState("");
   const filtered = clients.filter((c: Client) => c.name.toLowerCase().includes(q.toLowerCase()));
   return (
-    <div className="space-y-8">
-      <div className="flex items-end justify-between">
-        <div>
-          <div className="text-[10.5px] uppercase tracking-[0.22em] text-muted-foreground font-semibold mb-2">
-            Relacionamento
-          </div>
-          <h1 className="text-[32px] font-light tracking-[-0.025em]">Clientes</h1>
-          <p className="text-[14px] text-muted-foreground mt-1">{clients.length} clientes ativos</p>
-        </div>
-        <button
-          onClick={onNew}
-          className="flex items-center gap-2 rounded-lg bg-[#111] text-white px-4 py-2.5 text-[13px] font-semibold hover:bg-black transition-colors shadow-sm"
-        >
-          <Plus className="h-4 w-4" strokeWidth={2} />
-          Novo cliente
-        </button>
-      </div>
-      <div className="flex items-center gap-2 rounded-lg border border-border bg-white px-3.5 py-2 text-[13px] text-muted-foreground w-full max-w-sm shadow-xs">
-        <Search className="h-4 w-4" strokeWidth={1.75} />
-        <input
-          className="flex-1 bg-transparent outline-none placeholder:text-muted-foreground text-foreground"
-          placeholder="Buscar cliente…"
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-        />
-      </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+    <div>
+      <PageHeader
+        eyebrow="Relacionamento"
+        title="Clientes"
+        sub={`${clients.length} clientes ativos`}
+        action={
+          <Btn onClick={onNew}>
+            <Plus className="h-4 w-4" strokeWidth={2} />
+            Novo cliente
+          </Btn>
+        }
+      />
+      <SearchBar value={q} onChange={setQ} placeholder="Buscar cliente…" />
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 mt-4">
         {filtered.map((c: Client) => (
-          <div
-            key={c.id}
-            className="group rounded-2xl border border-border bg-white p-5 shadow-sm hover:shadow-md hover:border-[#d4d4d4] hover:-translate-y-0.5 transition-all duration-300"
-          >
+          <Card key={c.id} className="p-5 group hover:-translate-y-0.5 transition-all duration-300">
             <div className="flex items-start justify-between mb-4">
               <div className="flex items-center gap-3">
-                <div className="h-11 w-11 rounded-full bg-gradient-to-br from-[#3a3a3a] to-[#111] flex items-center justify-center text-white text-[14px] font-semibold shrink-0">
+                <div
+                  className="h-10 w-10 rounded-full flex items-center justify-center text-[13px] font-semibold shrink-0"
+                  style={{ background: `linear-gradient(135deg,${C.em},#00A87A)`, color: "#0D1612" }}
+                >
                   {c.name.charAt(0)}
                 </div>
                 <div>
-                  <div className="text-[14px] font-semibold">{c.name}</div>
-                  <div className="text-[12px] text-muted-foreground mt-0.5">{c.project}</div>
+                  <div className="text-[14px] font-semibold" style={{ color: C.fg }}>
+                    {c.name}
+                  </div>
+                  <div className="text-[12px] mt-0.5" style={{ color: C.muted }}>
+                    {c.project}
+                  </div>
                 </div>
               </div>
-              <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                <button
-                  onClick={() => onEdit(c)}
-                  className="h-7 w-7 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-[#f0f0f0] transition-colors"
-                >
-                  <Pencil className="h-3.5 w-3.5" strokeWidth={1.75} />
-                </button>
-                <button
-                  onClick={() => onDelete(c.id)}
-                  className="h-7 w-7 rounded-lg flex items-center justify-center text-muted-foreground hover:text-red-500 hover:bg-red-50 transition-colors"
-                >
-                  <Trash2 className="h-3.5 w-3.5" strokeWidth={1.75} />
-                </button>
+              <ActionButtons onEdit={() => onEdit(c)} onDelete={() => onDelete(c.id)} />
+            </div>
+            <div className="space-y-2 pt-4" style={{ borderTop: `1px solid ${C.border}` }}>
+              <div className="flex justify-between">
+                <span className="text-[11.5px]" style={{ color: C.muted }}>
+                  Status
+                </span>
+                <span className="text-[12px] font-medium" style={{ color: C.fgDim }}>
+                  {c.status}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-[11.5px]" style={{ color: C.muted }}>
+                  Última interação
+                </span>
+                <span className="text-[12px] tabular-nums" style={{ color: C.muted }}>
+                  {c.last}
+                </span>
               </div>
             </div>
-            <div className="space-y-2 pt-4 border-t border-border">
-              <div className="flex items-center justify-between">
-                <span className="text-[11.5px] text-muted-foreground">Status</span>
-                <span className="text-[12px] font-medium">{c.status}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-[11.5px] text-muted-foreground">Última interação</span>
-                <span className="text-[12px] text-muted-foreground tabular-nums">{c.last}</span>
-              </div>
-            </div>
-          </div>
+          </Card>
         ))}
         {filtered.length === 0 && (
-          <div className="col-span-3 py-20 text-center text-[13px] text-muted-foreground">
+          <div className="col-span-3 py-20 text-center text-[13px]" style={{ color: C.muted }}>
             Nenhum cliente encontrado.
           </div>
         )}
@@ -1074,7 +1519,35 @@ function ClientesScreen({ clients, onNew, onEdit, onDelete }: any) {
   );
 }
 
-/* ══════════════ PROJETOS ══════════════ */
+function SearchBar({
+  value,
+  onChange,
+  placeholder,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  placeholder: string;
+}) {
+  return (
+    <div
+      className="flex items-center gap-2 rounded-xl px-3.5 py-2 text-[13px] w-full max-w-sm"
+      style={{ background: C.card, border: `1px solid ${C.border}`, color: C.muted }}
+    >
+      <Search className="h-4 w-4 shrink-0" strokeWidth={1.75} />
+      <input
+        className="flex-1 bg-transparent outline-none placeholder:opacity-50"
+        style={{ color: C.fg }}
+        placeholder={placeholder}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+      />
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════
+   PROJETOS
+══════════════════════════════════════════ */
 function ProjetosScreen({ projects, clients, onNew, onEdit, onDelete }: any) {
   const [filter, setFilter] = useState("Todos");
   const [q, setQ] = useState("");
@@ -1084,107 +1557,89 @@ function ProjetosScreen({ projects, clients, onNew, onEdit, onDelete }: any) {
       (p.name.toLowerCase().includes(q.toLowerCase()) || p.client.toLowerCase().includes(q.toLowerCase())),
   );
   return (
-    <div className="space-y-8">
-      <div className="flex items-end justify-between">
-        <div>
-          <div className="text-[10.5px] uppercase tracking-[0.22em] text-muted-foreground font-semibold mb-2">
-            Operação
-          </div>
-          <h1 className="text-[32px] font-light tracking-[-0.025em]">Projetos</h1>
-          <p className="text-[14px] text-muted-foreground mt-1">{projects.length} projetos no total</p>
-        </div>
-        <button
-          onClick={onNew}
-          className="flex items-center gap-2 rounded-lg bg-[#111] text-white px-4 py-2.5 text-[13px] font-semibold hover:bg-black transition-colors shadow-sm"
-        >
-          <Plus className="h-4 w-4" strokeWidth={2} />
-          Novo projeto
-        </button>
-      </div>
-      <div className="flex items-center gap-3 flex-wrap">
-        <div className="flex items-center gap-2 rounded-lg border border-border bg-white px-3 py-1.5 text-[13px] text-muted-foreground shadow-xs">
-          <Search className="h-3.5 w-3.5" strokeWidth={1.75} />
-          <input
-            className="bg-transparent outline-none placeholder:text-muted-foreground text-foreground w-40"
-            placeholder="Buscar…"
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-          />
-        </div>
-        <div className="flex items-center gap-1.5 flex-wrap">
+    <div>
+      <PageHeader
+        eyebrow="Operação"
+        title="Projetos"
+        sub={`${projects.length} projetos no total`}
+        action={
+          <Btn onClick={onNew}>
+            <Plus className="h-4 w-4" strokeWidth={2} />
+            Novo projeto
+          </Btn>
+        }
+      />
+      <div className="flex items-center gap-3 flex-wrap mb-6">
+        <SearchBar value={q} onChange={setQ} placeholder="Buscar projeto…" />
+        <div className="flex gap-1.5 flex-wrap">
           {["Todos", ...STATUS_OPTIONS].map((s) => (
             <button
               key={s}
               onClick={() => setFilter(s)}
-              className={`px-3 py-1.5 rounded-full text-[12px] font-medium transition-colors ${filter === s ? "bg-[#111] text-white" : "border border-border text-muted-foreground hover:text-foreground bg-white"}`}
+              className="px-3 py-1.5 rounded-full text-[12px] font-medium transition-all"
+              style={
+                filter === s
+                  ? { background: C.em, color: "#0D1612" }
+                  : { background: C.card, border: `1px solid ${C.border}`, color: C.muted }
+              }
             >
               {s}
             </button>
           ))}
         </div>
       </div>
-      <div className="rounded-2xl border border-border bg-white shadow-sm overflow-hidden">
+      <Card>
         {filtered.length === 0 ? (
-          <div className="py-16 text-center text-[13px] text-muted-foreground">Nenhum projeto encontrado.</div>
+          <div className="py-16 text-center text-[13px]" style={{ color: C.muted }}>
+            Nenhum projeto encontrado.
+          </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-[13px]">
+            <table className="w-full text-[12.5px]">
               <thead>
-                <tr className="text-left text-[10.5px] uppercase tracking-[0.16em] text-muted-foreground font-semibold bg-[#fafafa] border-b border-border">
-                  <th className="px-6 py-3">Projeto</th>
-                  <th className="px-4 py-3">Cliente</th>
-                  <th className="px-4 py-3">Status</th>
-                  <th className="px-4 py-3">Prazo</th>
-                  <th className="px-4 py-3">Responsável</th>
-                  <th className="px-6 py-3 w-[160px]">Progresso</th>
-                  <th className="px-4 py-3 w-[80px]"></th>
+                <tr style={{ borderBottom: `1px solid ${C.border}`, color: C.muted }}>
+                  {["Projeto", "Cliente", "Status", "Prazo", "Responsável", "Progresso", ""].map((h) => (
+                    <th key={h} className="px-5 py-3 text-left text-[10px] uppercase tracking-[0.15em] font-semibold">
+                      {h}
+                    </th>
+                  ))}
                 </tr>
               </thead>
               <tbody>
                 {filtered.map((p: Project, i: number) => (
                   <tr
                     key={p.id}
-                    className={`group hover:bg-[#fafafa] transition-colors ${i < filtered.length - 1 ? "border-b border-border" : ""}`}
+                    className="group transition-colors"
+                    style={{ borderBottom: i < filtered.length - 1 ? `1px solid ${C.border}` : "none" }}
+                    onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.background = C.hover)}
+                    onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.background = "transparent")}
                   >
-                    <td className="px-6 py-4 font-medium">{p.name}</td>
-                    <td className="px-4 py-4 text-muted-foreground">{p.client}</td>
-                    <td className="px-4 py-4">
-                      <span
-                        className={`inline-flex text-[11px] font-medium rounded-full border px-2.5 py-1 ${statusStyle(p.status)}`}
-                      >
-                        {p.status}
-                      </span>
+                    <td className="px-5 py-3.5 font-medium" style={{ color: C.fg }}>
+                      {p.name}
                     </td>
-                    <td className="px-4 py-4 tabular-nums">{p.deadline}</td>
-                    <td className="px-4 py-4">
+                    <td className="px-5 py-3.5" style={{ color: C.muted }}>
+                      {p.client}
+                    </td>
+                    <td className="px-5 py-3.5">
+                      <Badge label={p.status} color={statusColor(p.status)} />
+                    </td>
+                    <td className="px-5 py-3.5 tabular-nums" style={{ color: C.fgDim }}>
+                      {p.deadline}
+                    </td>
+                    <td className="px-5 py-3.5">
                       <div className="flex items-center gap-2">
-                        <div className="h-6 w-6 rounded-full bg-gradient-to-br from-[#3a3a3a] to-[#111]" />
-                        <span className="text-muted-foreground">{p.owner}</span>
+                        <div
+                          className="h-5 w-5 rounded-full shrink-0"
+                          style={{ background: `linear-gradient(135deg,${C.em},#00A87A)` }}
+                        />
+                        <span style={{ color: C.muted }}>{p.owner}</span>
                       </div>
                     </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-2">
-                        <div className="flex-1 h-1.5 bg-[#eee] rounded-full overflow-hidden">
-                          <div className="h-full bg-[#111] rounded-full" style={{ width: `${p.progress}%` }} />
-                        </div>
-                        <span className="text-[11.5px] font-medium tabular-nums w-9 text-right">{p.progress}%</span>
-                      </div>
+                    <td className="px-5 py-3.5 w-[140px]">
+                      <ProgressBar value={p.progress} />
                     </td>
-                    <td className="px-4 py-4">
-                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button
-                          onClick={() => onEdit(p)}
-                          className="h-7 w-7 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-[#f0f0f0] transition-colors"
-                        >
-                          <Pencil className="h-3.5 w-3.5" strokeWidth={1.75} />
-                        </button>
-                        <button
-                          onClick={() => onDelete(p.id)}
-                          className="h-7 w-7 rounded-lg flex items-center justify-center text-muted-foreground hover:text-red-500 hover:bg-red-50 transition-colors"
-                        >
-                          <Trash2 className="h-3.5 w-3.5" strokeWidth={1.75} />
-                        </button>
-                      </div>
+                    <td className="px-5 py-3.5">
+                      <ActionButtons onEdit={() => onEdit(p)} onDelete={() => onDelete(p.id)} />
                     </td>
                   </tr>
                 ))}
@@ -1192,62 +1647,68 @@ function ProjetosScreen({ projects, clients, onNew, onEdit, onDelete }: any) {
             </table>
           </div>
         )}
-      </div>
+      </Card>
     </div>
   );
 }
 
-/* ══════════════ PIPELINE ══════════════ */
+/* ══════════════════════════════════════════
+   PIPELINE
+══════════════════════════════════════════ */
 function PipelineScreen({ projects }: any) {
   const stages: ProjectStatus[] = ["Pré-produção", "Gravação", "Edição", "Pós-produção", "Aprovação", "Entregue"];
   return (
-    <div className="space-y-8">
-      <div>
-        <div className="text-[10.5px] uppercase tracking-[0.22em] text-muted-foreground font-semibold mb-2">
-          Comercial
-        </div>
-        <h1 className="text-[32px] font-light tracking-[-0.025em]">Pipeline de produção</h1>
-        <p className="text-[14px] text-muted-foreground mt-1">Visão do funil por estágio</p>
-      </div>
+    <div>
+      <PageHeader eyebrow="Comercial" title="Pipeline de produção" sub="Visão do funil por estágio" />
       <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
-        {stages.map((stage, i) => {
+        {stages.map((stage) => {
           const sp = projects.filter((p: Project) => p.status === stage);
           return (
-            <div key={stage} className="space-y-3">
+            <div key={stage} className="space-y-2">
               <div className="flex items-center justify-between px-1">
-                <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+                <span className="text-[10px] font-semibold uppercase tracking-[0.12em]" style={{ color: C.muted }}>
                   {stage}
                 </span>
-                <span className="text-[11px] font-semibold bg-[#eee] text-[#444] rounded-md px-1.5 py-0.5">
+                <span
+                  className="text-[10px] font-semibold rounded-lg px-1.5 py-0.5"
+                  style={{
+                    background: sp.length > 0 ? C.emDim : C.card,
+                    color: sp.length > 0 ? C.em : C.muted,
+                    border: `1px solid ${sp.length > 0 ? `${C.em}30` : C.border}`,
+                  }}
+                >
                   {sp.length}
                 </span>
               </div>
-              <div className="space-y-2 min-h-[120px]">
+              <div className="space-y-2 min-h-[100px]">
                 {sp.map((p: Project) => (
-                  <div
-                    key={p.id}
-                    className="rounded-xl border border-border bg-white p-3.5 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cursor-pointer"
-                  >
-                    <div className="text-[12.5px] font-semibold leading-snug">{p.name}</div>
-                    <div className="text-[11px] text-muted-foreground mt-1">{p.client}</div>
+                  <Card key={p.id} className="p-3 hover:-translate-y-0.5 transition-all duration-200 cursor-pointer">
+                    <div className="text-[12.5px] font-semibold leading-snug" style={{ color: C.fg }}>
+                      {p.name}
+                    </div>
+                    <div className="text-[11px] mt-1" style={{ color: C.muted }}>
+                      {p.client}
+                    </div>
                     <div className="mt-3">
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="text-[10.5px] text-muted-foreground">Progresso</span>
-                        <span className="text-[10.5px] font-semibold tabular-nums">{p.progress}%</span>
-                      </div>
-                      <div className="h-1 bg-[#eee] rounded-full overflow-hidden">
-                        <div className="h-full bg-[#111] rounded-full" style={{ width: `${p.progress}%` }} />
-                      </div>
+                      <ProgressBar value={p.progress} />
                     </div>
-                    <div className="mt-2.5 flex items-center justify-between">
-                      <span className="text-[10.5px] text-muted-foreground">{p.deadline}</span>
-                      <div className="h-5 w-5 rounded-full bg-gradient-to-br from-[#3a3a3a] to-[#111]" />
+                    <div className="mt-2 flex items-center justify-between">
+                      <span className="text-[10.5px]" style={{ color: C.muted }}>
+                        {p.deadline}
+                      </span>
+                      <div
+                        className="h-4 w-4 rounded-full"
+                        style={{ background: `linear-gradient(135deg,${C.em},#00A87A)` }}
+                      />
                     </div>
-                  </div>
+                  </Card>
                 ))}
                 {sp.length === 0 && (
-                  <div className="rounded-xl border border-dashed border-border p-4 flex items-center justify-center">
-                    <span className="text-[11px] text-muted-foreground/50">Vazio</span>
+                  <div
+                    className="rounded-xl p-4 flex items-center justify-center text-[11px]"
+                    style={{ border: `1px dashed ${C.border}`, color: C.muted }}
+                  >
+                    Vazio
                   </div>
                 )}
               </div>
@@ -1259,241 +1720,150 @@ function PipelineScreen({ projects }: any) {
   );
 }
 
-/* ══════════════ AGENDA ══════════════ */
-function AgendaScreen({ gravacoes, onNew, onEdit, onDelete }: any) {
-  const staticEvents = [
-    {
-      time: "09:00",
-      title: "Kickoff — Porsche 911 GTS",
-      type: "Reunião",
-      client: "Porsche AG",
-      local: "Google Meet",
-      icon: Users,
-      color: "bg-[#eef2ff] text-[#3949ab]",
-    },
-    {
-      time: "14:00",
-      title: "Chamada de aprovação — Apple",
-      type: "Chamada",
-      client: "Apple Originals",
-      local: "Zoom",
-      icon: Phone,
-      color: "bg-[#f1f5f9] text-[#475569]",
-    },
-    {
-      time: "16:00",
-      title: "Entrega corte Dior",
-      type: "Entrega",
-      client: "Christian Dior",
-      local: "Frame.io",
-      icon: Send,
-      color: "bg-[#ecfdf5] text-[#15803d]",
-    },
-  ];
+/* ══════════════════════════════════════════
+   AGENDA
+══════════════════════════════════════════ */
+function AgendaScreen({ gravacoes, clients, onNew, onEdit, onDelete }: any) {
   return (
-    <div className="space-y-8">
-      <div className="flex items-end justify-between">
-        <div>
-          <div className="text-[10.5px] uppercase tracking-[0.22em] text-muted-foreground font-semibold mb-2">
-            Operação
+    <div>
+      <PageHeader
+        eyebrow="Operação"
+        title="Agenda & Gravações"
+        sub="Quinta, 11 de junho de 2026"
+        action={
+          <Btn onClick={onNew}>
+            <Plus className="h-4 w-4" strokeWidth={2} />
+            Agendar gravação
+          </Btn>
+        }
+      />
+      <div className="space-y-4">
+        {gravacoes.length === 0 && (
+          <div
+            className="rounded-2xl p-8 text-center text-[13px]"
+            style={{ border: `1px dashed ${C.border}`, color: C.muted }}
+          >
+            Nenhuma gravação agendada.{" "}
+            <button onClick={onNew} style={{ color: C.em }} className="underline ml-1">
+              Agendar agora
+            </button>
           </div>
-          <h1 className="text-[32px] font-light tracking-[-0.025em]">Agenda & Gravações</h1>
-          <p className="text-[14px] text-muted-foreground mt-1">Quinta, 11 de junho de 2026</p>
-        </div>
-        <button
-          onClick={onNew}
-          className="flex items-center gap-2 rounded-lg bg-[#111] text-white px-4 py-2.5 text-[13px] font-semibold hover:bg-black transition-colors shadow-sm"
-        >
-          <Plus className="h-4 w-4" strokeWidth={2} />
-          Agendar gravação
-        </button>
-      </div>
-      <div className="grid grid-cols-12 gap-6">
-        <div className="col-span-12 xl:col-span-8 space-y-4">
-          <div className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground font-semibold">
-            Compromissos do dia
-          </div>
-          {staticEvents.map((e, i) => {
-            const Icon = e.icon;
-            return (
-              <div
-                key={i}
-                className="flex items-start gap-4 rounded-2xl border border-border bg-white p-4 shadow-sm hover:shadow-md transition-all group"
-              >
-                <div className="text-[13px] font-semibold tabular-nums w-12 pt-0.5 shrink-0">{e.time}</div>
-                <div className={`h-9 w-9 rounded-xl flex items-center justify-center shrink-0 ${e.color}`}>
-                  <Icon className="h-4 w-4" strokeWidth={1.75} />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="text-[14px] font-semibold">{e.title}</div>
-                  <div className="flex items-center gap-3 mt-1">
-                    <span className="text-[12px] text-muted-foreground">{e.client}</span>
-                    <span className="text-muted-foreground/40">·</span>
-                    <span className="text-[12px] text-muted-foreground">{e.local}</span>
-                  </div>
-                </div>
-                <span className={`text-[11px] font-medium rounded-full px-2.5 py-1 border ${e.color}`}>{e.type}</span>
-              </div>
-            );
-          })}
-          <div className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground font-semibold mt-6">
-            Gravações agendadas
-          </div>
-          {gravacoes.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-border p-8 text-center text-[13px] text-muted-foreground">
-              Nenhuma gravação agendada.
+        )}
+        {gravacoes.map((g: Gravacao) => (
+          <Card
+            key={g.id}
+            className="flex items-start gap-4 p-4 group hover:-translate-y-0.5 transition-all duration-200"
+          >
+            <div
+              className="h-10 w-10 rounded-xl flex items-center justify-center shrink-0"
+              style={{ background: C.warnDim, color: C.warn }}
+            >
+              <Video className="h-5 w-5" strokeWidth={1.75} />
             </div>
-          ) : (
-            gravacoes.map((g: Gravacao) => (
-              <div
-                key={g.id}
-                className="flex items-start gap-4 rounded-2xl border border-border bg-white p-4 shadow-sm hover:shadow-md transition-all group"
-              >
-                <div className="text-[13px] font-semibold tabular-nums w-12 pt-0.5 shrink-0">{g.time}</div>
-                <div className="h-9 w-9 rounded-xl bg-[#fff4e5] text-[#a8651f] flex items-center justify-center shrink-0">
-                  <Video className="h-4 w-4" strokeWidth={1.75} />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="text-[14px] font-semibold">{g.title}</div>
-                  <div className="flex items-center gap-3 mt-1">
-                    <span className="text-[12px] text-muted-foreground">{g.client}</span>
-                    <span className="text-muted-foreground/40">·</span>
-                    <span className="text-[12px] text-muted-foreground">{g.local}</span>
-                    <span className="text-muted-foreground/40">·</span>
-                    <span className="text-[12px] text-muted-foreground">{g.date}</span>
-                  </div>
-                  <div className="text-[11.5px] text-muted-foreground mt-1">Equipe: {g.crew}</div>
-                </div>
-                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button
-                    onClick={() => onEdit(g)}
-                    className="h-7 w-7 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-[#f0f0f0] transition-colors"
-                  >
-                    <Pencil className="h-3.5 w-3.5" strokeWidth={1.75} />
-                  </button>
-                  <button
-                    onClick={() => onDelete(g.id)}
-                    className="h-7 w-7 rounded-lg flex items-center justify-center text-muted-foreground hover:text-red-500 hover:bg-red-50 transition-colors"
-                  >
-                    <Trash2 className="h-3.5 w-3.5" strokeWidth={1.75} />
-                  </button>
-                </div>
+            <div className="flex-1 min-w-0">
+              <div className="text-[14px] font-semibold" style={{ color: C.fg }}>
+                {g.title}
               </div>
-            ))
-          )}
-        </div>
-        <div className="col-span-12 xl:col-span-4">
-          <div className="rounded-2xl border border-border bg-white shadow-sm overflow-hidden">
-            <div className="px-5 pt-5 pb-3 border-b border-border">
-              <div className="text-[10.5px] uppercase tracking-[0.18em] text-muted-foreground font-semibold mb-1">
-                Próximos
+              <div className="flex items-center gap-3 mt-1">
+                <span className="text-[12px]" style={{ color: C.muted }}>
+                  {g.client}
+                </span>
+                <span style={{ color: C.border }}>·</span>
+                <span className="text-[12px]" style={{ color: C.muted }}>
+                  {g.local}
+                </span>
+                <span style={{ color: C.border }}>·</span>
+                <span className="text-[12px] font-semibold" style={{ color: C.em }}>
+                  {g.date} às {g.time}
+                </span>
               </div>
-              <h2 className="text-[16px] font-semibold tracking-[-0.015em]">Próximos eventos</h2>
+              <div className="text-[11.5px] mt-1" style={{ color: C.muted }}>
+                Equipe: {g.crew}
+              </div>
             </div>
-            {[
-              { date: "13 jun", title: "Gravação campanha Dior", local: "Studio B" },
-              { date: "15 jun", title: "Entrega final Apple — Silence", local: "Frame.io" },
-              { date: "18 jun", title: "Reunião Natura — aprovação roteiro", local: "Zoom" },
-              { date: "20 jun", title: "Gravação Porsche — externa SP", local: "São Paulo" },
-            ].map((u, i) => (
-              <div
-                key={i}
-                className="px-5 py-3.5 border-b border-border last:border-0 hover:bg-[#fafafa] transition-colors"
-              >
-                <div className="text-[11px] font-semibold text-muted-foreground uppercase tracking-[0.1em] mb-1">
-                  {u.date}
-                </div>
-                <div className="text-[13px] font-medium">{u.title}</div>
-                <div className="text-[11.5px] text-muted-foreground mt-0.5">{u.local}</div>
-              </div>
-            ))}
-          </div>
-        </div>
+            <ActionButtons onEdit={() => onEdit(g)} onDelete={() => onDelete(g.id)} />
+          </Card>
+        ))}
       </div>
     </div>
   );
 }
 
-/* ══════════════ ENTREGAS ══════════════ */
-function EntregasScreen({ entregas, onNew, onEdit, onDelete }: any) {
-  const statusE: Record<string, string> = {
-    "Aguardando aprovação": "bg-[#fef3c7] text-[#854d0e] border-[#fde68a]",
-    "Em revisão": "bg-[#eef2ff] text-[#3949ab] border-[#dde3fa]",
-    Enviado: "bg-[#f1f5f9] text-[#475569] border-[#e2e8f0]",
-    Pendente: "bg-[#fff4e5] text-[#a8651f] border-[#f5e3c3]",
-    Aprovado: "bg-[#ecfdf5] text-[#15803d] border-[#d1fae5]",
+/* ══════════════════════════════════════════
+   ENTREGAS
+══════════════════════════════════════════ */
+function EntregasScreen({ entregas, projects, onNew, onEdit, onDelete }: any) {
+  const statusColor2: Record<string, string> = {
+    "Aguardando aprovação": C.warn,
+    "Em revisão": C.info,
+    Enviado: C.muted,
+    Pendente: C.warn,
+    Aprovado: C.em,
   };
   return (
-    <div className="space-y-8">
-      <div className="flex items-end justify-between">
-        <div>
-          <div className="text-[10.5px] uppercase tracking-[0.22em] text-muted-foreground font-semibold mb-2">
-            Operação
-          </div>
-          <h1 className="text-[32px] font-light tracking-[-0.025em]">Entregas</h1>
-          <p className="text-[14px] text-muted-foreground mt-1">{entregas.length} entregas ativas</p>
-        </div>
-        <button
-          onClick={onNew}
-          className="flex items-center gap-2 rounded-lg bg-[#111] text-white px-4 py-2.5 text-[13px] font-semibold hover:bg-black transition-colors shadow-sm"
-        >
-          <Upload className="h-4 w-4" strokeWidth={2} />
-          Nova entrega
-        </button>
-      </div>
-      <div className="rounded-2xl border border-border bg-white shadow-sm overflow-hidden">
+    <div>
+      <PageHeader
+        eyebrow="Operação"
+        title="Entregas"
+        sub={`${entregas.length} entregas ativas`}
+        action={
+          <Btn onClick={onNew}>
+            <Upload className="h-4 w-4" strokeWidth={2} />
+            Nova entrega
+          </Btn>
+        }
+      />
+      <Card>
         {entregas.length === 0 ? (
-          <div className="py-16 text-center text-[13px] text-muted-foreground">Nenhuma entrega cadastrada.</div>
+          <div className="py-16 text-center text-[13px]" style={{ color: C.muted }}>
+            Nenhuma entrega.
+          </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-[13px]">
+            <table className="w-full text-[12.5px]">
               <thead>
-                <tr className="text-left text-[10.5px] uppercase tracking-[0.16em] text-muted-foreground font-semibold bg-[#fafafa] border-b border-border">
-                  <th className="px-6 py-3">Projeto</th>
-                  <th className="px-4 py-3">Arquivo</th>
-                  <th className="px-4 py-3">Status</th>
-                  <th className="px-4 py-3">Prazo</th>
-                  <th className="px-4 py-3">Tamanho</th>
-                  <th className="px-4 py-3 w-[80px]"></th>
+                <tr style={{ borderBottom: `1px solid ${C.border}`, color: C.muted }}>
+                  {["Projeto", "Arquivo", "Status", "Prazo", "Tamanho", ""].map((h) => (
+                    <th key={h} className="px-5 py-3 text-left text-[10px] uppercase tracking-[0.15em] font-semibold">
+                      {h}
+                    </th>
+                  ))}
                 </tr>
               </thead>
               <tbody>
                 {entregas.map((e: Entrega, i: number) => (
                   <tr
                     key={e.id}
-                    className={`group hover:bg-[#fafafa] transition-colors ${i < entregas.length - 1 ? "border-b border-border" : ""}`}
+                    className="group transition-colors"
+                    style={{ borderBottom: i < entregas.length - 1 ? `1px solid ${C.border}` : "none" }}
+                    onMouseEnter={(x) => ((x.currentTarget as HTMLElement).style.background = C.hover)}
+                    onMouseLeave={(x) => ((x.currentTarget as HTMLElement).style.background = "transparent")}
                   >
-                    <td className="px-6 py-4">
-                      <div className="font-medium">{e.project}</div>
-                      <div className="text-[11.5px] text-muted-foreground">{e.client}</div>
+                    <td className="px-5 py-3.5">
+                      <div className="font-medium" style={{ color: C.fg }}>
+                        {e.project}
+                      </div>
+                      <div className="text-[11px]" style={{ color: C.muted }}>
+                        {e.client}
+                      </div>
                     </td>
-                    <td className="px-4 py-4 font-mono text-[12px] text-muted-foreground">{e.file}</td>
-                    <td className="px-4 py-4">
-                      <span
-                        className={`inline-flex text-[11px] font-medium rounded-full border px-2.5 py-1 ${statusE[e.status] || "bg-[#f5f5f5] text-[#525252] border-[#e5e5e5]"}`}
-                      >
-                        {e.status}
-                      </span>
+                    <td className="px-5 py-3.5 font-mono text-[11.5px]" style={{ color: C.muted }}>
+                      {e.file}
                     </td>
-                    <td className={`px-4 py-4 tabular-nums font-medium ${e.urgent ? "text-[#b91c1c]" : ""}`}>
+                    <td className="px-5 py-3.5">
+                      <Badge label={e.status} color={statusColor2[e.status] || C.muted} />
+                    </td>
+                    <td
+                      className="px-5 py-3.5 tabular-nums font-medium"
+                      style={{ color: e.urgent ? C.danger : C.fgDim }}
+                    >
                       {e.date}
                     </td>
-                    <td className="px-4 py-4 text-muted-foreground tabular-nums">{e.size}</td>
-                    <td className="px-4 py-4">
-                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button
-                          onClick={() => onEdit(e)}
-                          className="h-7 w-7 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-[#f0f0f0] transition-colors"
-                        >
-                          <Pencil className="h-3.5 w-3.5" strokeWidth={1.75} />
-                        </button>
-                        <button
-                          onClick={() => onDelete(e.id)}
-                          className="h-7 w-7 rounded-lg flex items-center justify-center text-muted-foreground hover:text-red-500 hover:bg-red-50 transition-colors"
-                        >
-                          <Trash2 className="h-3.5 w-3.5" strokeWidth={1.75} />
-                        </button>
-                      </div>
+                    <td className="px-5 py-3.5 tabular-nums" style={{ color: C.muted }}>
+                      {e.size}
+                    </td>
+                    <td className="px-5 py-3.5">
+                      <ActionButtons onEdit={() => onEdit(e)} onDelete={() => onDelete(e.id)} />
                     </td>
                   </tr>
                 ))}
@@ -1501,84 +1871,75 @@ function EntregasScreen({ entregas, onNew, onEdit, onDelete }: any) {
             </table>
           </div>
         )}
-      </div>
+      </Card>
     </div>
   );
 }
 
-/* ══════════════ PROPOSTAS ══════════════ */
-function PropostasScreen({ propostas, onNew, onEdit, onDelete }: any) {
-  const statusP: Record<string, string> = {
-    Enviada: "bg-[#eef2ff] text-[#3949ab] border-[#dde3fa]",
-    "Em negociação": "bg-[#fff4e5] text-[#a8651f] border-[#f5e3c3]",
-    Aprovada: "bg-[#ecfdf5] text-[#15803d] border-[#d1fae5]",
-    Rascunho: "bg-[#f1f5f9] text-[#475569] border-[#e2e8f0]",
-    Recusada: "bg-[#fef2f2] text-[#b91c1c] border-[#fecaca]",
+/* ══════════════════════════════════════════
+   PROPOSTAS
+══════════════════════════════════════════ */
+function PropostasScreen({ propostas, clients, onNew, onEdit, onDelete }: any) {
+  const sc: Record<string, string> = {
+    Enviada: C.info,
+    "Em negociação": C.warn,
+    Aprovada: C.em,
+    Rascunho: C.muted,
+    Recusada: C.danger,
   };
   return (
-    <div className="space-y-8">
-      <div className="flex items-end justify-between">
-        <div>
-          <div className="text-[10.5px] uppercase tracking-[0.22em] text-muted-foreground font-semibold mb-2">
-            Comercial
-          </div>
-          <h1 className="text-[32px] font-light tracking-[-0.025em]">Propostas</h1>
-          <p className="text-[14px] text-muted-foreground mt-1">
-            {propostas.length} propostas · {propostas.filter((p: Proposta) => p.status === "Aprovada").length} aprovadas
-          </p>
-        </div>
-        <button
-          onClick={onNew}
-          className="flex items-center gap-2 rounded-lg bg-[#111] text-white px-4 py-2.5 text-[13px] font-semibold hover:bg-black transition-colors shadow-sm"
-        >
-          <Plus className="h-4 w-4" strokeWidth={2} />
-          Nova proposta
-        </button>
-      </div>
+    <div>
+      <PageHeader
+        eyebrow="Comercial"
+        title="Propostas"
+        sub={`${propostas.length} propostas · ${propostas.filter((p: Proposta) => p.status === "Aprovada").length} aprovadas`}
+        action={
+          <Btn onClick={onNew}>
+            <Plus className="h-4 w-4" strokeWidth={2} />
+            Nova proposta
+          </Btn>
+        }
+      />
       <div className="space-y-3">
         {propostas.map((p: Proposta) => (
-          <div
+          <Card
             key={p.id}
-            className="flex items-center gap-4 rounded-2xl border border-border bg-white p-4 shadow-sm hover:shadow-md hover:border-[#d4d4d4] transition-all group cursor-pointer"
+            className="flex items-center gap-4 p-4 group hover:-translate-y-0.5 transition-all duration-200 cursor-pointer"
           >
-            <div className="h-10 w-10 rounded-xl bg-[#f5f5f5] flex items-center justify-center shrink-0">
-              <FileText className="h-5 w-5 text-muted-foreground" strokeWidth={1.75} />
+            <div
+              className="h-10 w-10 rounded-xl flex items-center justify-center shrink-0"
+              style={{ background: C.emDim, color: C.em }}
+            >
+              <FileText className="h-5 w-5" strokeWidth={1.75} />
             </div>
             <div className="flex-1 min-w-0">
-              <div className="text-[14px] font-semibold">{p.title}</div>
-              <div className="text-[12px] text-muted-foreground mt-0.5">
+              <div className="text-[14px] font-semibold" style={{ color: C.fg }}>
+                {p.title}
+              </div>
+              <div className="text-[12px] mt-0.5" style={{ color: C.muted }}>
                 {p.client} · {p.date}
               </div>
             </div>
-            <div className="text-[15px] font-semibold tabular-nums">{p.value}</div>
-            <span className={`text-[11px] font-medium rounded-full border px-2.5 py-1 ${statusP[p.status] || ""}`}>
-              {p.status}
-            </span>
-            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-              <button
-                onClick={() => onEdit(p)}
-                className="h-7 w-7 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-[#f0f0f0] transition-colors"
-              >
-                <Pencil className="h-3.5 w-3.5" strokeWidth={1.75} />
-              </button>
-              <button
-                onClick={() => onDelete(p.id)}
-                className="h-7 w-7 rounded-lg flex items-center justify-center text-muted-foreground hover:text-red-500 hover:bg-red-50 transition-colors"
-              >
-                <Trash2 className="h-3.5 w-3.5" strokeWidth={1.75} />
-              </button>
+            <div className="text-[15px] font-semibold tabular-nums" style={{ color: C.fg }}>
+              {p.value}
             </div>
-          </div>
+            <Badge label={p.status} color={sc[p.status] || C.muted} />
+            <ActionButtons onEdit={() => onEdit(p)} onDelete={() => onDelete(p.id)} />
+          </Card>
         ))}
         {propostas.length === 0 && (
-          <div className="py-16 text-center text-[13px] text-muted-foreground">Nenhuma proposta cadastrada.</div>
+          <div className="py-16 text-center text-[13px]" style={{ color: C.muted }}>
+            Nenhuma proposta.
+          </div>
         )}
       </div>
     </div>
   );
 }
 
-/* ══════════════ FINANCEIRO ══════════════ */
+/* ══════════════════════════════════════════
+   FINANCEIRO
+══════════════════════════════════════════ */
 function FinanceiroScreen() {
   const [tab, setTab] = useState<"resumo" | "lancamentos">("resumo");
   const lancamentos = [
@@ -1590,40 +1951,44 @@ function FinanceiroScreen() {
     { desc: "Freelancer — colorista", tipo: "Saída", valor: "R$ 4.800", data: "12 jun", status: "Pendente" },
   ];
   const kpis = [
-    { label: "Faturamento do mês", value: "R$ 482.350", delta: "+18,4%", tone: "up" },
-    { label: "Despesas do mês", value: "R$ 68.400", delta: "+3,2%", tone: "warn" },
+    { label: "Faturamento", value: "R$ 482.350", delta: "+18,4%", tone: "up" },
+    { label: "Despesas", value: "R$ 68.400", delta: "+3,2%", tone: "warn" },
     { label: "Lucro líquido", value: "R$ 413.950", delta: "+22,1%", tone: "up" },
     { label: "A receber", value: "R$ 96.200", delta: "1 fatura", tone: "warn" },
   ];
   return (
-    <div className="space-y-8">
-      <div>
-        <div className="text-[10.5px] uppercase tracking-[0.22em] text-muted-foreground font-semibold mb-2">
-          Financeiro
-        </div>
-        <h1 className="text-[32px] font-light tracking-[-0.025em]">Financeiro</h1>
-        <p className="text-[14px] text-muted-foreground mt-1">Junho de 2026</p>
-      </div>
-      <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
+    <div>
+      <PageHeader eyebrow="Financeiro" title="Financeiro" sub="Junho de 2026" />
+      <div className="grid grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
         {kpis.map((k) => (
-          <div key={k.label} className="rounded-2xl border border-border bg-white p-5 shadow-sm">
-            <div className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground font-semibold">{k.label}</div>
-            <div className="mt-4 text-[26px] font-semibold tracking-[-0.02em] tabular-nums leading-none">{k.value}</div>
+          <Card key={k.label} className="p-5">
+            <div className="text-[10px] uppercase tracking-[0.16em] font-semibold mb-3" style={{ color: C.muted }}>
+              {k.label}
+            </div>
+            <div className="text-[24px] font-semibold tabular-nums leading-none" style={{ color: C.fg }}>
+              {k.value}
+            </div>
             <div
-              className={`mt-3 flex items-center gap-1 text-[11.5px] font-medium ${k.tone === "up" ? "text-[#1f7a4d]" : "text-[#a8651f]"}`}
+              className="text-[11.5px] mt-2 font-semibold flex items-center gap-0.5"
+              style={{ color: k.tone === "up" ? C.em : C.warn }}
             >
               {k.tone === "up" && <ArrowUpRight className="h-3 w-3" strokeWidth={2} />}
               {k.delta}
             </div>
-          </div>
+          </Card>
         ))}
       </div>
-      <div className="flex items-center gap-1">
+      <div className="flex gap-1 mb-4">
         {(["resumo", "lancamentos"] as const).map((t) => (
           <button
             key={t}
             onClick={() => setTab(t)}
-            className={`px-4 py-2 rounded-lg text-[13px] font-medium transition-colors ${tab === t ? "bg-[#111] text-white" : "text-muted-foreground hover:text-foreground"}`}
+            className="px-4 py-2 rounded-xl text-[13px] font-medium transition-all"
+            style={
+              tab === t
+                ? { background: C.em, color: "#0D1612" }
+                : { background: C.card, border: `1px solid ${C.border}`, color: C.muted }
+            }
           >
             {t === "resumo" ? "Resumo" : "Lançamentos"}
           </button>
@@ -1631,49 +1996,75 @@ function FinanceiroScreen() {
       </div>
       {tab === "resumo" && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="rounded-2xl border border-border bg-white shadow-sm p-6">
-            <div className="text-[13px] font-semibold mb-4">Receita vs Despesa</div>
+          <Card className="p-6">
+            <div className="text-[13px] font-semibold mb-5" style={{ color: C.fg }}>
+              Receita vs Despesa
+            </div>
             {[
-              { label: "Receita", value: 482350, max: 612000, color: "bg-[#111]" },
-              { label: "Despesa", value: 68400, max: 612000, color: "bg-[#e5e5e5]" },
-              { label: "Previsto", value: 612000, max: 612000, color: "bg-[#d4d4d4]" },
+              { label: "Receita", v: 482350, max: 612000 },
+              { label: "Despesa", v: 68400, max: 612000 },
+              { label: "Previsto", v: 612000, max: 612000 },
             ].map((b) => (
               <div key={b.label} className="mb-4">
-                <div className="flex items-center justify-between mb-1.5">
-                  <span className="text-[12px] text-muted-foreground">{b.label}</span>
-                  <span className="text-[12px] font-semibold tabular-nums">R$ {b.value.toLocaleString("pt-BR")}</span>
+                <div className="flex justify-between mb-1.5">
+                  <span className="text-[12px]" style={{ color: C.muted }}>
+                    {b.label}
+                  </span>
+                  <span className="text-[12px] font-semibold tabular-nums" style={{ color: C.fg }}>
+                    R$ {b.v.toLocaleString("pt-BR")}
+                  </span>
                 </div>
-                <div className="h-2 bg-[#f0f0f0] rounded-full overflow-hidden">
-                  <div className={`h-full ${b.color} rounded-full`} style={{ width: `${(b.value / b.max) * 100}%` }} />
+                <div className="h-1.5 rounded-full overflow-hidden" style={{ background: C.border }}>
+                  <div
+                    className="h-full rounded-full"
+                    style={{ width: `${(b.v / b.max) * 100}%`, background: `linear-gradient(90deg,${C.em},#00E8B0)` }}
+                  />
                 </div>
               </div>
             ))}
-          </div>
-          <div className="rounded-2xl border border-border bg-white shadow-sm p-6">
-            <div className="text-[13px] font-semibold mb-4">Status dos pagamentos</div>
+          </Card>
+          <Card className="p-6">
+            <div className="text-[13px] font-semibold mb-5" style={{ color: C.fg }}>
+              Status dos pagamentos
+            </div>
             {[
-              { label: "Recebidos", count: 2, total: 4, color: "text-[#15803d]" },
-              { label: "Pendentes", count: 1, total: 4, color: "text-[#a8651f]" },
-              { label: "Em atraso", count: 1, total: 4, color: "text-[#b91c1c]" },
+              { label: "Recebidos", count: 2, color: C.em },
+              { label: "Pendentes", count: 1, color: C.warn },
+              { label: "Em atraso", count: 1, color: C.danger },
             ].map((s) => (
               <div
                 key={s.label}
-                className="flex items-center justify-between py-3 border-b border-border last:border-0"
+                className="flex items-center justify-between py-3"
+                style={{ borderBottom: `1px solid ${C.border}` }}
               >
-                <span className="text-[13px] text-foreground">{s.label}</span>
-                <span className={`text-[13px] font-semibold ${s.color}`}>{s.count} faturas</span>
+                <span className="text-[13px]" style={{ color: C.fgDim }}>
+                  {s.label}
+                </span>
+                <span className="text-[13px] font-semibold" style={{ color: s.color }}>
+                  {s.count} faturas
+                </span>
               </div>
             ))}
-          </div>
+          </Card>
         </div>
       )}
       {tab === "lancamentos" && (
-        <div className="rounded-2xl border border-border bg-white shadow-sm overflow-hidden">
-          <div className="divide-y divide-border">
+        <Card>
+          <div className="divide-y" style={{ "--tw-divide-opacity": 1 } as any}>
             {lancamentos.map((l, i) => (
-              <div key={i} className="flex items-center gap-4 px-6 py-3.5 hover:bg-[#fafafa] transition-colors">
+              <div
+                key={i}
+                className="flex items-center gap-4 px-5 py-3.5 transition-colors"
+                style={{ borderBottom: i < lancamentos.length - 1 ? `1px solid ${C.border}` : "none" }}
+                onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.background = C.hover)}
+                onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.background = "transparent")}
+              >
                 <div
-                  className={`h-9 w-9 rounded-xl flex items-center justify-center shrink-0 ${l.tipo === "Entrada" ? "bg-[#ecfdf5] text-[#15803d]" : "bg-[#fef2f2] text-[#b91c1c]"}`}
+                  className="h-9 w-9 rounded-xl flex items-center justify-center shrink-0"
+                  style={{
+                    background: l.tipo === "Entrada" ? C.emDim : C.dangerDim,
+                    color: l.tipo === "Entrada" ? C.em : C.danger,
+                  }}
                 >
                   {l.tipo === "Entrada" ? (
                     <ArrowUpRight className="h-4 w-4" strokeWidth={1.75} />
@@ -1682,85 +2073,91 @@ function FinanceiroScreen() {
                   )}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="text-[13px] font-medium">{l.desc}</div>
-                  <div className="text-[11.5px] text-muted-foreground mt-0.5">
+                  <div className="text-[13px] font-medium" style={{ color: C.fg }}>
+                    {l.desc}
+                  </div>
+                  <div className="text-[11.5px] mt-0.5" style={{ color: C.muted }}>
                     {l.data} · {l.tipo}
                   </div>
                 </div>
                 <div
-                  className={`text-[14px] font-semibold tabular-nums ${l.tipo === "Entrada" ? "text-[#15803d]" : "text-[#b91c1c]"}`}
+                  className="text-[14px] font-semibold tabular-nums"
+                  style={{ color: l.tipo === "Entrada" ? C.em : C.danger }}
                 >
                   {l.tipo === "Saída" && "−"}
                   {l.valor}
                 </div>
-                <span
-                  className={`text-[11px] font-medium rounded-full border px-2.5 py-1 ${l.status === "Recebido" || l.status === "Pago" ? "bg-[#ecfdf5] text-[#15803d] border-[#d1fae5]" : "bg-[#fef3c7] text-[#854d0e] border-[#fde68a]"}`}
-                >
-                  {l.status}
-                </span>
+                <Badge label={l.status} color={l.status === "Recebido" || l.status === "Pago" ? C.em : C.warn} />
               </div>
             ))}
           </div>
-        </div>
+        </Card>
       )}
     </div>
   );
 }
 
-/* ══════════════ MENSAGENS ══════════════ */
+/* ══════════════════════════════════════════
+   MENSAGENS
+══════════════════════════════════════════ */
 function MensagensScreen({ convs, onSend }: { convs: any[]; onSend: (id: number, text: string) => void }) {
   const [active, setActive] = useState(0);
   const [draft, setDraft] = useState("");
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const endRef = useRef<HTMLDivElement>(null);
   const conv = convs[active];
-
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [active, convs]);
-
+  useEffect(() => endRef.current?.scrollIntoView({ behavior: "smooth" }), [active, convs]);
   const send = () => {
     if (!draft.trim()) return;
     onSend(conv.id, draft.trim());
     setDraft("");
   };
-
   return (
-    <div className="space-y-6">
-      <div>
-        <div className="text-[10.5px] uppercase tracking-[0.22em] text-muted-foreground font-semibold mb-2">Equipe</div>
-        <h1 className="text-[32px] font-light tracking-[-0.025em]">Mensagens</h1>
-      </div>
-      <div
-        className="rounded-2xl border border-border bg-white shadow-sm overflow-hidden flex"
-        style={{ height: "560px" }}
-      >
-        <div className="w-[280px] shrink-0 border-r border-border flex flex-col">
-          <div className="px-4 py-3 border-b border-border">
-            <div className="flex items-center gap-2 rounded-lg border border-border bg-[#fafafa] px-3 py-2 text-[12.5px] text-muted-foreground">
+    <div>
+      <PageHeader eyebrow="Equipe" title="Mensagens" sub="Comunicação com clientes" />
+      <Card className="flex overflow-hidden" style={{ height: 560 }}>
+        <div className="w-[260px] shrink-0 flex flex-col" style={{ borderRight: `1px solid ${C.border}` }}>
+          <div className="p-3" style={{ borderBottom: `1px solid ${C.border}` }}>
+            <div
+              className="flex items-center gap-2 rounded-xl px-3 py-2 text-[12.5px]"
+              style={{ background: C.hover, border: `1px solid ${C.border}`, color: C.muted }}
+            >
               <Search className="h-3.5 w-3.5" strokeWidth={1.75} />
-              <span>Buscar conversa…</span>
+              <span>Buscar…</span>
             </div>
           </div>
-          <div className="flex-1 overflow-y-auto divide-y divide-border">
+          <div className="flex-1 overflow-y-auto">
             {convs.map((c, i) => (
               <button
                 key={c.id}
                 onClick={() => setActive(i)}
-                className={`w-full text-left px-4 py-3.5 hover:bg-[#fafafa] transition-colors ${active === i ? "bg-[#f5f5f5]" : ""}`}
+                className="w-full text-left px-4 py-3.5 transition-colors"
+                style={{ background: active === i ? C.hover : "transparent", borderBottom: `1px solid ${C.border}` }}
               >
                 <div className="flex items-start gap-3">
-                  <div className="h-9 w-9 rounded-full bg-gradient-to-br from-[#3a3a3a] to-[#111] flex items-center justify-center text-white text-[12px] font-semibold shrink-0">
+                  <div
+                    className="h-8 w-8 rounded-full flex items-center justify-center text-[11px] font-semibold shrink-0"
+                    style={{ background: `linear-gradient(135deg,${C.em},#00A87A)`, color: "#0D1612" }}
+                  >
                     {c.name.charAt(0)}
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between">
-                      <span className="text-[13px] font-semibold truncate">{c.name}</span>
-                      <span className="text-[11px] text-muted-foreground shrink-0 ml-2">{c.time}</span>
+                      <span className="text-[13px] font-semibold truncate" style={{ color: C.fg }}>
+                        {c.name}
+                      </span>
+                      <span className="text-[10.5px] shrink-0 ml-2" style={{ color: C.muted }}>
+                        {c.time}
+                      </span>
                     </div>
-                    <div className="text-[11.5px] text-muted-foreground truncate mt-0.5">{c.last}</div>
+                    <div className="text-[11.5px] truncate mt-0.5" style={{ color: C.muted }}>
+                      {c.last}
+                    </div>
                   </div>
                   {c.unread > 0 && (
-                    <span className="h-5 w-5 rounded-full bg-[#111] text-white text-[10px] font-semibold flex items-center justify-center shrink-0">
+                    <span
+                      className="h-5 w-5 rounded-full flex items-center justify-center text-[10px] font-semibold shrink-0"
+                      style={{ background: C.em, color: "#0D1612" }}
+                    >
                       {c.unread}
                     </span>
                   )}
@@ -1770,35 +2167,55 @@ function MensagensScreen({ convs, onSend }: { convs: any[]; onSend: (id: number,
           </div>
         </div>
         <div className="flex-1 flex flex-col">
-          <div className="px-5 py-3.5 border-b border-border flex items-center gap-3">
-            <div className="h-8 w-8 rounded-full bg-gradient-to-br from-[#3a3a3a] to-[#111] flex items-center justify-center text-white text-[11px] font-semibold">
+          <div className="px-5 py-3.5 flex items-center gap-3" style={{ borderBottom: `1px solid ${C.border}` }}>
+            <div
+              className="h-8 w-8 rounded-full flex items-center justify-center text-[11px] font-semibold"
+              style={{ background: `linear-gradient(135deg,${C.em},#00A87A)`, color: "#0D1612" }}
+            >
               {conv.name.charAt(0)}
             </div>
             <div>
-              <div className="text-[13.5px] font-semibold">{conv.name}</div>
-              <div className="text-[11.5px] text-muted-foreground">{conv.project}</div>
+              <div className="text-[13.5px] font-semibold" style={{ color: C.fg }}>
+                {conv.name}
+              </div>
+              <div className="text-[11.5px]" style={{ color: C.muted }}>
+                {conv.project}
+              </div>
             </div>
           </div>
           <div className="flex-1 overflow-y-auto px-5 py-4 space-y-3">
-            {conv.msgs.map((m: Message, i: number) => (
+            {conv.msgs.map((m: Msg, i: number) => (
               <div key={i} className={`flex ${m.from === "Você" ? "justify-end" : "justify-start"}`}>
                 <div
-                  className={`max-w-[70%] rounded-2xl px-4 py-2.5 text-[13px] ${m.from === "Você" ? "bg-[#111] text-white rounded-br-sm" : "bg-[#f5f5f5] text-foreground rounded-bl-sm"}`}
+                  className="max-w-[70%] rounded-2xl px-4 py-2.5 text-[13px]"
+                  style={
+                    m.from === "Você"
+                      ? {
+                          background: `linear-gradient(135deg,${C.em},#00A87A)`,
+                          color: "#0D1612",
+                          borderRadius: "1rem 1rem 2px 1rem",
+                        }
+                      : {
+                          background: C.card,
+                          color: C.fg,
+                          border: `1px solid ${C.border}`,
+                          borderRadius: "1rem 1rem 1rem 2px",
+                        }
+                  }
                 >
                   <div>{m.text}</div>
-                  <div
-                    className={`text-[10.5px] mt-1 ${m.from === "Você" ? "text-white/50" : "text-muted-foreground"}`}
-                  >
+                  <div className="text-[10.5px] mt-1" style={{ opacity: 0.6 }}>
                     {m.time}
                   </div>
                 </div>
               </div>
             ))}
-            <div ref={messagesEndRef} />
+            <div ref={endRef} />
           </div>
-          <div className="px-5 py-3.5 border-t border-border flex items-center gap-3">
+          <div className="px-5 py-3.5 flex items-center gap-3" style={{ borderTop: `1px solid ${C.border}` }}>
             <input
-              className={inputCls}
+              className="flex-1 rounded-xl px-4 py-2 text-[13px] outline-none"
+              style={{ background: C.card, border: `1px solid ${C.border}`, color: C.fg }}
               placeholder="Escreva uma mensagem…"
               value={draft}
               onChange={(e) => setDraft(e.target.value)}
@@ -1806,18 +2223,34 @@ function MensagensScreen({ convs, onSend }: { convs: any[]; onSend: (id: number,
             />
             <button
               onClick={send}
-              className="h-9 w-9 rounded-lg bg-[#111] text-white flex items-center justify-center shrink-0 hover:bg-black transition-colors"
+              className="h-9 w-9 rounded-xl flex items-center justify-center shrink-0 transition-opacity hover:opacity-90"
+              style={{ background: `linear-gradient(135deg,${C.em},#00A87A)`, color: "#0D1612" }}
             >
               <Send className="h-4 w-4" strokeWidth={1.75} />
             </button>
           </div>
         </div>
-      </div>
+      </Card>
     </div>
   );
 }
 
-/* ══════════════ CONFIGURAÇÕES ══════════════ */
+function Toggle({ defaultOn }: { defaultOn: boolean }) {
+  const [on, setOn] = useState(defaultOn);
+  return (
+    <button
+      onClick={() => setOn((v) => !v)}
+      className="relative h-6 w-10 rounded-full transition-colors"
+      style={{ background: on ? C.em : C.border }}
+    >
+      <span
+        className="absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-all"
+        style={{ left: on ? "18px" : "2px" }}
+      />
+    </button>
+  );
+}
+
 function ConfiguracoesScreen() {
   const [nome, setNome] = useState("Élise Marchand");
   const [email, setEmail] = useState("elise@mediaworld.com.br");
@@ -1828,88 +2261,105 @@ function ConfiguracoesScreen() {
     setTimeout(() => setSaved(false), 2000);
   };
   return (
-    <div className="space-y-8 max-w-2xl">
-      <div>
-        <div className="text-[10.5px] uppercase tracking-[0.22em] text-muted-foreground font-semibold mb-2">
-          Sistema
-        </div>
-        <h1 className="text-[32px] font-light tracking-[-0.025em]">Configurações</h1>
-      </div>
-      <div className="rounded-2xl border border-border bg-white shadow-sm overflow-hidden">
-        <div className="px-6 pt-5 pb-4 border-b border-border">
-          <div className="flex items-center gap-2">
-            <User className="h-4 w-4 text-muted-foreground" strokeWidth={1.75} />
-            <h2 className="text-[15px] font-semibold">Perfil</h2>
-          </div>
+    <div className="max-w-2xl space-y-6">
+      <PageHeader eyebrow="Sistema" title="Configurações" sub="Preferências da sua conta" />
+      <Card className="overflow-hidden">
+        <div className="flex items-center gap-2 px-6 pt-5 pb-4" style={{ borderBottom: `1px solid ${C.border}` }}>
+          <User className="h-4 w-4" style={{ color: C.em }} strokeWidth={1.75} />
+          <h2 className="text-[15px] font-semibold" style={{ color: C.fg }}>
+            Perfil
+          </h2>
         </div>
         <div className="px-6 py-5 space-y-4">
           <div className="flex items-center gap-4 mb-6">
-            <div className="h-16 w-16 rounded-full bg-gradient-to-br from-[#2a2a2a] to-[#111] flex items-center justify-center text-white text-[20px] font-semibold">
+            <div
+              className="h-14 w-14 rounded-full flex items-center justify-center text-[18px] font-semibold"
+              style={{ background: `linear-gradient(135deg,${C.em},#00A87A)`, color: "#0D1612" }}
+            >
               {nome.charAt(0)}
             </div>
             <div>
-              <div className="text-[14px] font-semibold">{nome}</div>
-              <div className="text-[12px] text-muted-foreground">Produtora Executiva</div>
+              <div className="text-[14px] font-semibold" style={{ color: C.fg }}>
+                {nome}
+              </div>
+              <div className="text-[12px]" style={{ color: C.muted }}>
+                Produtora Executiva
+              </div>
             </div>
           </div>
-          <Field label="Nome completo">
-            <input className={inputCls} value={nome} onChange={(e) => setNome(e.target.value)} />
-          </Field>
-          <Field label="E-mail">
-            <input className={inputCls} value={email} onChange={(e) => setEmail(e.target.value)} />
-          </Field>
-          <Field label="Nome da produtora">
-            <input className={inputCls} value={empresa} onChange={(e) => setEmpresa(e.target.value)} />
-          </Field>
+          {[
+            ["Nome completo", nome, setNome],
+            ["E-mail", email, setEmail],
+            ["Produtora", empresa, setEmpresa],
+          ].map(([l, v, fn]: any) => (
+            <Field key={l} label={l}>
+              <input
+                className="w-full rounded-xl px-3 py-2 text-[13px] outline-none"
+                style={{ background: C.hover, border: `1px solid ${C.border}`, color: C.fg }}
+                value={v}
+                onChange={(e) => fn(e.target.value)}
+              />
+            </Field>
+          ))}
         </div>
-      </div>
-      <div className="rounded-2xl border border-border bg-white shadow-sm overflow-hidden">
-        <div className="px-6 pt-5 pb-4 border-b border-border">
-          <div className="flex items-center gap-2">
-            <Lock className="h-4 w-4 text-muted-foreground" strokeWidth={1.75} />
-            <h2 className="text-[15px] font-semibold">Segurança</h2>
-          </div>
+      </Card>
+      <Card className="overflow-hidden">
+        <div className="flex items-center gap-2 px-6 pt-5 pb-4" style={{ borderBottom: `1px solid ${C.border}` }}>
+          <Lock className="h-4 w-4" style={{ color: C.em }} strokeWidth={1.75} />
+          <h2 className="text-[15px] font-semibold" style={{ color: C.fg }}>
+            Segurança
+          </h2>
         </div>
         <div className="px-6 py-5 space-y-4">
-          <Field label="Senha atual">
-            <input type="password" className={inputCls} placeholder="••••••••" />
-          </Field>
-          <Field label="Nova senha">
-            <input type="password" className={inputCls} placeholder="••••••••" />
-          </Field>
-          <Field label="Confirmar nova senha">
-            <input type="password" className={inputCls} placeholder="••••••••" />
-          </Field>
+          {["Senha atual", "Nova senha", "Confirmar nova senha"].map((l) => (
+            <Field key={l} label={l}>
+              <input
+                type="password"
+                className="w-full rounded-xl px-3 py-2 text-[13px] outline-none"
+                style={{ background: C.hover, border: `1px solid ${C.border}`, color: C.fg }}
+                placeholder="••••••••"
+              />
+            </Field>
+          ))}
         </div>
-      </div>
-      <div className="rounded-2xl border border-border bg-white shadow-sm overflow-hidden">
-        <div className="px-6 pt-5 pb-4 border-b border-border">
-          <div className="flex items-center gap-2">
-            <Bell className="h-4 w-4 text-muted-foreground" strokeWidth={1.75} />
-            <h2 className="text-[15px] font-semibold">Notificações</h2>
-          </div>
+      </Card>
+      <Card className="overflow-hidden">
+        <div className="flex items-center gap-2 px-6 pt-5 pb-4" style={{ borderBottom: `1px solid ${C.border}` }}>
+          <Bell className="h-4 w-4" style={{ color: C.em }} strokeWidth={1.75} />
+          <h2 className="text-[15px] font-semibold" style={{ color: C.fg }}>
+            Notificações
+          </h2>
         </div>
-        <div className="px-6 py-5 divide-y divide-border">
+        <div className="px-6 py-2">
           {[
             { label: "Aprovações pendentes", desc: "Quando um projeto aguarda sua aprovação" },
             { label: "Novas mensagens", desc: "Quando clientes enviam mensagens" },
             { label: "Prazos próximos", desc: "48h antes de um prazo vencer" },
             { label: "Novos pagamentos", desc: "Quando uma fatura é paga" },
           ].map((item, i) => (
-            <div key={i} className="flex items-center justify-between py-3.5">
+            <div
+              key={i}
+              className="flex items-center justify-between py-3.5"
+              style={{ borderBottom: i < 3 ? `1px solid ${C.border}` : "none" }}
+            >
               <div>
-                <div className="text-[13px] font-medium">{item.label}</div>
-                <div className="text-[11.5px] text-muted-foreground mt-0.5">{item.desc}</div>
+                <div className="text-[13px] font-medium" style={{ color: C.fg }}>
+                  {item.label}
+                </div>
+                <div className="text-[11.5px] mt-0.5" style={{ color: C.muted }}>
+                  {item.desc}
+                </div>
               </div>
               <Toggle defaultOn={i < 3} />
             </div>
           ))}
         </div>
-      </div>
+      </Card>
       <div className="flex items-center gap-3">
         <button
           onClick={save}
-          className="flex items-center gap-2 rounded-lg bg-[#111] text-white px-5 py-2.5 text-[13px] font-semibold hover:bg-black transition-colors shadow-sm"
+          className="flex items-center gap-2 rounded-xl px-5 py-2.5 text-[13px] font-semibold shadow-lg transition-opacity hover:opacity-90"
+          style={{ background: `linear-gradient(135deg,${C.em},#00A87A)`, color: "#0D1612" }}
         >
           {saved ? (
             <>
@@ -1923,7 +2373,10 @@ function ConfiguracoesScreen() {
             </>
           )}
         </button>
-        <button className="flex items-center gap-2 rounded-lg border border-border bg-white text-muted-foreground px-5 py-2.5 text-[13px] font-medium hover:text-foreground transition-colors shadow-xs">
+        <button
+          className="flex items-center gap-2 rounded-xl px-5 py-2.5 text-[13px] font-medium"
+          style={{ background: C.card, border: `1px solid ${C.border}`, color: C.muted }}
+        >
           <LogOut className="h-4 w-4" strokeWidth={1.75} />
           Sair
         </button>
@@ -1932,55 +2385,98 @@ function ConfiguracoesScreen() {
   );
 }
 
-function Toggle({ defaultOn }: { defaultOn: boolean }) {
-  const [on, setOn] = useState(defaultOn);
-  return (
-    <button
-      onClick={() => setOn((v) => !v)}
-      className={`relative h-6 w-10 rounded-full transition-colors ${on ? "bg-[#111]" : "bg-[#d4d4d4]"}`}
-    >
-      <span
-        className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-all ${on ? "left-[18px]" : "left-0.5"}`}
-      />
-    </button>
-  );
-}
-
-/* ══════════════ MODALS ══════════════ */
-function ModalShell({
+function Modal({
   title,
   onClose,
   children,
-  footer,
+  onSave,
+  saveLabel = "Salvar",
 }: {
   title: string;
   onClose: () => void;
   children: React.ReactNode;
-  footer: React.ReactNode;
+  onSave: () => void;
+  saveLabel?: string;
 }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-      <div className="bg-white rounded-2xl border border-border shadow-xl w-full max-w-lg mx-4 overflow-hidden">
-        <div className="flex items-center justify-between px-6 pt-6 pb-4 border-b border-border">
-          <h2 className="text-[17px] font-semibold tracking-tight">{title}</h2>
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center"
+      style={{ background: "rgba(0,0,0,0.7)", backdropFilter: "blur(8px)" }}
+    >
+      <div
+        className="rounded-2xl w-full max-w-lg mx-4 overflow-hidden shadow-2xl"
+        style={{ background: C.surface, border: `1px solid ${C.border}` }}
+      >
+        <div
+          className="flex items-center justify-between px-6 pt-6 pb-4"
+          style={{ borderBottom: `1px solid ${C.border}` }}
+        >
+          <h2 className="text-[17px] font-semibold" style={{ color: C.fg }}>
+            {title}
+          </h2>
           <button
             onClick={onClose}
-            className="h-8 w-8 rounded-lg flex items-center justify-center text-muted-foreground hover:bg-[#f5f5f5] transition-colors"
+            className="h-8 w-8 rounded-xl flex items-center justify-center"
+            style={{ color: C.muted, background: C.card }}
           >
             <X className="h-4 w-4" strokeWidth={1.75} />
           </button>
         </div>
         <div className="px-6 py-5 space-y-4">{children}</div>
-        <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-border bg-[#fafafa]">
-          {footer}
+        <div
+          className="flex items-center justify-end gap-3 px-6 py-4"
+          style={{ borderTop: `1px solid ${C.border}`, background: C.card }}
+        >
+          <button onClick={onClose} className="px-4 py-2 text-[13px] rounded-xl" style={{ color: C.muted }}>
+            Cancelar
+          </button>
+          <button
+            onClick={onSave}
+            className="px-5 py-2 text-[13px] font-semibold rounded-xl shadow-lg hover:opacity-90"
+            style={{ background: `linear-gradient(135deg,${C.em},#00A87A)`, color: "#0D1612" }}
+          >
+            {saveLabel}
+          </button>
         </div>
       </div>
     </div>
   );
 }
 
+function MInput({ label, value, onChange, placeholder, type = "text", list }: any) {
+  return (
+    <Field label={label}>
+      <input
+        type={type}
+        list={list}
+        className="w-full rounded-xl px-3 py-2 text-[13px] outline-none"
+        style={{ background: C.card, border: `1px solid ${C.border}`, color: C.fg }}
+        placeholder={placeholder}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+      />
+    </Field>
+  );
+}
+function MSelect({ label, value, onChange, options }: any) {
+  return (
+    <Field label={label}>
+      <select
+        className="w-full rounded-xl px-3 py-2 text-[13px] outline-none"
+        style={{ background: C.card, border: `1px solid ${C.border}`, color: C.fg }}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+      >
+        {options.map((o: string) => (
+          <option key={o}>{o}</option>
+        ))}
+      </select>
+    </Field>
+  );
+}
+
 function ProjectModal({ editing, clients, onSave, onClose }: any) {
-  const [form, setForm] = useState({
+  const [f, setF] = useState({
     name: editing?.name ?? "",
     client: editing?.client ?? "",
     status: editing?.status ?? "Pré-produção",
@@ -1988,152 +2484,83 @@ function ProjectModal({ editing, clients, onSave, onClose }: any) {
     owner: editing?.owner ?? "",
     progress: editing?.progress ?? 0,
   });
-  const set = (k: string, v: any) => setForm((p) => ({ ...p, [k]: v }));
+  const s = (k: string, v: any) => setF((p) => ({ ...p, [k]: v }));
   return (
-    <ModalShell
+    <Modal
       title={editing ? "Editar projeto" : "Novo projeto"}
       onClose={onClose}
-      footer={
-        <>
-          <button
-            onClick={onClose}
-            className="px-4 py-2 text-[13px] text-muted-foreground hover:text-foreground rounded-lg transition-colors"
-          >
-            Cancelar
-          </button>
-          <button
-            onClick={() => {
-              if (form.name.trim()) onSave(form);
-            }}
-            className="px-5 py-2 text-[13px] font-semibold bg-[#111] text-white rounded-lg hover:bg-black transition-colors"
-          >
-            {editing ? "Salvar" : "Criar projeto"}
-          </button>
-        </>
-      }
+      onSave={() => {
+        if (f.name.trim()) onSave(f);
+      }}
+      saveLabel={editing ? "Salvar" : "Criar projeto"}
     >
-      <Field label="Nome do projeto">
-        <input
-          className={inputCls}
-          value={form.name}
-          onChange={(e) => set("name", e.target.value)}
-          placeholder="Ex: Nike — Campanha Verão"
-        />
-      </Field>
-      <Field label="Cliente">
-        <input
-          className={inputCls}
-          value={form.client}
-          onChange={(e) => set("client", e.target.value)}
-          list="cl-list"
-          placeholder="Nome do cliente"
-        />
-        <datalist id="cl-list">
-          {clients.map((c: Client) => (
-            <option key={c.id} value={c.name} />
-          ))}
-        </datalist>
-      </Field>
+      <MInput
+        label="Nome"
+        value={f.name}
+        onChange={(v: string) => s("name", v)}
+        placeholder="Ex: Nike — Campanha Verão"
+      />
+      <MInput
+        label="Cliente"
+        value={f.client}
+        onChange={(v: string) => s("client", v)}
+        placeholder="Nome do cliente"
+        list="p-cl"
+      />
+      <datalist id="p-cl">
+        {clients.map((c: Client) => (
+          <option key={c.id} value={c.name} />
+        ))}
+      </datalist>
       <div className="grid grid-cols-2 gap-4">
-        <Field label="Status">
-          <select className={inputCls} value={form.status} onChange={(e) => set("status", e.target.value)}>
-            {STATUS_OPTIONS.map((s) => (
-              <option key={s}>{s}</option>
-            ))}
-          </select>
-        </Field>
-        <Field label="Prazo">
-          <input
-            className={inputCls}
-            value={form.deadline}
-            onChange={(e) => set("deadline", e.target.value)}
-            placeholder="Ex: 30 jun"
-          />
-        </Field>
+        <MSelect label="Status" value={f.status} onChange={(v: string) => s("status", v)} options={STATUS_OPTIONS} />
+        <MInput label="Prazo" value={f.deadline} onChange={(v: string) => s("deadline", v)} placeholder="Ex: 30 jun" />
       </div>
-      <Field label="Responsável">
-        <input
-          className={inputCls}
-          value={form.owner}
-          onChange={(e) => set("owner", e.target.value)}
-          placeholder="Nome do responsável"
-        />
-      </Field>
-      <Field label={`Progresso — ${form.progress}%`}>
+      <MInput label="Responsável" value={f.owner} onChange={(v: string) => s("owner", v)} placeholder="Nome" />
+      <Field label={`Progresso — ${f.progress}%`}>
         <input
           type="range"
           min={0}
           max={100}
-          value={form.progress}
-          onChange={(e) => set("progress", Number(e.target.value))}
-          className="w-full accent-[#111]"
+          value={f.progress}
+          onChange={(e) => s("progress", Number(e.target.value))}
+          className="w-full"
+          style={{ accentColor: C.em }}
         />
       </Field>
-    </ModalShell>
+    </Modal>
   );
 }
-
 function ClientModal({ editing, onSave, onClose }: any) {
-  const [form, setForm] = useState({
+  const [f, setF] = useState({
     name: editing?.name ?? "",
     project: editing?.project ?? "",
     status: editing?.status ?? "",
     last: editing?.last ?? "agora",
   });
-  const set = (k: string, v: string) => setForm((p) => ({ ...p, [k]: v }));
+  const s = (k: string, v: string) => setF((p) => ({ ...p, [k]: v }));
   return (
-    <ModalShell
+    <Modal
       title={editing ? "Editar cliente" : "Novo cliente"}
       onClose={onClose}
-      footer={
-        <>
-          <button
-            onClick={onClose}
-            className="px-4 py-2 text-[13px] text-muted-foreground hover:text-foreground rounded-lg transition-colors"
-          >
-            Cancelar
-          </button>
-          <button
-            onClick={() => {
-              if (form.name.trim()) onSave(form);
-            }}
-            className="px-5 py-2 text-[13px] font-semibold bg-[#111] text-white rounded-lg hover:bg-black transition-colors"
-          >
-            {editing ? "Salvar" : "Adicionar cliente"}
-          </button>
-        </>
-      }
+      onSave={() => {
+        if (f.name.trim()) onSave(f);
+      }}
+      saveLabel={editing ? "Salvar" : "Adicionar"}
     >
-      <Field label="Nome do cliente">
-        <input
-          className={inputCls}
-          value={form.name}
-          onChange={(e) => set("name", e.target.value)}
-          placeholder="Ex: Nike Brasil"
-        />
-      </Field>
-      <Field label="Projeto atual">
-        <input
-          className={inputCls}
-          value={form.project}
-          onChange={(e) => set("project", e.target.value)}
-          placeholder="Nome do projeto"
-        />
-      </Field>
-      <Field label="Status do relacionamento">
-        <input
-          className={inputCls}
-          value={form.status}
-          onChange={(e) => set("status", e.target.value)}
-          placeholder="Ex: Em produção, Aguardando briefing…"
-        />
-      </Field>
-    </ModalShell>
+      <MInput label="Nome" value={f.name} onChange={(v: string) => s("name", v)} placeholder="Ex: Nike Brasil" />
+      <MInput
+        label="Projeto atual"
+        value={f.project}
+        onChange={(v: string) => s("project", v)}
+        placeholder="Nome do projeto"
+      />
+      <MInput label="Status" value={f.status} onChange={(v: string) => s("status", v)} placeholder="Ex: Em produção" />
+    </Modal>
   );
 }
-
 function EntregaModal({ editing, projects, onSave, onClose }: any) {
-  const [form, setForm] = useState({
+  const [f, setF] = useState({
     project: editing?.project ?? "",
     client: editing?.client ?? "",
     file: editing?.file ?? "",
@@ -2142,173 +2569,107 @@ function EntregaModal({ editing, projects, onSave, onClose }: any) {
     size: editing?.size ?? "",
     urgent: editing?.urgent ?? false,
   });
-  const set = (k: string, v: any) => setForm((p) => ({ ...p, [k]: v }));
+  const s = (k: string, v: any) => setF((p) => ({ ...p, [k]: v }));
   return (
-    <ModalShell
+    <Modal
       title={editing ? "Editar entrega" : "Nova entrega"}
       onClose={onClose}
-      footer={
-        <>
-          <button
-            onClick={onClose}
-            className="px-4 py-2 text-[13px] text-muted-foreground hover:text-foreground rounded-lg transition-colors"
-          >
-            Cancelar
-          </button>
-          <button
-            onClick={() => {
-              if (form.project.trim()) onSave(form);
-            }}
-            className="px-5 py-2 text-[13px] font-semibold bg-[#111] text-white rounded-lg hover:bg-black transition-colors"
-          >
-            {editing ? "Salvar" : "Criar entrega"}
-          </button>
-        </>
-      }
+      onSave={() => {
+        if (f.project.trim()) onSave(f);
+      }}
+      saveLabel={editing ? "Salvar" : "Criar"}
     >
-      <Field label="Projeto">
-        <input
-          className={inputCls}
-          value={form.project}
-          onChange={(e) => set("project", e.target.value)}
-          list="proj-list"
-          placeholder="Nome do projeto"
-        />
-        <datalist id="proj-list">
-          {projects.map((p: Project) => (
-            <option key={p.id} value={p.name} />
-          ))}
-        </datalist>
-      </Field>
-      <Field label="Cliente">
-        <input
-          className={inputCls}
-          value={form.client}
-          onChange={(e) => set("client", e.target.value)}
-          placeholder="Nome do cliente"
-        />
-      </Field>
-      <Field label="Nome do arquivo">
-        <input
-          className={inputCls}
-          value={form.file}
-          onChange={(e) => set("file", e.target.value)}
-          placeholder="Ex: Corte_Final_v3.mp4"
-        />
-      </Field>
+      <MInput
+        label="Projeto"
+        value={f.project}
+        onChange={(v: string) => s("project", v)}
+        placeholder="Nome do projeto"
+        list="e-p"
+      />
+      <datalist id="e-p">
+        {projects.map((p: Project) => (
+          <option key={p.id} value={p.name} />
+        ))}
+      </datalist>
+      <MInput label="Cliente" value={f.client} onChange={(v: string) => s("client", v)} placeholder="Nome do cliente" />
+      <MInput
+        label="Arquivo"
+        value={f.file}
+        onChange={(v: string) => s("file", v)}
+        placeholder="Ex: Corte_Final_v3.mp4"
+      />
       <div className="grid grid-cols-2 gap-4">
-        <Field label="Status">
-          <select className={inputCls} value={form.status} onChange={(e) => set("status", e.target.value)}>
-            {["Pendente", "Em revisão", "Aguardando aprovação", "Aprovado", "Enviado"].map((s) => (
-              <option key={s}>{s}</option>
-            ))}
-          </select>
-        </Field>
-        <Field label="Prazo">
-          <input
-            className={inputCls}
-            value={form.date}
-            onChange={(e) => set("date", e.target.value)}
-            placeholder="Ex: 30 jun"
-          />
-        </Field>
-      </div>
-      <Field label="Tamanho do arquivo">
-        <input
-          className={inputCls}
-          value={form.size}
-          onChange={(e) => set("size", e.target.value)}
-          placeholder="Ex: 4.2 GB"
+        <MSelect
+          label="Status"
+          value={f.status}
+          onChange={(v: string) => s("status", v)}
+          options={["Pendente", "Em revisão", "Aguardando aprovação", "Aprovado", "Enviado"]}
         />
-      </Field>
+        <MInput label="Prazo" value={f.date} onChange={(v: string) => s("date", v)} placeholder="Ex: 30 jun" />
+      </div>
+      <MInput label="Tamanho" value={f.size} onChange={(v: string) => s("size", v)} placeholder="Ex: 4.2 GB" />
       <label className="flex items-center gap-2 cursor-pointer">
         <input
           type="checkbox"
-          checked={form.urgent}
-          onChange={(e) => set("urgent", e.target.checked)}
-          className="accent-[#111]"
+          checked={f.urgent}
+          onChange={(e) => s("urgent", e.target.checked)}
+          style={{ accentColor: C.em }}
         />
-        <span className="text-[13px] text-foreground">Marcar como urgente</span>
+        <span className="text-[13px]" style={{ color: C.fgDim }}>
+          Urgente
+        </span>
       </label>
-    </ModalShell>
+    </Modal>
   );
 }
-
 function PropostaModal({ editing, clients, onSave, onClose }: any) {
-  const [form, setForm] = useState({
+  const [f, setF] = useState({
     title: editing?.title ?? "",
     client: editing?.client ?? "",
     value: editing?.value ?? "",
     status: editing?.status ?? "Rascunho",
     date: editing?.date ?? "",
   });
-  const set = (k: string, v: string) => setForm((p) => ({ ...p, [k]: v }));
+  const s = (k: string, v: string) => setF((p) => ({ ...p, [k]: v }));
   return (
-    <ModalShell
+    <Modal
       title={editing ? "Editar proposta" : "Nova proposta"}
       onClose={onClose}
-      footer={
-        <>
-          <button
-            onClick={onClose}
-            className="px-4 py-2 text-[13px] text-muted-foreground hover:text-foreground rounded-lg transition-colors"
-          >
-            Cancelar
-          </button>
-          <button
-            onClick={() => {
-              if (form.title.trim()) onSave(form);
-            }}
-            className="px-5 py-2 text-[13px] font-semibold bg-[#111] text-white rounded-lg hover:bg-black transition-colors"
-          >
-            {editing ? "Salvar" : "Criar proposta"}
-          </button>
-        </>
-      }
+      onSave={() => {
+        if (f.title.trim()) onSave(f);
+      }}
+      saveLabel={editing ? "Salvar" : "Criar"}
     >
-      <Field label="Título da proposta">
-        <input
-          className={inputCls}
-          value={form.title}
-          onChange={(e) => set("title", e.target.value)}
-          placeholder="Ex: Campanha Verão 2026"
-        />
-      </Field>
-      <Field label="Cliente">
-        <input
-          className={inputCls}
-          value={form.client}
-          onChange={(e) => set("client", e.target.value)}
-          list="cl2-list"
-          placeholder="Nome do cliente"
-        />
-        <datalist id="cl2-list">
-          {clients.map((c: Client) => (
-            <option key={c.id} value={c.name} />
-          ))}
-        </datalist>
-      </Field>
-      <Field label="Valor">
-        <input
-          className={inputCls}
-          value={form.value}
-          onChange={(e) => set("value", e.target.value)}
-          placeholder="Ex: R$ 84.000"
-        />
-      </Field>
-      <Field label="Status">
-        <select className={inputCls} value={form.status} onChange={(e) => set("status", e.target.value)}>
-          {["Rascunho", "Enviada", "Em negociação", "Aprovada", "Recusada"].map((s) => (
-            <option key={s}>{s}</option>
-          ))}
-        </select>
-      </Field>
-    </ModalShell>
+      <MInput
+        label="Título"
+        value={f.title}
+        onChange={(v: string) => s("title", v)}
+        placeholder="Ex: Campanha Verão 2026"
+      />
+      <MInput
+        label="Cliente"
+        value={f.client}
+        onChange={(v: string) => s("client", v)}
+        placeholder="Nome do cliente"
+        list="pr-cl"
+      />
+      <datalist id="pr-cl">
+        {clients.map((c: Client) => (
+          <option key={c.id} value={c.name} />
+        ))}
+      </datalist>
+      <MInput label="Valor" value={f.value} onChange={(v: string) => s("value", v)} placeholder="Ex: R$ 84.000" />
+      <MSelect
+        label="Status"
+        value={f.status}
+        onChange={(v: string) => s("status", v)}
+        options={["Rascunho", "Enviada", "Em negociação", "Aprovada", "Recusada"]}
+      />
+    </Modal>
   );
 }
-
 function GravacaoModal({ editing, clients, onSave, onClose }: any) {
-  const [form, setForm] = useState({
+  const [f, setF] = useState({
     title: editing?.title ?? "",
     client: editing?.client ?? "",
     local: editing?.local ?? "",
@@ -2316,253 +2677,40 @@ function GravacaoModal({ editing, clients, onSave, onClose }: any) {
     time: editing?.time ?? "",
     crew: editing?.crew ?? "",
   });
-  const set = (k: string, v: string) => setForm((p) => ({ ...p, [k]: v }));
+  const s = (k: string, v: string) => setF((p) => ({ ...p, [k]: v }));
   return (
-    <ModalShell
+    <Modal
       title={editing ? "Editar gravação" : "Agendar gravação"}
       onClose={onClose}
-      footer={
-        <>
-          <button
-            onClick={onClose}
-            className="px-4 py-2 text-[13px] text-muted-foreground hover:text-foreground rounded-lg transition-colors"
-          >
-            Cancelar
-          </button>
-          <button
-            onClick={() => {
-              if (form.title.trim()) onSave(form);
-            }}
-            className="px-5 py-2 text-[13px] font-semibold bg-[#111] text-white rounded-lg hover:bg-black transition-colors"
-          >
-            {editing ? "Salvar" : "Agendar"}
-          </button>
-        </>
-      }
+      onSave={() => {
+        if (f.title.trim()) onSave(f);
+      }}
+      saveLabel={editing ? "Salvar" : "Agendar"}
     >
-      <Field label="Título">
-        <input
-          className={inputCls}
-          value={form.title}
-          onChange={(e) => set("title", e.target.value)}
-          placeholder="Ex: Gravação campanha Nike"
-        />
-      </Field>
-      <Field label="Cliente">
-        <input
-          className={inputCls}
-          value={form.client}
-          onChange={(e) => set("client", e.target.value)}
-          list="cl3-list"
-          placeholder="Nome do cliente"
-        />
-        <datalist id="cl3-list">
-          {clients.map((c: Client) => (
-            <option key={c.id} value={c.name} />
-          ))}
-        </datalist>
-      </Field>
-      <Field label="Local">
-        <input
-          className={inputCls}
-          value={form.local}
-          onChange={(e) => set("local", e.target.value)}
-          placeholder="Ex: Studio A, São Paulo"
-        />
-      </Field>
+      <MInput label="Título" value={f.title} onChange={(v: string) => s("title", v)} placeholder="Ex: Gravação Nike" />
+      <MInput
+        label="Cliente"
+        value={f.client}
+        onChange={(v: string) => s("client", v)}
+        placeholder="Nome do cliente"
+        list="g-cl"
+      />
+      <datalist id="g-cl">
+        {clients.map((c: Client) => (
+          <option key={c.id} value={c.name} />
+        ))}
+      </datalist>
+      <MInput label="Local" value={f.local} onChange={(v: string) => s("local", v)} placeholder="Ex: Studio A" />
       <div className="grid grid-cols-2 gap-4">
-        <Field label="Data">
-          <input
-            className={inputCls}
-            value={form.date}
-            onChange={(e) => set("date", e.target.value)}
-            placeholder="Ex: 20 jun"
-          />
-        </Field>
-        <Field label="Horário">
-          <input
-            className={inputCls}
-            value={form.time}
-            onChange={(e) => set("time", e.target.value)}
-            placeholder="Ex: 09:00"
-          />
-        </Field>
+        <MInput label="Data" value={f.date} onChange={(v: string) => s("date", v)} placeholder="Ex: 20 jun" />
+        <MInput label="Horário" value={f.time} onChange={(v: string) => s("time", v)} placeholder="Ex: 09:00" />
       </div>
-      <Field label="Equipe">
-        <input
-          className={inputCls}
-          value={form.crew}
-          onChange={(e) => set("crew", e.target.value)}
-          placeholder="Ex: Léon B., Margaux T."
-        />
-      </Field>
-    </ModalShell>
-  );
-}
-
-/* ══════════════ DASHBOARD WIDGETS (stubs) ══════════════ */
-function SectionCard({ title, caption, children }: { title: string; caption?: string; children: React.ReactNode }) {
-  return (
-    <div className="rounded-2xl border border-border bg-white p-5 shadow-sm">
-      <div className="flex items-end justify-between mb-4">
-        <div>
-          <div className="text-[10.5px] uppercase tracking-[0.18em] text-muted-foreground font-semibold">{title}</div>
-          {caption && <div className="text-[12px] text-muted-foreground mt-1">{caption}</div>}
-        </div>
-      </div>
-      {children}
-    </div>
-  );
-}
-
-function ProjectsTable({
-  projects,
-  onEdit,
-  onDelete,
-}: {
-  projects: Project[];
-  onEdit: (p: Project) => void;
-  onDelete: (id: number) => void;
-}) {
-  return (
-    <SectionCard title="Projetos recentes" caption={`${projects.length} projetos`}>
-      <div className="divide-y divide-border">
-        {projects.slice(0, 6).map((p) => (
-          <div key={p.id} className="flex items-center gap-4 py-3">
-            <div className="min-w-0 flex-1">
-              <div className="text-[13.5px] font-medium truncate">{p.name}</div>
-              <div className="text-[11.5px] text-muted-foreground truncate">
-                {p.client} · {p.status} · {p.deadline}
-              </div>
-            </div>
-            <div className="w-28 h-1.5 rounded-full bg-[#f1f1f1] overflow-hidden">
-              <div className="h-full bg-[#111]" style={{ width: `${p.progress}%` }} />
-            </div>
-            <button onClick={() => onEdit(p)} className="text-[11.5px] text-muted-foreground hover:text-foreground">
-              Editar
-            </button>
-            <button onClick={() => onDelete(p.id)} className="text-[11.5px] text-muted-foreground hover:text-foreground">
-              Excluir
-            </button>
-          </div>
-        ))}
-      </div>
-    </SectionCard>
-  );
-}
-
-function PipelineMini({ projects }: { projects: Project[] }) {
-  const stages: ProjectStatus[] = ["Pré-produção", "Gravação", "Edição", "Pós-produção", "Aprovação", "Entregue"];
-  return (
-    <SectionCard title="Pipeline" caption="Distribuição por etapa">
-      <div className="grid grid-cols-6 gap-2">
-        {stages.map((s) => {
-          const count = projects.filter((p) => p.status === s).length;
-          return (
-            <div key={s} className="rounded-lg border border-border bg-[#fafafa] p-3 text-center">
-              <div className="text-[20px] font-semibold tabular-nums">{count}</div>
-              <div className="text-[10px] uppercase tracking-[0.12em] text-muted-foreground mt-1">{s}</div>
-            </div>
-          );
-        })}
-      </div>
-    </SectionCard>
-  );
-}
-
-function ClientsTable({
-  clients,
-  onEdit,
-  onDelete,
-}: {
-  clients: Client[];
-  onEdit: (c: Client) => void;
-  onDelete: (id: number) => void;
-}) {
-  return (
-    <SectionCard title="Clientes" caption={`${clients.length} ativos`}>
-      <div className="divide-y divide-border">
-        {clients.slice(0, 5).map((c) => (
-          <div key={c.id} className="flex items-center gap-4 py-3">
-            <div className="min-w-0 flex-1">
-              <div className="text-[13.5px] font-medium truncate">{c.name}</div>
-              <div className="text-[11.5px] text-muted-foreground truncate">
-                {c.project} · {c.status} · {c.last}
-              </div>
-            </div>
-            <button onClick={() => onEdit(c)} className="text-[11.5px] text-muted-foreground hover:text-foreground">
-              Editar
-            </button>
-            <button onClick={() => onDelete(c.id)} className="text-[11.5px] text-muted-foreground hover:text-foreground">
-              Excluir
-            </button>
-          </div>
-        ))}
-      </div>
-    </SectionCard>
-  );
-}
-
-function AgendaWidget({ gravacoes }: { gravacoes: Gravacao[] }) {
-  return (
-    <SectionCard title="Agenda" caption="Próximas gravações">
-      <div className="space-y-3">
-        {gravacoes.slice(0, 4).map((g) => (
-          <div key={g.id} className="flex items-start gap-3">
-            <div className="h-9 w-9 rounded-lg bg-[#f5f5f5] flex items-center justify-center shrink-0">
-              <Video className="h-4 w-4" strokeWidth={1.75} />
-            </div>
-            <div className="min-w-0 flex-1">
-              <div className="text-[12.5px] font-medium truncate">{g.title}</div>
-              <div className="text-[11px] text-muted-foreground truncate">
-                {g.date} · {g.time} · {g.local}
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
-    </SectionCard>
-  );
-}
-
-function DeadlinesWidget() {
-  return (
-    <SectionCard title="Prazos próximos" caption="Atenção esta semana">
-      <div className="text-[12.5px] text-muted-foreground">Nenhum prazo crítico.</div>
-    </SectionCard>
-  );
-}
-
-function NotificationsWidget() {
-  return (
-    <SectionCard title="Notificações" caption="Atualizações recentes">
-      <div className="text-[12.5px] text-muted-foreground">Tudo em dia.</div>
-    </SectionCard>
-  );
-}
-
-function FinancialWidget() {
-  return (
-    <div className="rounded-2xl border border-[#1a1a1a] bg-[#111] text-white p-5 shadow-sm">
-      <div className="text-[10.5px] uppercase tracking-[0.18em] text-white/60 font-semibold">Resumo financeiro</div>
-      <div className="mt-4 space-y-3">
-        <div className="flex items-baseline justify-between">
-          <span className="text-[12px] text-white/60">Faturamento do mês</span>
-          <span className="text-[16px] font-semibold tabular-nums">R$ 482.350</span>
-        </div>
-        <div className="flex items-baseline justify-between">
-          <span className="text-[12px] text-white/60">Mês anterior</span>
-          <span className="text-[14px] tabular-nums text-white/80">R$ 407.120</span>
-        </div>
-        <div className="flex items-baseline justify-between">
-          <span className="text-[12px] text-white/60">Pagamentos pendentes</span>
-          <span className="text-[14px] tabular-nums text-white/80">R$ 96.200</span>
-        </div>
-        <div className="flex items-baseline justify-between">
-          <span className="text-[12px] text-white/60">Receita prevista</span>
-          <span className="text-[14px] tabular-nums text-white/80">R$ 612.000</span>
-        </div>
-      </div>
-    </div>
+      <MInput
+        label="Equipe"
+        value={f.crew}
+        onChange={(v: string) => s("crew", v)}
+        placeholder="Ex: Léon B., Margaux T."
+      />
+    </Modal>
   );
 }
