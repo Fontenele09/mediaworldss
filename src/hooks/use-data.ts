@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
-type Table = "projects" | "clients" | "entregas" | "propostas" | "gravacoes";
+type Table = "projects" | "clients" | "entregas" | "propostas" | "gravacoes" | "lancamentos";
 
 async function getUid() {
   const { data } = await supabase.auth.getUser();
@@ -80,9 +80,14 @@ export type GravacaoRow = {
   id: string; title: string; client: string | null; local: string | null;
   date: string | null; time: string | null; crew: string | null;
 };
+export type LancamentoRow = {
+  id: string; descricao: string; tipo: "Entrada" | "Saída"; valor: number;
+  data: string; status: "Recebido" | "Pago" | "Pendente";
+};
 
 export const projectsApi = makeHooks<ProjectRow>("projects");
 export const clientsApi = makeHooks<ClientRow>("clients");
 export const entregasApi = makeHooks<EntregaRow>("entregas");
 export const propostasApi = makeHooks<PropostaRow>("propostas");
 export const gravacoesApi = makeHooks<GravacaoRow>("gravacoes");
+export const lancamentosApi = makeHooks<LancamentoRow>("lancamentos", "data");

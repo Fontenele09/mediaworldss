@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useRef, useEffect } from "react";
-import { projectsApi, clientsApi, entregasApi, propostasApi, gravacoesApi } from "@/hooks/use-data";
+import { projectsApi, clientsApi, entregasApi, propostasApi, gravacoesApi, lancamentosApi, type LancamentoRow } from "@/hooks/use-data";
 import { supabase } from "@/integrations/supabase/client";
 import {
   ArrowRight, ArrowUpRight, Bell, Calendar, CheckCircle2,
@@ -183,12 +183,14 @@ function App() {
   const entregasQ = entregasApi.useList();
   const propostasQ= propostasApi.useList();
   const gravacoesQ= gravacoesApi.useList();
+  const lancamentosQ = lancamentosApi.useList();
 
   const projects  = (projectsQ.data  ?? []) as unknown as Project[];
   const clients   = (clientsQ.data   ?? []) as unknown as Client[];
   const entregas  = (entregasQ.data  ?? []) as unknown as Entrega[];
   const propostas = (propostasQ.data ?? []) as unknown as Proposta[];
   const gravacoes = (gravacoesQ.data ?? []) as unknown as Gravacao[];
+  const lancamentos = (lancamentosQ.data ?? []) as LancamentoRow[];
 
   const saveProjectM   = projectsApi.useSave();
   const deleteProjectM = projectsApi.useRemove();
@@ -200,6 +202,8 @@ function App() {
   const deletePropostaM= propostasApi.useRemove();
   const saveGravacaoM  = gravacoesApi.useSave();
   const deleteGravacaoM= gravacoesApi.useRemove();
+  const saveLancamentoM  = lancamentosApi.useSave();
+  const deleteLancamentoM= lancamentosApi.useRemove();
 
   const [notifs,   setNotifs]   = useState<Notif[]>([]);
   const [convs,    setConvs]    = useState(initConvs);
@@ -212,6 +216,7 @@ function App() {
   const [entregaModal,setEntregaModal]= useState<{open:boolean;e:Entrega|null}>({open:false,e:null});
   const [propModal,   setPropModal]   = useState<{open:boolean;e:Proposta|null}>({open:false,e:null});
   const [gravModal,   setGravModal]   = useState<{open:boolean;e:Gravacao|null}>({open:false,e:null});
+  const [lancModal,   setLancModal]   = useState<{open:boolean;e:LancamentoRow|null}>({open:false,e:null});
 
   const unread = notifs.filter(n=>!n.read).length;
 
@@ -220,6 +225,7 @@ function App() {
   const saveEntrega  = async (d:Omit<Entrega,"id">)  => { await saveEntregaM.mutateAsync(entregaModal.e?{...d,id:entregaModal.e.id}:d); setEntregaModal({open:false,e:null}); };
   const saveProposta = async (d:Omit<Proposta,"id">) => { await savePropostaM.mutateAsync(propModal.e?{...d,id:propModal.e.id}:d);   setPropModal({open:false,e:null}); };
   const saveGravacao = async (d:Omit<Gravacao,"id">) => { await saveGravacaoM.mutateAsync(gravModal.e?{...d,id:gravModal.e.id}:d);   setGravModal({open:false,e:null}); };
+  const saveLancamento = async (d:Omit<LancamentoRow,"id">) => { await saveLancamentoM.mutateAsync(lancModal.e?{...d,id:lancModal.e.id}:d as any); setLancModal({open:false,e:null}); };
 
   const sendMsg = (cid:number,text:string) => {
     const now=new Date(); const t=`${now.getHours().toString().padStart(2,"0")}:${now.getMinutes().toString().padStart(2,"0")}`;
@@ -268,7 +274,7 @@ function App() {
             {screen==="agenda"       && <AgendaScreen gravacoes={gravacoes} clients={clients} onNew={()=>setGravModal({open:true,e:null})} onEdit={(g:any)=>setGravModal({open:true,e:g})} onDelete={(id:string)=>deleteGravacaoM.mutate(id)} />}
             {screen==="entregas"     && <EntregasScreen entregas={entregas} projects={projects} onNew={()=>setEntregaModal({open:true,e:null})} onEdit={(e:any)=>setEntregaModal({open:true,e:e})} onDelete={(id:string)=>deleteEntregaM.mutate(id)} />}
             {screen==="propostas"    && <PropostasScreen propostas={propostas} clients={clients} onNew={()=>setPropModal({open:true,e:null})} onEdit={(p:any)=>setPropModal({open:true,e:p})} onDelete={(id:string)=>deletePropostaM.mutate(id)} />}
-            {screen==="financeiro"   && <FinanceiroScreen />}
+            {screen==="financeiro"   && <FinanceiroScreen lancamentos={lancamentos} onNew={()=>setLancModal({open:true,e:null})} onEdit={(l:LancamentoRow)=>setLancModal({open:true,e:l})} onDelete={(id:string)=>deleteLancamentoM.mutate(id)} />}
             {screen==="mensagens"    && <MensagensScreen convs={convs} onSend={sendMsg} />}
             {screen==="configuracoes"&& <ConfiguracoesScreen user={userProfile} onSignOut={handleSignOut} />}
           </div>
@@ -280,6 +286,7 @@ function App() {
       {entregaModal.open && <EntregaModal   editing={entregaModal.e} projects={projects} onSave={saveEntrega}  onClose={()=>setEntregaModal({open:false,e:null})} />}
       {propModal.open    && <PropostaModal  editing={propModal.e}    clients={clients}   onSave={saveProposta} onClose={()=>setPropModal({open:false,e:null})} />}
       {gravModal.open    && <GravacaoModal  editing={gravModal.e}    clients={clients}   onSave={saveGravacao} onClose={()=>setGravModal({open:false,e:null})} />}
+      {lancModal.open    && <LancamentoModal editing={lancModal.e}                       onSave={saveLancamento} onClose={()=>setLancModal({open:false,e:null})} />}
     </div>
   );
 }
@@ -958,19 +965,30 @@ function PropostasScreen({ propostas, clients, onNew, onEdit, onDelete }: any) {
 }
 
 /* ══ FINANCEIRO ══ */
-function FinanceiroScreen() {
+function FinanceiroScreen({ lancamentos, onNew, onEdit, onDelete }: { lancamentos:LancamentoRow[]; onNew:()=>void; onEdit:(l:LancamentoRow)=>void; onDelete:(id:string)=>void }) {
   const [tab,setTab]=useState<"resumo"|"lancamentos">("resumo");
-  const lancamentos=[
-    {desc:"Pagamento — Apple Originals",tipo:"Entrada",valor:"R$ 142.000",data:"10 jun",status:"Recebido"},
-    {desc:"Pagamento — Porsche AG (50%)",tipo:"Entrada",valor:"R$ 75.000",data:"08 jun",status:"Recebido"},
-    {desc:"Aluguel Studio A — junho",tipo:"Saída",valor:"R$ 8.500",data:"05 jun",status:"Pago"},
-    {desc:"Equipamentos — locação",tipo:"Saída",valor:"R$ 12.200",data:"07 jun",status:"Pago"},
-    {desc:"Fatura — Maison Hermès",tipo:"Entrada",valor:"R$ 96.200",data:"15 jun",status:"Pendente"},
+  const fmt = (n:number) => `R$ ${n.toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2})}`;
+  const fmtDate = (d:string) => { try { const [y,m,day]=d.split("-"); const months=["jan","fev","mar","abr","mai","jun","jul","ago","set","out","nov","dez"]; return `${day} ${months[+m-1]}`; } catch { return d; } };
+  const num = (l:LancamentoRow) => Number(l.valor) || 0;
+  const faturamento = lancamentos.filter(l=>l.tipo==="Entrada"&&l.status==="Recebido").reduce((s,l)=>s+num(l),0);
+  const despesas = lancamentos.filter(l=>l.tipo==="Saída"&&l.status==="Pago").reduce((s,l)=>s+num(l),0);
+  const lucro = faturamento - despesas;
+  const aReceber = lancamentos.filter(l=>l.tipo==="Entrada"&&l.status==="Pendente").reduce((s,l)=>s+num(l),0);
+  const aReceberCount = lancamentos.filter(l=>l.tipo==="Entrada"&&l.status==="Pendente").length;
+  const recebidosCount = lancamentos.filter(l=>l.status==="Recebido").length;
+  const pagosCount = lancamentos.filter(l=>l.status==="Pago").length;
+  const pendentesCount = lancamentos.filter(l=>l.status==="Pendente").length;
+  const kpis=[
+    {label:"Faturamento",value:fmt(faturamento),tone:"up" as const, delta:`${recebidosCount} recebidos`},
+    {label:"Despesas",value:fmt(despesas),tone:"warn" as const, delta:`${pagosCount} pagos`},
+    {label:"Lucro",value:fmt(lucro),tone:lucro>=0?"up" as const:"warn" as const, delta:faturamento>0?`${((lucro/faturamento)*100).toFixed(1)}% margem`:"—"},
+    {label:"A receber",value:fmt(aReceber),tone:"warn" as const, delta:`${aReceberCount} ${aReceberCount===1?"fatura":"faturas"}`},
   ];
-  const kpis=[{label:"Faturamento",value:"R$ 482.350",delta:"+18,4%",tone:"up"},{label:"Despesas",value:"R$ 68.400",delta:"+3,2%",tone:"warn"},{label:"Lucro",value:"R$ 413.950",delta:"+22,1%",tone:"up"},{label:"A receber",value:"R$ 96.200",delta:"1 fatura",tone:"warn"}];
+  const maxBar = Math.max(faturamento,despesas,1);
   return (
     <div>
-      <PageHeader eyebrow="Financeiro" title="Financeiro" sub="Junho de 2026" />
+      <PageHeader eyebrow="Financeiro" title="Financeiro" sub={`${lancamentos.length} ${lancamentos.length===1?"lançamento":"lançamentos"}`}
+        action={<Btn onClick={onNew}><Plus className="h-4 w-4" strokeWidth={2} />Novo lançamento</Btn>} />
       <div className="grid grid-cols-2 xl:grid-cols-4 gap-3 mb-6">
         {kpis.map(k=>(
           <Card key={k.label} className="p-4">
@@ -994,39 +1012,46 @@ function FinanceiroScreen() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <Card className="p-5">
             <div className="text-[13px] font-semibold mb-4" style={{color:C.fg}}>Receita vs Despesa</div>
-            {[{label:"Receita",v:482350,max:612000},{label:"Despesa",v:68400,max:612000},{label:"Previsto",v:612000,max:612000}].map(b=>(
+            {[{label:"Receita",v:faturamento},{label:"Despesa",v:despesas},{label:"Lucro",v:Math.max(lucro,0)}].map(b=>(
               <div key={b.label} className="mb-4">
-                <div className="flex justify-between mb-1.5"><span className="text-[12px]" style={{color:C.muted}}>{b.label}</span><span className="text-[12px] font-semibold tabular-nums" style={{color:C.fg}}>R$ {b.v.toLocaleString("pt-BR")}</span></div>
-                <div className="h-1.5 rounded-full overflow-hidden" style={{background:C.border}}><div className="h-full rounded-full" style={{width:`${(b.v/b.max)*100}%`,background:`linear-gradient(90deg,${C.em},#6B8EFF)`}} /></div>
+                <div className="flex justify-between mb-1.5"><span className="text-[12px]" style={{color:C.muted}}>{b.label}</span><span className="text-[12px] font-semibold tabular-nums" style={{color:C.fg}}>{fmt(b.v)}</span></div>
+                <div className="h-1.5 rounded-full overflow-hidden" style={{background:C.border}}><div className="h-full rounded-full" style={{width:`${Math.min((b.v/maxBar)*100,100)}%`,background:`linear-gradient(90deg,${C.em},#6B8EFF)`}} /></div>
               </div>
             ))}
           </Card>
           <Card className="p-5">
             <div className="text-[13px] font-semibold mb-4" style={{color:C.fg}}>Status dos pagamentos</div>
-            {[{label:"Recebidos",count:2,color:C.em},{label:"Pendentes",count:1,color:C.warn},{label:"Em atraso",count:1,color:C.danger}].map(s=>(
+            {[{label:"Recebidos",count:recebidosCount,color:C.em},{label:"Pagos",count:pagosCount,color:C.info},{label:"Pendentes",count:pendentesCount,color:C.warn}].map(s=>(
               <div key={s.label} className="flex items-center justify-between py-3" style={{borderBottom:`1px solid ${C.border}`}}>
                 <span className="text-[13px]" style={{color:C.fgDim}}>{s.label}</span>
-                <span className="text-[13px] font-semibold" style={{color:s.color}}>{s.count} faturas</span>
+                <span className="text-[13px] font-semibold" style={{color:s.color}}>{s.count} {s.count===1?"lançamento":"lançamentos"}</span>
               </div>
             ))}
           </Card>
         </div>
       )}
       {tab==="lancamentos"&&(
-        <Card>
-          {lancamentos.map((l,i)=>(
-            <div key={i} className="flex items-center gap-3 px-4 py-3.5 transition-colors" style={{borderBottom:i<lancamentos.length-1?`1px solid ${C.border}`:"none"}}
-              onMouseEnter={e=>(e.currentTarget as HTMLElement).style.background=C.hover}
-              onMouseLeave={e=>(e.currentTarget as HTMLElement).style.background="transparent"}>
-              <div className="h-8 w-8 rounded-xl flex items-center justify-center shrink-0" style={{background:l.tipo==="Entrada"?C.emDim:C.dangerDim,color:l.tipo==="Entrada"?C.em:C.danger}}>
-                {l.tipo==="Entrada"?<ArrowUpRight className="h-4 w-4" strokeWidth={1.75}/>:<ArrowRight className="h-4 w-4 rotate-180" strokeWidth={1.75}/>}
+        lancamentos.length===0 ? (
+          <Card className="py-16 text-center text-[13px]" >
+            <div style={{color:C.muted}}>Nenhum lançamento. Crie o primeiro com “Novo lançamento”.</div>
+          </Card>
+        ) : (
+          <Card>
+            {lancamentos.map((l,i)=>(
+              <div key={l.id} className="flex items-center gap-3 px-4 py-3.5 transition-colors" style={{borderBottom:i<lancamentos.length-1?`1px solid ${C.border}`:"none"}}
+                onMouseEnter={e=>(e.currentTarget as HTMLElement).style.background=C.hover}
+                onMouseLeave={e=>(e.currentTarget as HTMLElement).style.background="transparent"}>
+                <div className="h-8 w-8 rounded-xl flex items-center justify-center shrink-0" style={{background:l.tipo==="Entrada"?C.emDim:C.dangerDim,color:l.tipo==="Entrada"?C.em:C.danger}}>
+                  {l.tipo==="Entrada"?<ArrowUpRight className="h-4 w-4" strokeWidth={1.75}/>:<ArrowRight className="h-4 w-4 rotate-180" strokeWidth={1.75}/>}
+                </div>
+                <div className="flex-1 min-w-0"><div className="text-[13px] font-medium truncate" style={{color:C.fg}}>{l.descricao}</div><div className="text-[11.5px] mt-0.5" style={{color:C.muted}}>{fmtDate(l.data)} · {l.tipo}</div></div>
+                <div className="text-[13px] font-semibold tabular-nums" style={{color:l.tipo==="Entrada"?C.em:C.danger}}>{l.tipo==="Saída"&&"−"}{fmt(num(l))}</div>
+                <Badge label={l.status} color={l.status==="Recebido"?C.em:l.status==="Pago"?C.info:C.warn} />
+                <ActionButtons onEdit={()=>onEdit(l)} onDelete={()=>onDelete(l.id)} />
               </div>
-              <div className="flex-1 min-w-0"><div className="text-[13px] font-medium truncate" style={{color:C.fg}}>{l.desc}</div><div className="text-[11.5px] mt-0.5" style={{color:C.muted}}>{l.data} · {l.tipo}</div></div>
-              <div className="text-[13px] font-semibold tabular-nums" style={{color:l.tipo==="Entrada"?C.em:C.danger}}>{l.tipo==="Saída"&&"−"}{l.valor}</div>
-              <Badge label={l.status} color={l.status==="Recebido"||l.status==="Pago"?C.em:C.warn} />
-            </div>
-          ))}
-        </Card>
+            ))}
+          </Card>
+        )
       )}
     </div>
   );
@@ -1313,6 +1338,32 @@ function GravacaoModal({ editing, clients, onSave, onClose }: any) {
         <MInput label="Horário" value={f.time} onChange={(v:string)=>s("time",v)} placeholder="Ex: 09:00" />
       </div>
       <MInput label="Equipe" value={f.crew} onChange={(v:string)=>s("crew",v)} placeholder="Ex: Léon B., Margaux T." />
+    </Modal>
+  );
+}
+function LancamentoModal({ editing, onSave, onClose }: { editing:LancamentoRow|null; onSave:(d:Omit<LancamentoRow,"id">)=>void; onClose:()=>void }) {
+  const today = new Date().toISOString().slice(0,10);
+  const [f,setF]=useState<{descricao:string;tipo:"Entrada"|"Saída";valor:string;data:string;status:"Recebido"|"Pago"|"Pendente"}>({
+    descricao:editing?.descricao??"",
+    tipo:(editing?.tipo as "Entrada"|"Saída")??"Entrada",
+    valor:editing?String(editing.valor):"",
+    data:editing?.data??today,
+    status:(editing?.status as "Recebido"|"Pago"|"Pendente")??"Pendente",
+  });
+  const s=(k:string,v:any)=>setF(p=>({...p,[k]:v}));
+  return (
+    <Modal title={editing?"Editar lançamento":"Novo lançamento"} onClose={onClose}
+      onSave={()=>{ if(!f.descricao.trim()) return; onSave({descricao:f.descricao.trim(),tipo:f.tipo,valor:Number(String(f.valor).replace(",","."))||0,data:f.data,status:f.status}); }}
+      saveLabel={editing?"Salvar":"Criar"}>
+      <MInput label="Descrição" value={f.descricao} onChange={(v:string)=>s("descricao",v)} placeholder="Ex: Pagamento — Cliente X" />
+      <div className="grid grid-cols-2 gap-3">
+        <MSelect label="Tipo" value={f.tipo} onChange={(v:string)=>s("tipo",v)} options={["Entrada","Saída"]} />
+        <MInput label="Valor (R$)" type="number" value={f.valor} onChange={(v:string)=>s("valor",v)} placeholder="0,00" />
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        <MInput label="Data" type="date" value={f.data} onChange={(v:string)=>s("data",v)} />
+        <MSelect label="Status" value={f.status} onChange={(v:string)=>s("status",v)} options={["Recebido","Pago","Pendente"]} />
+      </div>
     </Modal>
   );
 }
