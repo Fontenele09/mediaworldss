@@ -492,7 +492,7 @@ function DashboardScreen({ projects, clients, gravacoes, onNewProject, onNewClie
     {label:"Faturamento",  value:"R$ 482k",                delta:"+18,4%",                       tone:"up",   icon:TrendingUp},
     {label:"A receber",    value:"R$ 96k",                 delta:"4 faturas",                    tone:"warn", icon:Wallet},
   ];
-  const greeting = () => { const h=new Date().getHours(); return h<12?"Bom dia":"h<18?"Boa tarde":"Boa noite"; };
+  const greeting = () => { const h=new Date().getHours(); return h<12?"Bom dia":h<18?"Boa tarde":"Boa noite"; };
   return (
     <div className="space-y-6">
       <div>
