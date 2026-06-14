@@ -183,12 +183,14 @@ function App() {
   const entregasQ = entregasApi.useList();
   const propostasQ= propostasApi.useList();
   const gravacoesQ= gravacoesApi.useList();
+  const lancamentosQ = lancamentosApi.useList();
 
   const projects  = (projectsQ.data  ?? []) as unknown as Project[];
   const clients   = (clientsQ.data   ?? []) as unknown as Client[];
   const entregas  = (entregasQ.data  ?? []) as unknown as Entrega[];
   const propostas = (propostasQ.data ?? []) as unknown as Proposta[];
   const gravacoes = (gravacoesQ.data ?? []) as unknown as Gravacao[];
+  const lancamentos = (lancamentosQ.data ?? []) as LancamentoRow[];
 
   const saveProjectM   = projectsApi.useSave();
   const deleteProjectM = projectsApi.useRemove();
@@ -200,6 +202,8 @@ function App() {
   const deletePropostaM= propostasApi.useRemove();
   const saveGravacaoM  = gravacoesApi.useSave();
   const deleteGravacaoM= gravacoesApi.useRemove();
+  const saveLancamentoM  = lancamentosApi.useSave();
+  const deleteLancamentoM= lancamentosApi.useRemove();
 
   const [notifs,   setNotifs]   = useState<Notif[]>([]);
   const [convs,    setConvs]    = useState(initConvs);
@@ -212,6 +216,7 @@ function App() {
   const [entregaModal,setEntregaModal]= useState<{open:boolean;e:Entrega|null}>({open:false,e:null});
   const [propModal,   setPropModal]   = useState<{open:boolean;e:Proposta|null}>({open:false,e:null});
   const [gravModal,   setGravModal]   = useState<{open:boolean;e:Gravacao|null}>({open:false,e:null});
+  const [lancModal,   setLancModal]   = useState<{open:boolean;e:LancamentoRow|null}>({open:false,e:null});
 
   const unread = notifs.filter(n=>!n.read).length;
 
