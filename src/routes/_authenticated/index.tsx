@@ -286,6 +286,7 @@ function App() {
       {entregaModal.open && <EntregaModal   editing={entregaModal.e} projects={projects} onSave={saveEntrega}  onClose={()=>setEntregaModal({open:false,e:null})} />}
       {propModal.open    && <PropostaModal  editing={propModal.e}    clients={clients}   onSave={saveProposta} onClose={()=>setPropModal({open:false,e:null})} />}
       {gravModal.open    && <GravacaoModal  editing={gravModal.e}    clients={clients}   onSave={saveGravacao} onClose={()=>setGravModal({open:false,e:null})} />}
+      {lancModal.open    && <LancamentoModal editing={lancModal.e}                       onSave={saveLancamento} onClose={()=>setLancModal({open:false,e:null})} />}
     </div>
   );
 }
