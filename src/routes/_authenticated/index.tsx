@@ -1341,3 +1341,29 @@ function GravacaoModal({ editing, clients, onSave, onClose }: any) {
     </Modal>
   );
 }
+function LancamentoModal({ editing, onSave, onClose }: { editing:LancamentoRow|null; onSave:(d:Omit<LancamentoRow,"id">)=>void; onClose:()=>void }) {
+  const today = new Date().toISOString().slice(0,10);
+  const [f,setF]=useState<{descricao:string;tipo:"Entrada"|"Saída";valor:string;data:string;status:"Recebido"|"Pago"|"Pendente"}>({
+    descricao:editing?.descricao??"",
+    tipo:(editing?.tipo as "Entrada"|"Saída")??"Entrada",
+    valor:editing?String(editing.valor):"",
+    data:editing?.data??today,
+    status:(editing?.status as "Recebido"|"Pago"|"Pendente")??"Pendente",
+  });
+  const s=(k:string,v:any)=>setF(p=>({...p,[k]:v}));
+  return (
+    <Modal title={editing?"Editar lançamento":"Novo lançamento"} onClose={onClose}
+      onSave={()=>{ if(!f.descricao.trim()) return; onSave({descricao:f.descricao.trim(),tipo:f.tipo,valor:Number(String(f.valor).replace(",","."))||0,data:f.data,status:f.status}); }}
+      saveLabel={editing?"Salvar":"Criar"}>
+      <MInput label="Descrição" value={f.descricao} onChange={(v:string)=>s("descricao",v)} placeholder="Ex: Pagamento — Cliente X" />
+      <div className="grid grid-cols-2 gap-3">
+        <MSelect label="Tipo" value={f.tipo} onChange={(v:string)=>s("tipo",v)} options={["Entrada","Saída"]} />
+        <MInput label="Valor (R$)" type="number" value={f.valor} onChange={(v:string)=>s("valor",v)} placeholder="0,00" />
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        <MInput label="Data" type="date" value={f.data} onChange={(v:string)=>s("data",v)} />
+        <MSelect label="Status" value={f.status} onChange={(v:string)=>s("status",v)} options={["Recebido","Pago","Pendente"]} />
+      </div>
+    </Modal>
+  );
+}
