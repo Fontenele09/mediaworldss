@@ -225,6 +225,7 @@ function App() {
   const saveEntrega  = async (d:Omit<Entrega,"id">)  => { await saveEntregaM.mutateAsync(entregaModal.e?{...d,id:entregaModal.e.id}:d); setEntregaModal({open:false,e:null}); };
   const saveProposta = async (d:Omit<Proposta,"id">) => { await savePropostaM.mutateAsync(propModal.e?{...d,id:propModal.e.id}:d);   setPropModal({open:false,e:null}); };
   const saveGravacao = async (d:Omit<Gravacao,"id">) => { await saveGravacaoM.mutateAsync(gravModal.e?{...d,id:gravModal.e.id}:d);   setGravModal({open:false,e:null}); };
+  const saveLancamento = async (d:Omit<LancamentoRow,"id">) => { await saveLancamentoM.mutateAsync(lancModal.e?{...d,id:lancModal.e.id}:d as any); setLancModal({open:false,e:null}); };
 
   const sendMsg = (cid:number,text:string) => {
     const now=new Date(); const t=`${now.getHours().toString().padStart(2,"0")}:${now.getMinutes().toString().padStart(2,"0")}`;
