@@ -37,6 +37,7 @@ import {
   LogOut,
   Lock,
   User,
+  Menu,
 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/")({
@@ -49,7 +50,6 @@ export const Route = createFileRoute("/_authenticated/")({
   component: App,
 });
 
-/* ── Tokens ── */
 const C = {
   bg: "#0D1612",
   surface: "#141F1A",
@@ -141,63 +141,6 @@ interface Msg {
 
 const STATUS_OPTIONS: ProjectStatus[] = ["Pré-produção", "Gravação", "Edição", "Pós-produção", "Aprovação", "Entregue"];
 
-/* ── Helpers ── */
-const inp =
-  `w-full rounded-xl border px-3 py-2 text-[13px] outline-none transition-all placeholder:opacity-40` +
-  ` bg-[${C.card}] border-[${C.border}] text-[${C.fg}] focus:border-[${C.em}] focus:ring-1 focus:ring-[${C.em}]`;
-
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div className="space-y-1.5">
-      <label style={{ color: C.muted }} className="text-[10.5px] font-semibold uppercase tracking-[0.14em]">
-        {label}
-      </label>
-      {children}
-    </div>
-  );
-}
-
-function Badge({ label, color }: { label: string; color: string }) {
-  return (
-    <span
-      className="inline-flex items-center text-[10.5px] font-semibold rounded-full px-2.5 py-0.5 border"
-      style={{ background: `${color}18`, color, borderColor: `${color}35` }}
-    >
-      {label}
-    </span>
-  );
-}
-
-function statusColor(s: string) {
-  const m: Record<string, string> = {
-    "Pré-produção": C.muted,
-    Gravação: C.warn,
-    Edição: C.info,
-    "Pós-produção": "#A78BFA",
-    Aprovação: C.warn,
-    Entregue: C.em,
-  };
-  return m[s] || C.muted;
-}
-
-function ProgressBar({ value }: { value: number }) {
-  return (
-    <div className="flex items-center gap-2">
-      <div className="flex-1 h-1 rounded-full overflow-hidden" style={{ background: C.border }}>
-        <div
-          className="h-full rounded-full transition-all"
-          style={{ width: `${value}%`, background: `linear-gradient(90deg, ${C.em}, #00E8B0)` }}
-        />
-      </div>
-      <span className="text-[11px] tabular-nums w-8 text-right" style={{ color: C.fgDim }}>
-        {value}%
-      </span>
-    </div>
-  );
-}
-
-/* ── Initial data (empty — populated from Supabase) ── */
-const initNotifs: Notif[] = [];
 const initConvs = [
   {
     id: 1,
@@ -236,11 +179,155 @@ const initConvs = [
   },
 ];
 
+/* ── Helpers ── */
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="space-y-1.5">
+      <label style={{ color: C.muted }} className="text-[10.5px] font-semibold uppercase tracking-[0.14em]">
+        {label}
+      </label>
+      {children}
+    </div>
+  );
+}
+function Badge({ label, color }: { label: string; color: string }) {
+  return (
+    <span
+      className="inline-flex items-center text-[10.5px] font-semibold rounded-full px-2.5 py-0.5 border"
+      style={{ background: `${color}18`, color, borderColor: `${color}35` }}
+    >
+      {label}
+    </span>
+  );
+}
+function statusColor(s: string) {
+  const m: Record<string, string> = {
+    "Pré-produção": C.muted,
+    Gravação: C.warn,
+    Edição: C.info,
+    "Pós-produção": "#A78BFA",
+    Aprovação: C.warn,
+    Entregue: C.em,
+  };
+  return m[s] || C.muted;
+}
+function ProgressBar({ value }: { value: number }) {
+  return (
+    <div className="flex items-center gap-2">
+      <div className="flex-1 h-1 rounded-full overflow-hidden" style={{ background: C.border }}>
+        <div
+          className="h-full rounded-full transition-all"
+          style={{ width: `${value}%`, background: `linear-gradient(90deg,${C.em},#00E8B0)` }}
+        />
+      </div>
+      <span className="text-[11px] tabular-nums w-8 text-right" style={{ color: C.fgDim }}>
+        {value}%
+      </span>
+    </div>
+  );
+}
+function Card({ children, className = "" }: { children: React.ReactNode; className?: string }) {
+  return (
+    <div className={`rounded-2xl ${className}`} style={{ background: C.card, border: `1px solid ${C.border}` }}>
+      {children}
+    </div>
+  );
+}
+function ActionButtons({ onEdit, onDelete }: { onEdit: () => void; onDelete: () => void }) {
+  return (
+    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+      <button
+        onClick={onEdit}
+        className="h-7 w-7 rounded-lg flex items-center justify-center"
+        style={{ color: C.muted }}
+        onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.color = C.fg)}
+        onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.color = C.muted)}
+      >
+        <Pencil className="h-3.5 w-3.5" strokeWidth={1.75} />
+      </button>
+      <button
+        onClick={onDelete}
+        className="h-7 w-7 rounded-lg flex items-center justify-center"
+        style={{ color: C.muted }}
+        onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.color = C.danger)}
+        onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.color = C.muted)}
+      >
+        <Trash2 className="h-3.5 w-3.5" strokeWidth={1.75} />
+      </button>
+    </div>
+  );
+}
+function PageHeader({
+  eyebrow,
+  title,
+  sub,
+  action,
+}: {
+  eyebrow: string;
+  title: string;
+  sub: string;
+  action?: React.ReactNode;
+}) {
+  return (
+    <div className="flex items-end justify-between mb-6 flex-wrap gap-3">
+      <div>
+        <div className="text-[10px] uppercase tracking-[0.2em] font-semibold mb-1" style={{ color: C.em }}>
+          {eyebrow}
+        </div>
+        <h1 className="text-[24px] md:text-[30px] font-light tracking-[-0.02em]" style={{ color: C.fg }}>
+          {title}
+        </h1>
+        <p className="text-[13px] mt-1" style={{ color: C.muted }}>
+          {sub}
+        </p>
+      </div>
+      {action}
+    </div>
+  );
+}
+function Btn({ children, onClick }: { children: React.ReactNode; onClick?: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      className="flex items-center gap-2 rounded-xl px-4 py-2 text-[13px] font-semibold shadow-lg transition-opacity hover:opacity-90 active:scale-95"
+      style={{ background: `linear-gradient(135deg,${C.em},#00A87A)`, color: "#0D1612" }}
+    >
+      {children}
+    </button>
+  );
+}
+function SearchBar({
+  value,
+  onChange,
+  placeholder,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  placeholder: string;
+}) {
+  return (
+    <div
+      className="flex items-center gap-2 rounded-xl px-3.5 py-2 text-[13px] w-full max-w-sm"
+      style={{ background: C.card, border: `1px solid ${C.border}`, color: C.muted }}
+    >
+      <Search className="h-4 w-4 shrink-0" strokeWidth={1.75} />
+      <input
+        className="flex-1 bg-transparent outline-none placeholder:opacity-50"
+        style={{ color: C.fg }}
+        placeholder={placeholder}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+      />
+    </div>
+  );
+}
+
 /* ══════════════════════════════════════════
    APP ROOT
 ══════════════════════════════════════════ */
 function App() {
   const [screen, setScreen] = useState<Screen>("dashboard");
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const projectsQ = projectsApi.useList();
   const clientsQ = clientsApi.useList();
@@ -265,7 +352,7 @@ function App() {
   const saveGravacaoM = gravacoesApi.useSave();
   const deleteGravacaoM = gravacoesApi.useRemove();
 
-  const [notifs, setNotifs] = useState(initNotifs);
+  const [notifs, setNotifs] = useState<Notif[]>([]);
   const [convs, setConvs] = useState(initConvs);
   const [searchQ, setSearchQ] = useState("");
   const [showSearch, setShowSearch] = useState(false);
@@ -300,7 +387,6 @@ function App() {
     setGravModal({ open: false, e: null });
   };
 
-
   const sendMsg = (cid: number, text: string) => {
     const now = new Date();
     const t = `${now.getHours().toString().padStart(2, "0")}:${now.getMinutes().toString().padStart(2, "0")}`;
@@ -331,13 +417,28 @@ function App() {
     setScreen(s);
     setShowSearch(false);
     setShowNotifs(false);
+    setSidebarOpen(false);
   };
 
   return (
     <div style={{ background: C.bg, color: C.fg, minHeight: "100vh", fontFamily: "Inter,sans-serif" }}>
       <div className="flex min-h-screen">
-        <Sidebar current={screen} onNavigate={nav} />
-        <main className="flex-1 min-w-0">
+        {/* Desktop Sidebar */}
+        <div className="hidden lg:block">
+          <Sidebar current={screen} onNavigate={nav} />
+        </div>
+
+        {/* Mobile Sidebar Drawer */}
+        {sidebarOpen && (
+          <div className="fixed inset-0 z-50 lg:hidden">
+            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setSidebarOpen(false)} />
+            <div className="absolute left-0 top-0 h-full">
+              <Sidebar current={screen} onNavigate={nav} />
+            </div>
+          </div>
+        )}
+
+        <main className="flex-1 min-w-0 flex flex-col">
           <TopBar
             screen={screen}
             unread={unread}
@@ -357,8 +458,10 @@ function App() {
             }}
             onSearchChange={setSearchQ}
             onNewProject={() => setProjModal({ open: true, e: null })}
+            onMenuOpen={() => setSidebarOpen(true)}
           />
-          <div className="px-8 py-8 max-w-[1480px]">
+
+          <div className="flex-1 px-4 md:px-8 py-6 md:py-8 max-w-[1480px] w-full pb-24 lg:pb-8">
             {screen === "dashboard" && (
               <DashboardScreen
                 projects={projects}
@@ -422,6 +525,9 @@ function App() {
             {screen === "mensagens" && <MensagensScreen convs={convs} onSend={sendMsg} />}
             {screen === "configuracoes" && <ConfiguracoesScreen />}
           </div>
+
+          {/* Mobile Bottom Nav */}
+          <MobileNav current={screen} onNavigate={nav} />
         </main>
       </div>
 
@@ -469,7 +575,41 @@ function App() {
 }
 
 /* ══════════════════════════════════════════
-   SIDEBAR
+   MOBILE BOTTOM NAV
+══════════════════════════════════════════ */
+function MobileNav({ current, onNavigate }: { current: Screen; onNavigate: (s: Screen) => void }) {
+  const items = [
+    { icon: LayoutDashboard, label: "Início", screen: "dashboard" as Screen },
+    { icon: Clapperboard, label: "Projetos", screen: "projetos" as Screen },
+    { icon: Users, label: "Clientes", screen: "clientes" as Screen },
+    { icon: FileText, label: "Propostas", screen: "propostas" as Screen },
+    { icon: Wallet, label: "Financeiro", screen: "financeiro" as Screen },
+  ];
+  return (
+    <nav
+      className="lg:hidden fixed bottom-0 left-0 right-0 z-40 flex items-center justify-around px-2 py-2 safe-area-bottom"
+      style={{ background: C.surface, borderTop: `1px solid ${C.border}`, backdropFilter: "blur(16px)" }}
+    >
+      {items.map(({ icon: Icon, label, screen }) => {
+        const active = current === screen;
+        return (
+          <button
+            key={screen}
+            onClick={() => onNavigate(screen)}
+            className="flex flex-col items-center gap-1 px-3 py-1.5 rounded-xl transition-all active:scale-95"
+            style={{ color: active ? C.em : C.muted, background: active ? C.emDim : "transparent" }}
+          >
+            <Icon className="h-5 w-5" strokeWidth={active ? 2 : 1.75} />
+            <span className="text-[9.5px] font-medium tracking-[0.05em]">{label}</span>
+          </button>
+        );
+      })}
+    </nav>
+  );
+}
+
+/* ══════════════════════════════════════════
+   SIDEBAR (Desktop)
 ══════════════════════════════════════════ */
 function Sidebar({ current, onNavigate }: { current: Screen; onNavigate: (s: Screen) => void }) {
   const sections = [
@@ -505,7 +645,6 @@ function Sidebar({ current, onNavigate }: { current: Screen; onNavigate: (s: Scr
       style={{ width: 248, background: C.surface, borderRight: `1px solid ${C.border}` }}
       className="shrink-0 sticky top-0 h-screen flex flex-col"
     >
-      {/* Logo */}
       <div className="px-5 pt-6 pb-5">
         <div className="flex items-center gap-3">
           <div
@@ -524,7 +663,6 @@ function Sidebar({ current, onNavigate }: { current: Screen; onNavigate: (s: Scr
           </div>
         </div>
       </div>
-
       <nav className="flex-1 px-3 py-2 space-y-5 overflow-y-auto">
         {sections.map((sec) => (
           <div key={sec.label}>
@@ -543,7 +681,7 @@ function Sidebar({ current, onNavigate }: { current: Screen; onNavigate: (s: Scr
                       color: active ? C.em : C.fgDim,
                       border: `1px solid ${active ? `${C.em}30` : "transparent"}`,
                     }}
-                    className="w-full flex items-center gap-2.5 rounded-xl px-3 py-2 text-[13px] transition-all hover:opacity-100"
+                    className="w-full flex items-center gap-2.5 rounded-xl px-3 py-2 text-[13px] transition-all"
                     onMouseEnter={(e) => {
                       if (!active) (e.currentTarget as HTMLElement).style.background = C.hover;
                     }}
@@ -561,22 +699,20 @@ function Sidebar({ current, onNavigate }: { current: Screen; onNavigate: (s: Scr
           </div>
         ))}
       </nav>
-
-      {/* User */}
       <div className="p-3" style={{ borderTop: `1px solid ${C.border}` }}>
         <div
           className="rounded-xl p-3 flex items-center gap-3"
           style={{ background: C.card, border: `1px solid ${C.border}` }}
         >
           <div
-            className="h-8 w-8 rounded-full flex items-center justify-center text-white text-[12px] font-semibold shrink-0"
-            style={{ background: `linear-gradient(135deg,${C.em},#00A87A)` }}
+            className="h-8 w-8 rounded-full flex items-center justify-center text-[12px] font-semibold shrink-0"
+            style={{ background: `linear-gradient(135deg,${C.em},#00A87A)`, color: "#0D1612" }}
           >
-            É
+            M
           </div>
           <div className="min-w-0 flex-1">
             <div className="text-[12.5px] font-medium truncate" style={{ color: C.fg }}>
-              Élise Marchand
+              Media World
             </div>
             <div className="text-[11px] truncate" style={{ color: C.muted }}>
               Produtora Executiva
@@ -618,6 +754,7 @@ function TopBar({
   onToggleSearch,
   onSearchChange,
   onNewProject,
+  onMenuOpen,
 }: any) {
   const nRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -630,28 +767,48 @@ function TopBar({
 
   return (
     <div
-      className="sticky top-0 z-30 flex items-center gap-4 px-8 py-3.5"
+      className="sticky top-0 z-30 flex items-center gap-3 px-4 md:px-8 py-3"
       style={{ background: `${C.surface}E8`, borderBottom: `1px solid ${C.border}`, backdropFilter: "blur(16px)" }}
     >
-      <div className="flex items-center gap-2 text-[12px]" style={{ color: C.muted }}>
-        <span style={{ color: C.em, fontWeight: 500 }}>MW</span>
-        <ChevronRight className="h-3 w-3" strokeWidth={1.75} />
-        <span style={{ color: C.fg }}>{screenLabels[screen as Screen]}</span>
+      {/* Mobile menu button */}
+      <button
+        onClick={onMenuOpen}
+        className="lg:hidden h-8 w-8 rounded-xl flex items-center justify-center shrink-0"
+        style={{ background: C.card, border: `1px solid ${C.border}`, color: C.muted }}
+      >
+        <Menu className="h-4 w-4" strokeWidth={1.75} />
+      </button>
+
+      {/* Breadcrumb */}
+      <div className="flex items-center gap-2 text-[12px] min-w-0" style={{ color: C.muted }}>
+        <span className="hidden md:block" style={{ color: C.em, fontWeight: 500 }}>
+          MW
+        </span>
+        <ChevronRight className="h-3 w-3 hidden md:block" strokeWidth={1.75} />
+        <span className="font-medium truncate" style={{ color: C.fg }}>
+          {screenLabels[screen as Screen]}
+        </span>
       </div>
 
       <div className="ml-auto flex items-center gap-2">
-        {/* Search */}
-        <div className="relative">
+        {/* Search — hidden on small mobile */}
+        <div className="relative hidden sm:block">
           <div
-            className="flex items-center gap-2 rounded-xl px-3 py-1.5 text-[12.5px] w-[220px] cursor-text"
-            style={{ background: C.card, border: `1px solid ${C.border}`, color: C.muted }}
+            className="flex items-center gap-2 rounded-xl px-3 py-1.5 text-[12.5px] cursor-text"
+            style={{
+              background: C.card,
+              border: `1px solid ${C.border}`,
+              color: C.muted,
+              width: showSearch ? "200px" : "160px",
+              transition: "width 0.2s",
+            }}
             onClick={onToggleSearch}
           >
             <Search className="h-3.5 w-3.5 shrink-0" strokeWidth={1.75} />
             {showSearch ? (
               <input
                 autoFocus
-                className="flex-1 bg-transparent outline-none text-[12.5px]"
+                className="flex-1 bg-transparent outline-none text-[12.5px] min-w-0"
                 style={{ color: C.fg }}
                 placeholder="Buscar…"
                 value={searchQ}
@@ -659,15 +816,12 @@ function TopBar({
                 onClick={(e) => e.stopPropagation()}
               />
             ) : (
-              <span>Buscar…</span>
+              <span className="text-[12px]">Buscar…</span>
             )}
-            <span className="ml-auto text-[10px] flex items-center gap-0.5 opacity-50">
-              <Command className="h-2.5 w-2.5" strokeWidth={2} />K
-            </span>
           </div>
           {searchQ.length > 1 && (
             <div
-              className="absolute top-full left-0 mt-2 w-[300px] rounded-2xl overflow-hidden z-50 shadow-2xl"
+              className="absolute top-full left-0 mt-2 w-[280px] rounded-2xl overflow-hidden z-50 shadow-2xl"
               style={{ background: C.card, border: `1px solid ${C.border}` }}
             >
               {searchResults.length === 0 ? (
@@ -678,7 +832,7 @@ function TopBar({
                 searchResults.map((r: any, i: number) => (
                   <div
                     key={i}
-                    className="flex items-center gap-3 px-4 py-2.5 transition-colors cursor-pointer"
+                    className="flex items-center gap-3 px-4 py-2.5 cursor-pointer transition-colors"
                     style={{ borderBottom: `1px solid ${C.border}` }}
                     onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.background = C.hover)}
                     onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.background = "transparent")}
@@ -715,7 +869,7 @@ function TopBar({
           </button>
           {showNotifs && (
             <div
-              className="absolute top-full right-0 mt-2 w-[300px] rounded-2xl overflow-hidden z-50 shadow-2xl"
+              className="absolute top-full right-0 mt-2 w-[280px] md:w-[300px] rounded-2xl overflow-hidden z-50 shadow-2xl"
               style={{ background: C.card, border: `1px solid ${C.border}` }}
             >
               <div
@@ -729,147 +883,57 @@ function TopBar({
                   Marcar lidas
                 </button>
               </div>
-              {notifs.map((n: Notif) => (
-                <div
-                  key={n.id}
-                  className="flex items-start gap-3 px-4 py-3"
-                  style={{ borderBottom: `1px solid ${C.border}`, opacity: n.read ? 0.4 : 1 }}
-                >
-                  <div
-                    className="h-7 w-7 rounded-lg flex items-center justify-center shrink-0 mt-0.5"
-                    style={{
-                      background: n.type === "alert" ? C.dangerDim : n.type === "warn" ? C.warnDim : C.infoDim,
-                      color: n.type === "alert" ? C.danger : n.type === "warn" ? C.warn : C.info,
-                    }}
-                  >
-                    {n.type === "alert" ? (
-                      <AlertCircle className="h-3.5 w-3.5" strokeWidth={1.75} />
-                    ) : n.type === "warn" ? (
-                      <Clock className="h-3.5 w-3.5" strokeWidth={1.75} />
-                    ) : (
-                      <Info className="h-3.5 w-3.5" strokeWidth={1.75} />
-                    )}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="text-[12.5px]" style={{ color: C.fg }}>
-                      {n.text}
-                    </div>
-                    <div className="text-[11px] mt-0.5" style={{ color: C.muted }}>
-                      {n.time}
-                    </div>
-                  </div>
-                  {!n.read && (
-                    <span className="h-1.5 w-1.5 rounded-full mt-1.5 shrink-0" style={{ background: C.em }} />
-                  )}
+              {notifs.length === 0 ? (
+                <div className="px-4 py-6 text-center text-[13px]" style={{ color: C.muted }}>
+                  Nenhuma notificação.
                 </div>
-              ))}
+              ) : (
+                notifs.map((n: Notif) => (
+                  <div
+                    key={n.id}
+                    className="flex items-start gap-3 px-4 py-3"
+                    style={{ borderBottom: `1px solid ${C.border}`, opacity: n.read ? 0.4 : 1 }}
+                  >
+                    <div
+                      className="h-7 w-7 rounded-lg flex items-center justify-center shrink-0 mt-0.5"
+                      style={{
+                        background: n.type === "alert" ? C.dangerDim : n.type === "warn" ? C.warnDim : C.infoDim,
+                        color: n.type === "alert" ? C.danger : n.type === "warn" ? C.warn : C.info,
+                      }}
+                    >
+                      {n.type === "alert" ? (
+                        <AlertCircle className="h-3.5 w-3.5" strokeWidth={1.75} />
+                      ) : n.type === "warn" ? (
+                        <Clock className="h-3.5 w-3.5" strokeWidth={1.75} />
+                      ) : (
+                        <Info className="h-3.5 w-3.5" strokeWidth={1.75} />
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-[12.5px]" style={{ color: C.fg }}>
+                        {n.text}
+                      </div>
+                      <div className="text-[11px] mt-0.5" style={{ color: C.muted }}>
+                        {n.time}
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
           )}
         </div>
 
         <button
           onClick={onNewProject}
-          className="flex items-center gap-2 rounded-xl px-4 py-2 text-[12.5px] font-semibold transition-all shadow-lg"
+          className="flex items-center gap-2 rounded-xl px-3 md:px-4 py-2 text-[12.5px] font-semibold transition-all shadow-lg active:scale-95"
           style={{ background: `linear-gradient(135deg,${C.em},#00A87A)`, color: "#0D1612" }}
         >
           <Plus className="h-3.5 w-3.5" strokeWidth={2.5} />
-          Novo projeto
+          <span className="hidden sm:block">Novo projeto</span>
         </button>
       </div>
     </div>
-  );
-}
-
-/* ══════════════════════════════════════════
-   SHARED COMPONENTS
-══════════════════════════════════════════ */
-function Card({ children, className = "", style }: { children: React.ReactNode; className?: string; style?: React.CSSProperties }) {
-  return (
-    <div className={`rounded-2xl ${className}`} style={{ background: C.card, border: `1px solid ${C.border}`, ...style }}>
-      {children}
-    </div>
-  );
-}
-
-function ActionButtons({ onEdit, onDelete }: { onEdit: () => void; onDelete: () => void }) {
-  return (
-    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-      <button
-        onClick={onEdit}
-        className="h-7 w-7 rounded-lg flex items-center justify-center transition-colors"
-        style={{ color: C.muted }}
-        onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.color = C.fg)}
-        onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.color = C.muted)}
-      >
-        <Pencil className="h-3.5 w-3.5" strokeWidth={1.75} />
-      </button>
-      <button
-        onClick={onDelete}
-        className="h-7 w-7 rounded-lg flex items-center justify-center transition-colors"
-        style={{ color: C.muted }}
-        onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.color = C.danger)}
-        onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.color = C.muted)}
-      >
-        <Trash2 className="h-3.5 w-3.5" strokeWidth={1.75} />
-      </button>
-    </div>
-  );
-}
-
-function PageHeader({
-  eyebrow,
-  title,
-  sub,
-  action,
-}: {
-  eyebrow: string;
-  title: string;
-  sub: string;
-  action?: React.ReactNode;
-}) {
-  return (
-    <div className="flex items-end justify-between mb-8">
-      <div>
-        <div className="text-[10px] uppercase tracking-[0.2em] font-semibold mb-2" style={{ color: C.em }}>
-          {eyebrow}
-        </div>
-        <h1 className="text-[30px] font-light tracking-[-0.02em]" style={{ color: C.fg }}>
-          {title}
-        </h1>
-        <p className="text-[13px] mt-1" style={{ color: C.muted }}>
-          {sub}
-        </p>
-      </div>
-      {action}
-    </div>
-  );
-}
-
-function Btn({
-  children,
-  onClick,
-  variant = "primary",
-}: {
-  children: React.ReactNode;
-  onClick?: () => void;
-  variant?: "primary" | "ghost";
-}) {
-  return variant === "primary" ? (
-    <button
-      onClick={onClick}
-      className="flex items-center gap-2 rounded-xl px-4 py-2 text-[13px] font-semibold shadow-lg transition-opacity hover:opacity-90"
-      style={{ background: `linear-gradient(135deg,${C.em},#00A87A)`, color: "#0D1612" }}
-    >
-      {children}
-    </button>
-  ) : (
-    <button
-      onClick={onClick}
-      className="flex items-center gap-2 rounded-xl px-4 py-2 text-[13px] font-medium transition-colors"
-      style={{ background: C.card, border: `1px solid ${C.border}`, color: C.fgDim }}
-    >
-      {children}
-    </button>
   );
 }
 
@@ -892,7 +956,7 @@ function DashboardScreen({
   const pending = projects.filter((p: Project) => p.status === "Aprovação").length;
   const delivered = projects.filter((p: Project) => p.status === "Entregue").length;
   const kpis = [
-    { label: "Clientes ativos", value: String(clients.length), delta: `+4 este mês`, tone: "up", icon: Users },
+    { label: "Clientes", value: String(clients.length), delta: `${clients.length} ativos`, tone: "up", icon: Users },
     {
       label: "Em andamento",
       value: String(active),
@@ -901,7 +965,7 @@ function DashboardScreen({
       icon: Clapperboard,
     },
     {
-      label: "Aguardando aprovação",
+      label: "Aprovação",
       value: String(pending),
       delta: pending > 0 ? "Atenção" : "OK",
       tone: pending > 0 ? "warn" : "up",
@@ -913,34 +977,32 @@ function DashboardScreen({
     { label: "A receber", value: "R$ 96k", delta: "4 faturas", tone: "warn", icon: Wallet },
   ];
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <div>
         <div className="text-[10px] uppercase tracking-[0.2em] font-semibold mb-2" style={{ color: C.em }}>
-          Visão geral · 11 jun 2026
+          Visão geral
         </div>
-        <h1 className="text-[36px] font-light tracking-[-0.025em]" style={{ color: C.fg }}>
-          Boa noite, Élise.
+        <h1 className="text-[28px] md:text-[36px] font-light tracking-[-0.025em]" style={{ color: C.fg }}>
+          Boa noite. 👋
         </h1>
-        <p className="text-[14px] mt-1" style={{ color: C.muted }}>
-          Aqui está o panorama da operação hoje.
+        <p className="text-[13px] mt-1" style={{ color: C.muted }}>
+          Panorama da operação hoje.
         </p>
       </div>
 
-      {/* KPIs */}
+      {/* KPIs — 2 cols mobile, 4 desktop */}
       <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-7 gap-3">
         {kpis.map((k) => {
           const Icon = k.icon;
           return (
-            <Card key={k.label} className="p-4 group hover:-translate-y-0.5 transition-all duration-300 cursor-default">
-              <div className="flex items-center justify-between mb-3">
-                <div
-                  className="h-7 w-7 rounded-lg flex items-center justify-center transition-colors"
-                  style={{ background: C.emDim, color: C.em }}
-                >
-                  <Icon className="h-3.5 w-3.5" strokeWidth={1.75} />
-                </div>
+            <Card key={k.label} className="p-4">
+              <div
+                className="h-7 w-7 rounded-lg flex items-center justify-center mb-3"
+                style={{ background: C.emDim, color: C.em }}
+              >
+                <Icon className="h-3.5 w-3.5" strokeWidth={1.75} />
               </div>
-              <div className="text-[24px] font-semibold tabular-nums leading-none" style={{ color: C.fg }}>
+              <div className="text-[22px] font-semibold tabular-nums leading-none" style={{ color: C.fg }}>
                 {k.value}
               </div>
               <div className="text-[10.5px] mt-1.5 font-medium" style={{ color: C.muted }}>
@@ -963,20 +1025,21 @@ function DashboardScreen({
         className="flex flex-wrap items-center gap-2 rounded-2xl p-3"
         style={{ background: C.card, border: `1px solid ${C.border}` }}
       >
-        <span className="text-[10px] uppercase tracking-[0.18em] font-semibold px-2" style={{ color: C.muted }}>
+        <span
+          className="text-[10px] uppercase tracking-[0.18em] font-semibold px-2 w-full md:w-auto"
+          style={{ color: C.muted }}
+        >
           Ações rápidas
         </span>
-        <div className="h-4 w-px mx-1" style={{ background: C.border }} />
         {[
           { icon: Plus, label: "Novo projeto", onClick: onNewProject, primary: true },
           { icon: UserPlus, label: "Novo cliente", onClick: onNewClient, primary: false },
           { icon: Video, label: "Agendar gravação", onClick: onNewGravacao, primary: false },
-          { icon: FileText, label: "Nova proposta", onClick: () => {}, primary: false },
         ].map(({ icon: Icon, label, onClick, primary }) => (
           <button
             key={label}
             onClick={onClick}
-            className="flex items-center gap-2 rounded-xl px-3.5 py-1.5 text-[12.5px] font-medium transition-all"
+            className="flex items-center gap-2 rounded-xl px-3.5 py-2 text-[12.5px] font-medium transition-all active:scale-95"
             style={
               primary
                 ? { background: `linear-gradient(135deg,${C.em},#00A87A)`, color: "#0D1612" }
@@ -989,13 +1052,14 @@ function DashboardScreen({
         ))}
       </div>
 
-      <div className="grid grid-cols-12 gap-6">
-        <div className="col-span-12 xl:col-span-8 space-y-6">
+      {/* Content grid */}
+      <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
+        <div className="xl:col-span-8 space-y-6">
           <ProjectsTable projects={projects} onEdit={onEditProject} onDelete={onDeleteProject} />
           <PipelineMini projects={projects} />
           <ClientsTable clients={clients} onEdit={onEditClient} onDelete={onDeleteClient} />
         </div>
-        <div className="col-span-12 xl:col-span-4 space-y-4">
+        <div className="xl:col-span-4 space-y-4">
           <AgendaWidget />
           <DeadlinesWidget />
           <FinancialWidget />
@@ -1005,11 +1069,12 @@ function DashboardScreen({
   );
 }
 
+/* Projects table — desktop table, mobile cards */
 function ProjectsTable({ projects, onEdit, onDelete }: any) {
   return (
     <Card>
       <div
-        className="flex items-center justify-between px-5 pt-5 pb-4"
+        className="flex items-center justify-between px-4 md:px-5 pt-5 pb-4"
         style={{ borderBottom: `1px solid ${C.border}` }}
       >
         <div>
@@ -1026,49 +1091,82 @@ function ProjectsTable({ projects, onEdit, onDelete }: any) {
           Nenhum projeto.
         </div>
       ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full text-[12.5px]">
-            <thead>
-              <tr style={{ borderBottom: `1px solid ${C.border}`, color: C.muted }}>
-                {["Projeto", "Cliente", "Status", "Prazo", "Progresso", ""].map((h) => (
-                  <th key={h} className="px-5 py-3 text-left text-[10px] uppercase tracking-[0.15em] font-semibold">
-                    {h}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {projects.map((p: Project, i: number) => (
-                <tr
-                  key={p.id}
-                  className="group transition-colors"
-                  style={{ borderBottom: i < projects.length - 1 ? `1px solid ${C.border}` : "none" }}
-                  onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.background = C.hover)}
-                  onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.background = "transparent")}
-                >
-                  <td className="px-5 py-3.5 font-medium" style={{ color: C.fg }}>
-                    {p.name}
-                  </td>
-                  <td className="px-5 py-3.5" style={{ color: C.muted }}>
-                    {p.client}
-                  </td>
-                  <td className="px-5 py-3.5">
-                    <Badge label={p.status} color={statusColor(p.status)} />
-                  </td>
-                  <td className="px-5 py-3.5 tabular-nums" style={{ color: C.fgDim }}>
-                    {p.deadline}
-                  </td>
-                  <td className="px-5 py-3.5 w-[140px]">
-                    <ProgressBar value={p.progress} />
-                  </td>
-                  <td className="px-5 py-3.5">
-                    <ActionButtons onEdit={() => onEdit(p)} onDelete={() => onDelete(p.id)} />
-                  </td>
+        <>
+          {/* Mobile cards */}
+          <div className="md:hidden divide-y" style={{ "--tw-divide-color": C.border } as any}>
+            {projects.map((p: Project) => (
+              <div
+                key={p.id}
+                className="p-4 group"
+                onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.background = C.hover)}
+                onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.background = "transparent")}
+              >
+                <div className="flex items-start justify-between mb-2">
+                  <div>
+                    <div className="text-[13.5px] font-semibold" style={{ color: C.fg }}>
+                      {p.name}
+                    </div>
+                    <div className="text-[12px] mt-0.5" style={{ color: C.muted }}>
+                      {p.client}
+                    </div>
+                  </div>
+                  <Badge label={p.status} color={statusColor(p.status)} />
+                </div>
+                <ProgressBar value={p.progress} />
+                <div className="flex items-center justify-between mt-2">
+                  <span className="text-[11px]" style={{ color: C.muted }}>
+                    Prazo: {p.deadline}
+                  </span>
+                  <ActionButtons onEdit={() => onEdit(p)} onDelete={() => onDelete(p.id)} />
+                </div>
+              </div>
+            ))}
+          </div>
+          {/* Desktop table */}
+          <div className="hidden md:block overflow-x-auto">
+            <table className="w-full text-[12.5px]">
+              <thead>
+                <tr style={{ borderBottom: `1px solid ${C.border}`, color: C.muted }}>
+                  {["Projeto", "Cliente", "Status", "Prazo", "Progresso", ""].map((h) => (
+                    <th key={h} className="px-5 py-3 text-left text-[10px] uppercase tracking-[0.15em] font-semibold">
+                      {h}
+                    </th>
+                  ))}
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {projects.map((p: Project, i: number) => (
+                  <tr
+                    key={p.id}
+                    className="group transition-colors"
+                    style={{ borderBottom: i < projects.length - 1 ? `1px solid ${C.border}` : "none" }}
+                    onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.background = C.hover)}
+                    onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.background = "transparent")}
+                  >
+                    <td className="px-5 py-3.5 font-medium" style={{ color: C.fg }}>
+                      {p.name}
+                    </td>
+                    <td className="px-5 py-3.5" style={{ color: C.muted }}>
+                      {p.client}
+                    </td>
+                    <td className="px-5 py-3.5">
+                      <Badge label={p.status} color={statusColor(p.status)} />
+                    </td>
+                    <td className="px-5 py-3.5 tabular-nums" style={{ color: C.fgDim }}>
+                      {p.deadline}
+                    </td>
+                    <td className="px-5 py-3.5 w-[140px]">
+                      <ProgressBar value={p.progress} />
+                    </td>
+                    <td className="px-5 py-3.5">
+                      <ActionButtons onEdit={() => onEdit(p)} onDelete={() => onDelete(p.id)} />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
       )}
     </Card>
   );
@@ -1078,14 +1176,14 @@ function PipelineMini({ projects }: any) {
   const stages: ProjectStatus[] = ["Pré-produção", "Gravação", "Edição", "Pós-produção", "Aprovação", "Entregue"];
   const max = Math.max(...stages.map((s) => projects.filter((p: Project) => p.status === s).length), 1);
   return (
-    <Card className="p-5">
+    <Card className="p-4 md:p-5">
       <div className="text-[9.5px] uppercase tracking-[0.2em] font-semibold mb-1" style={{ color: C.em }}>
         Comercial
       </div>
-      <h2 className="text-[16px] font-semibold mb-5" style={{ color: C.fg }}>
+      <h2 className="text-[16px] font-semibold mb-4" style={{ color: C.fg }}>
         Pipeline
       </h2>
-      <div className="flex gap-2">
+      <div className="grid grid-cols-3 md:flex gap-2">
         {stages.map((stage, i) => {
           const count = projects.filter((p: Project) => p.status === stage).length;
           const intensity = 0.1 + (count / max) * 0.15;
@@ -1099,13 +1197,13 @@ function PipelineMini({ projects }: any) {
               }}
             >
               <div
-                className="text-[20px] font-semibold tabular-nums leading-none"
+                className="text-[18px] md:text-[20px] font-semibold tabular-nums leading-none"
                 style={{ color: count > 0 ? C.em : C.muted }}
               >
                 {count}
               </div>
               <div
-                className="text-[10.5px] font-medium mt-1.5 leading-tight"
+                className="text-[10px] md:text-[10.5px] font-medium mt-1.5 leading-tight"
                 style={{ color: count > 0 ? C.fgDim : C.muted }}
               >
                 {stage}
@@ -1121,7 +1219,7 @@ function PipelineMini({ projects }: any) {
 function ClientsTable({ clients, onEdit, onDelete }: any) {
   return (
     <Card>
-      <div className="px-5 pt-5 pb-4" style={{ borderBottom: `1px solid ${C.border}` }}>
+      <div className="px-4 md:px-5 pt-5 pb-4" style={{ borderBottom: `1px solid ${C.border}` }}>
         <div className="text-[9.5px] uppercase tracking-[0.2em] font-semibold mb-1" style={{ color: C.em }}>
           Relacionamento
         </div>
@@ -1132,7 +1230,7 @@ function ClientsTable({ clients, onEdit, onDelete }: any) {
       {clients.map((c: Client) => (
         <div
           key={c.id}
-          className="flex items-center gap-4 px-5 py-3.5 group transition-colors"
+          className="flex items-center gap-3 px-4 md:px-5 py-3.5 group transition-colors"
           style={{ borderBottom: `1px solid ${C.border}` }}
           onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.background = C.hover)}
           onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.background = "transparent")}
@@ -1143,21 +1241,16 @@ function ClientsTable({ clients, onEdit, onDelete }: any) {
           >
             {c.name.charAt(0)}
           </div>
-          <div className="flex-1 min-w-0 grid grid-cols-3 gap-4 items-center">
-            <div>
-              <div className="text-[13px] font-semibold truncate" style={{ color: C.fg }}>
-                {c.name}
-              </div>
-              <div className="text-[11px] truncate" style={{ color: C.muted }}>
-                {c.project}
-              </div>
+          <div className="flex-1 min-w-0">
+            <div className="text-[13px] font-semibold truncate" style={{ color: C.fg }}>
+              {c.name}
             </div>
-            <div className="text-[12px]" style={{ color: C.fgDim }}>
-              {c.status}
+            <div className="text-[11px] truncate" style={{ color: C.muted }}>
+              {c.project} · {c.status}
             </div>
-            <div className="text-[11.5px] text-right tabular-nums" style={{ color: C.muted }}>
-              {c.last}
-            </div>
+          </div>
+          <div className="text-[11px] shrink-0 hidden sm:block" style={{ color: C.muted }}>
+            {c.last}
           </div>
           <ActionButtons onEdit={() => onEdit(c)} onDelete={() => onDelete(c.id)} />
         </div>
@@ -1204,7 +1297,7 @@ function AgendaWidget() {
               >
                 <Icon className="h-3 w-3" strokeWidth={1.75} />
               </div>
-              <span className="text-[12.5px] font-medium" style={{ color: C.fgDim }}>
+              <span className="text-[12.5px] font-medium truncate" style={{ color: C.fgDim }}>
                 {item.title}
               </span>
             </li>
@@ -1220,7 +1313,6 @@ function DeadlinesWidget() {
     { project: "Apple — Silence", task: "Aprovação corte final", in: "Em 2 dias", urgent: true },
     { project: "Porsche 911 GTS", task: "Entrega dos brutos", in: "Em 4 dias", urgent: true },
     { project: "Hermès — Carré 90", task: "Color grading", in: "Em 1 sem", urgent: false },
-    { project: "Natura — Ekos", task: "Aprovação roteiro", in: "Em 10 dias", urgent: false },
   ];
   return (
     <Card>
@@ -1272,7 +1364,6 @@ function FinancialWidget() {
     { label: "Faturamento", value: "R$ 482.350", delta: "+18,4%" },
     { label: "Mês anterior", value: "R$ 407.420", delta: null },
     { label: "A receber", value: "R$ 96.200", delta: "4 faturas" },
-    { label: "Previsto", value: "R$ 612.000", delta: "+27%" },
   ];
   return (
     <Card className="overflow-hidden">
@@ -1337,7 +1428,7 @@ function ClientesScreen({ clients, onNew, onEdit, onDelete }: any) {
         }
       />
       <SearchBar value={q} onChange={setQ} placeholder="Buscar cliente…" />
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 mt-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 mt-4">
         {filtered.map((c: Client) => (
           <Card key={c.id} className="p-5 group hover:-translate-y-0.5 transition-all duration-300">
             <div className="flex items-start justify-between mb-4">
@@ -1389,32 +1480,6 @@ function ClientesScreen({ clients, onNew, onEdit, onDelete }: any) {
   );
 }
 
-function SearchBar({
-  value,
-  onChange,
-  placeholder,
-}: {
-  value: string;
-  onChange: (v: string) => void;
-  placeholder: string;
-}) {
-  return (
-    <div
-      className="flex items-center gap-2 rounded-xl px-3.5 py-2 text-[13px] w-full max-w-sm"
-      style={{ background: C.card, border: `1px solid ${C.border}`, color: C.muted }}
-    >
-      <Search className="h-4 w-4 shrink-0" strokeWidth={1.75} />
-      <input
-        className="flex-1 bg-transparent outline-none placeholder:opacity-50"
-        style={{ color: C.fg }}
-        placeholder={placeholder}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-      />
-    </div>
-  );
-}
-
 /* ══════════════════════════════════════════
    PROJETOS
 ══════════════════════════════════════════ */
@@ -1439,14 +1504,14 @@ function ProjetosScreen({ projects, clients, onNew, onEdit, onDelete }: any) {
           </Btn>
         }
       />
-      <div className="flex items-center gap-3 flex-wrap mb-6">
+      <div className="space-y-3 mb-5">
         <SearchBar value={q} onChange={setQ} placeholder="Buscar projeto…" />
         <div className="flex gap-1.5 flex-wrap">
           {["Todos", ...STATUS_OPTIONS].map((s) => (
             <button
               key={s}
               onClick={() => setFilter(s)}
-              className="px-3 py-1.5 rounded-full text-[12px] font-medium transition-all"
+              className="px-3 py-1.5 rounded-full text-[12px] font-medium transition-all active:scale-95"
               style={
                 filter === s
                   ? { background: C.em, color: "#0D1612" }
@@ -1458,7 +1523,49 @@ function ProjetosScreen({ projects, clients, onNew, onEdit, onDelete }: any) {
           ))}
         </div>
       </div>
-      <Card>
+      {/* Mobile cards */}
+      <div className="md:hidden space-y-3">
+        {filtered.map((p: Project) => (
+          <Card key={p.id} className="p-4 group">
+            <div className="flex items-start justify-between mb-3">
+              <div>
+                <div className="text-[14px] font-semibold" style={{ color: C.fg }}>
+                  {p.name}
+                </div>
+                <div className="text-[12px] mt-0.5" style={{ color: C.muted }}>
+                  {p.client}
+                </div>
+              </div>
+              <Badge label={p.status} color={statusColor(p.status)} />
+            </div>
+            <ProgressBar value={p.progress} />
+            <div className="flex items-center justify-between mt-3">
+              <div className="flex items-center gap-2">
+                <div
+                  className="h-5 w-5 rounded-full shrink-0"
+                  style={{ background: `linear-gradient(135deg,${C.em},#00A87A)` }}
+                />
+                <span className="text-[12px]" style={{ color: C.muted }}>
+                  {p.owner}
+                </span>
+              </div>
+              <div className="flex items-center gap-3">
+                <span className="text-[12px]" style={{ color: C.muted }}>
+                  {p.deadline}
+                </span>
+                <ActionButtons onEdit={() => onEdit(p)} onDelete={() => onDelete(p.id)} />
+              </div>
+            </div>
+          </Card>
+        ))}
+        {filtered.length === 0 && (
+          <div className="py-16 text-center text-[13px]" style={{ color: C.muted }}>
+            Nenhum projeto encontrado.
+          </div>
+        )}
+      </div>
+      {/* Desktop table */}
+      <Card className="hidden md:block">
         {filtered.length === 0 ? (
           <div className="py-16 text-center text-[13px]" style={{ color: C.muted }}>
             Nenhum projeto encontrado.
@@ -1529,7 +1636,7 @@ function PipelineScreen({ projects }: any) {
   const stages: ProjectStatus[] = ["Pré-produção", "Gravação", "Edição", "Pós-produção", "Aprovação", "Entregue"];
   return (
     <div>
-      <PageHeader eyebrow="Comercial" title="Pipeline de produção" sub="Visão do funil por estágio" />
+      <PageHeader eyebrow="Comercial" title="Pipeline" sub="Visão do funil por estágio" />
       <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
         {stages.map((stage) => {
           const sp = projects.filter((p: Project) => p.status === stage);
@@ -1550,16 +1657,16 @@ function PipelineScreen({ projects }: any) {
                   {sp.length}
                 </span>
               </div>
-              <div className="space-y-2 min-h-[100px]">
+              <div className="space-y-2 min-h-[80px]">
                 {sp.map((p: Project) => (
                   <Card key={p.id} className="p-3 hover:-translate-y-0.5 transition-all duration-200 cursor-pointer">
-                    <div className="text-[12.5px] font-semibold leading-snug" style={{ color: C.fg }}>
+                    <div className="text-[12px] font-semibold leading-snug" style={{ color: C.fg }}>
                       {p.name}
                     </div>
                     <div className="text-[11px] mt-1" style={{ color: C.muted }}>
                       {p.client}
                     </div>
-                    <div className="mt-3">
+                    <div className="mt-2">
                       <ProgressBar value={p.progress} />
                     </div>
                     <div className="mt-2 flex items-center justify-between">
@@ -1575,7 +1682,7 @@ function PipelineScreen({ projects }: any) {
                 ))}
                 {sp.length === 0 && (
                   <div
-                    className="rounded-xl p-4 flex items-center justify-center text-[11px]"
+                    className="rounded-xl p-3 flex items-center justify-center text-[11px]"
                     style={{ border: `1px dashed ${C.border}`, color: C.muted }}
                   >
                     Vazio
@@ -1599,15 +1706,15 @@ function AgendaScreen({ gravacoes, clients, onNew, onEdit, onDelete }: any) {
       <PageHeader
         eyebrow="Operação"
         title="Agenda & Gravações"
-        sub="Quinta, 11 de junho de 2026"
+        sub="Gravações agendadas"
         action={
           <Btn onClick={onNew}>
             <Plus className="h-4 w-4" strokeWidth={2} />
-            Agendar gravação
+            Agendar
           </Btn>
         }
       />
-      <div className="space-y-4">
+      <div className="space-y-3">
         {gravacoes.length === 0 && (
           <div
             className="rounded-2xl p-8 text-center text-[13px]"
@@ -1620,38 +1727,30 @@ function AgendaScreen({ gravacoes, clients, onNew, onEdit, onDelete }: any) {
           </div>
         )}
         {gravacoes.map((g: Gravacao) => (
-          <Card
-            key={g.id}
-            className="flex items-start gap-4 p-4 group hover:-translate-y-0.5 transition-all duration-200"
-          >
-            <div
-              className="h-10 w-10 rounded-xl flex items-center justify-center shrink-0"
-              style={{ background: C.warnDim, color: C.warn }}
-            >
-              <Video className="h-5 w-5" strokeWidth={1.75} />
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="text-[14px] font-semibold" style={{ color: C.fg }}>
-                {g.title}
+          <Card key={g.id} className="p-4 group hover:-translate-y-0.5 transition-all duration-200">
+            <div className="flex items-start gap-3">
+              <div
+                className="h-10 w-10 rounded-xl flex items-center justify-center shrink-0"
+                style={{ background: C.warnDim, color: C.warn }}
+              >
+                <Video className="h-5 w-5" strokeWidth={1.75} />
               </div>
-              <div className="flex items-center gap-3 mt-1">
-                <span className="text-[12px]" style={{ color: C.muted }}>
-                  {g.client}
-                </span>
-                <span style={{ color: C.border }}>·</span>
-                <span className="text-[12px]" style={{ color: C.muted }}>
-                  {g.local}
-                </span>
-                <span style={{ color: C.border }}>·</span>
-                <span className="text-[12px] font-semibold" style={{ color: C.em }}>
+              <div className="flex-1 min-w-0">
+                <div className="text-[14px] font-semibold" style={{ color: C.fg }}>
+                  {g.title}
+                </div>
+                <div className="text-[12px] mt-1" style={{ color: C.muted }}>
+                  {g.client} · {g.local}
+                </div>
+                <div className="text-[12px] font-semibold mt-0.5" style={{ color: C.em }}>
                   {g.date} às {g.time}
-                </span>
+                </div>
+                <div className="text-[11.5px] mt-1" style={{ color: C.muted }}>
+                  Equipe: {g.crew}
+                </div>
               </div>
-              <div className="text-[11.5px] mt-1" style={{ color: C.muted }}>
-                Equipe: {g.crew}
-              </div>
+              <ActionButtons onEdit={() => onEdit(g)} onDelete={() => onDelete(g.id)} />
             </div>
-            <ActionButtons onEdit={() => onEdit(g)} onDelete={() => onDelete(g.id)} />
           </Card>
         ))}
       </div>
@@ -1663,7 +1762,7 @@ function AgendaScreen({ gravacoes, clients, onNew, onEdit, onDelete }: any) {
    ENTREGAS
 ══════════════════════════════════════════ */
 function EntregasScreen({ entregas, projects, onNew, onEdit, onDelete }: any) {
-  const statusColor2: Record<string, string> = {
+  const sc2: Record<string, string> = {
     "Aguardando aprovação": C.warn,
     "Em revisão": C.info,
     Enviado: C.muted,
@@ -1683,7 +1782,37 @@ function EntregasScreen({ entregas, projects, onNew, onEdit, onDelete }: any) {
           </Btn>
         }
       />
-      <Card>
+      {/* Mobile */}
+      <div className="md:hidden space-y-3">
+        {entregas.map((e: Entrega) => (
+          <Card key={e.id} className="p-4 group">
+            <div className="flex items-start justify-between mb-2">
+              <div>
+                <div className="text-[13.5px] font-semibold" style={{ color: C.fg }}>
+                  {e.project}
+                </div>
+                <div className="text-[12px] mt-0.5 font-mono" style={{ color: C.muted }}>
+                  {e.file}
+                </div>
+              </div>
+              <Badge label={e.status} color={sc2[e.status] || C.muted} />
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-[12px]" style={{ color: e.urgent ? C.danger : C.muted }}>
+                Prazo: {e.date} · {e.size}
+              </span>
+              <ActionButtons onEdit={() => onEdit(e)} onDelete={() => onDelete(e.id)} />
+            </div>
+          </Card>
+        ))}
+        {entregas.length === 0 && (
+          <div className="py-16 text-center text-[13px]" style={{ color: C.muted }}>
+            Nenhuma entrega.
+          </div>
+        )}
+      </div>
+      {/* Desktop */}
+      <Card className="hidden md:block">
         {entregas.length === 0 ? (
           <div className="py-16 text-center text-[13px]" style={{ color: C.muted }}>
             Nenhuma entrega.
@@ -1721,7 +1850,7 @@ function EntregasScreen({ entregas, projects, onNew, onEdit, onDelete }: any) {
                       {e.file}
                     </td>
                     <td className="px-5 py-3.5">
-                      <Badge label={e.status} color={statusColor2[e.status] || C.muted} />
+                      <Badge label={e.status} color={sc2[e.status] || C.muted} />
                     </td>
                     <td
                       className="px-5 py-3.5 tabular-nums font-medium"
@@ -1783,14 +1912,14 @@ function PropostasScreen({ propostas, clients, onNew, onEdit, onDelete }: any) {
               <FileText className="h-5 w-5" strokeWidth={1.75} />
             </div>
             <div className="flex-1 min-w-0">
-              <div className="text-[14px] font-semibold" style={{ color: C.fg }}>
+              <div className="text-[14px] font-semibold truncate" style={{ color: C.fg }}>
                 {p.title}
               </div>
               <div className="text-[12px] mt-0.5" style={{ color: C.muted }}>
                 {p.client} · {p.date}
               </div>
             </div>
-            <div className="text-[15px] font-semibold tabular-nums" style={{ color: C.fg }}>
+            <div className="text-[14px] font-semibold tabular-nums hidden sm:block" style={{ color: C.fg }}>
               {p.value}
             </div>
             <Badge label={p.status} color={sc[p.status] || C.muted} />
@@ -1816,26 +1945,25 @@ function FinanceiroScreen() {
     { desc: "Pagamento — Apple Originals", tipo: "Entrada", valor: "R$ 142.000", data: "10 jun", status: "Recebido" },
     { desc: "Pagamento — Porsche AG (50%)", tipo: "Entrada", valor: "R$ 75.000", data: "08 jun", status: "Recebido" },
     { desc: "Aluguel Studio A — junho", tipo: "Saída", valor: "R$ 8.500", data: "05 jun", status: "Pago" },
-    { desc: "Equipamentos — locação externa", tipo: "Saída", valor: "R$ 12.200", data: "07 jun", status: "Pago" },
+    { desc: "Equipamentos — locação", tipo: "Saída", valor: "R$ 12.200", data: "07 jun", status: "Pago" },
     { desc: "Fatura — Maison Hermès", tipo: "Entrada", valor: "R$ 96.200", data: "15 jun", status: "Pendente" },
-    { desc: "Freelancer — colorista", tipo: "Saída", valor: "R$ 4.800", data: "12 jun", status: "Pendente" },
   ];
   const kpis = [
     { label: "Faturamento", value: "R$ 482.350", delta: "+18,4%", tone: "up" },
     { label: "Despesas", value: "R$ 68.400", delta: "+3,2%", tone: "warn" },
-    { label: "Lucro líquido", value: "R$ 413.950", delta: "+22,1%", tone: "up" },
+    { label: "Lucro", value: "R$ 413.950", delta: "+22,1%", tone: "up" },
     { label: "A receber", value: "R$ 96.200", delta: "1 fatura", tone: "warn" },
   ];
   return (
     <div>
       <PageHeader eyebrow="Financeiro" title="Financeiro" sub="Junho de 2026" />
-      <div className="grid grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-2 xl:grid-cols-4 gap-3 mb-6">
         {kpis.map((k) => (
-          <Card key={k.label} className="p-5">
+          <Card key={k.label} className="p-4">
             <div className="text-[10px] uppercase tracking-[0.16em] font-semibold mb-3" style={{ color: C.muted }}>
               {k.label}
             </div>
-            <div className="text-[24px] font-semibold tabular-nums leading-none" style={{ color: C.fg }}>
+            <div className="text-[20px] md:text-[24px] font-semibold tabular-nums leading-none" style={{ color: C.fg }}>
               {k.value}
             </div>
             <div
@@ -1853,7 +1981,7 @@ function FinanceiroScreen() {
           <button
             key={t}
             onClick={() => setTab(t)}
-            className="px-4 py-2 rounded-xl text-[13px] font-medium transition-all"
+            className="px-4 py-2 rounded-xl text-[13px] font-medium transition-all active:scale-95"
             style={
               tab === t
                 ? { background: C.em, color: "#0D1612" }
@@ -1866,8 +1994,8 @@ function FinanceiroScreen() {
       </div>
       {tab === "resumo" && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <Card className="p-6">
-            <div className="text-[13px] font-semibold mb-5" style={{ color: C.fg }}>
+          <Card className="p-5">
+            <div className="text-[13px] font-semibold mb-4" style={{ color: C.fg }}>
               Receita vs Despesa
             </div>
             {[
@@ -1893,8 +2021,8 @@ function FinanceiroScreen() {
               </div>
             ))}
           </Card>
-          <Card className="p-6">
-            <div className="text-[13px] font-semibold mb-5" style={{ color: C.fg }}>
+          <Card className="p-5">
+            <div className="text-[13px] font-semibold mb-4" style={{ color: C.fg }}>
               Status dos pagamentos
             </div>
             {[
@@ -1920,47 +2048,45 @@ function FinanceiroScreen() {
       )}
       {tab === "lancamentos" && (
         <Card>
-          <div className="divide-y" style={{ "--tw-divide-opacity": 1 } as any}>
-            {lancamentos.map((l, i) => (
+          {lancamentos.map((l, i) => (
+            <div
+              key={i}
+              className="flex items-center gap-3 px-4 py-3.5 transition-colors"
+              style={{ borderBottom: i < lancamentos.length - 1 ? `1px solid ${C.border}` : "none" }}
+              onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.background = C.hover)}
+              onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.background = "transparent")}
+            >
               <div
-                key={i}
-                className="flex items-center gap-4 px-5 py-3.5 transition-colors"
-                style={{ borderBottom: i < lancamentos.length - 1 ? `1px solid ${C.border}` : "none" }}
-                onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.background = C.hover)}
-                onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.background = "transparent")}
+                className="h-8 w-8 rounded-xl flex items-center justify-center shrink-0"
+                style={{
+                  background: l.tipo === "Entrada" ? C.emDim : C.dangerDim,
+                  color: l.tipo === "Entrada" ? C.em : C.danger,
+                }}
               >
-                <div
-                  className="h-9 w-9 rounded-xl flex items-center justify-center shrink-0"
-                  style={{
-                    background: l.tipo === "Entrada" ? C.emDim : C.dangerDim,
-                    color: l.tipo === "Entrada" ? C.em : C.danger,
-                  }}
-                >
-                  {l.tipo === "Entrada" ? (
-                    <ArrowUpRight className="h-4 w-4" strokeWidth={1.75} />
-                  ) : (
-                    <ArrowRight className="h-4 w-4 rotate-180" strokeWidth={1.75} />
-                  )}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="text-[13px] font-medium" style={{ color: C.fg }}>
-                    {l.desc}
-                  </div>
-                  <div className="text-[11.5px] mt-0.5" style={{ color: C.muted }}>
-                    {l.data} · {l.tipo}
-                  </div>
-                </div>
-                <div
-                  className="text-[14px] font-semibold tabular-nums"
-                  style={{ color: l.tipo === "Entrada" ? C.em : C.danger }}
-                >
-                  {l.tipo === "Saída" && "−"}
-                  {l.valor}
-                </div>
-                <Badge label={l.status} color={l.status === "Recebido" || l.status === "Pago" ? C.em : C.warn} />
+                {l.tipo === "Entrada" ? (
+                  <ArrowUpRight className="h-4 w-4" strokeWidth={1.75} />
+                ) : (
+                  <ArrowRight className="h-4 w-4 rotate-180" strokeWidth={1.75} />
+                )}
               </div>
-            ))}
-          </div>
+              <div className="flex-1 min-w-0">
+                <div className="text-[13px] font-medium truncate" style={{ color: C.fg }}>
+                  {l.desc}
+                </div>
+                <div className="text-[11.5px] mt-0.5" style={{ color: C.muted }}>
+                  {l.data} · {l.tipo}
+                </div>
+              </div>
+              <div
+                className="text-[13px] font-semibold tabular-nums"
+                style={{ color: l.tipo === "Entrada" ? C.em : C.danger }}
+              >
+                {l.tipo === "Saída" && "−"}
+                {l.valor}
+              </div>
+              <Badge label={l.status} color={l.status === "Recebido" || l.status === "Pago" ? C.em : C.warn} />
+            </div>
+          ))}
         </Card>
       )}
     </div>
@@ -1973,6 +2099,7 @@ function FinanceiroScreen() {
 function MensagensScreen({ convs, onSend }: { convs: any[]; onSend: (id: number, text: string) => void }) {
   const [active, setActive] = useState(0);
   const [draft, setDraft] = useState("");
+  const [showList, setShowList] = useState(true);
   const endRef = useRef<HTMLDivElement>(null);
   const conv = convs[active];
   useEffect(() => endRef.current?.scrollIntoView({ behavior: "smooth" }), [active, convs]);
@@ -1981,10 +2108,133 @@ function MensagensScreen({ convs, onSend }: { convs: any[]; onSend: (id: number,
     onSend(conv.id, draft.trim());
     setDraft("");
   };
+  const selectConv = (i: number) => {
+    setActive(i);
+    setShowList(false);
+  };
+
   return (
     <div>
       <PageHeader eyebrow="Equipe" title="Mensagens" sub="Comunicação com clientes" />
-      <Card className="flex overflow-hidden" style={{ height: 560 }}>
+      {/* Mobile: list or chat */}
+      <div className="md:hidden">
+        {showList ? (
+          <Card>
+            {convs.map((c, i) => (
+              <button
+                key={c.id}
+                onClick={() => selectConv(i)}
+                className="w-full text-left px-4 py-3.5 transition-colors active:scale-[0.98]"
+                style={{ borderBottom: `1px solid ${C.border}` }}
+              >
+                <div className="flex items-center gap-3">
+                  <div
+                    className="h-9 w-9 rounded-full flex items-center justify-center text-[12px] font-semibold shrink-0"
+                    style={{ background: `linear-gradient(135deg,${C.em},#00A87A)`, color: "#0D1612" }}
+                  >
+                    {c.name.charAt(0)}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[13px] font-semibold" style={{ color: C.fg }}>
+                        {c.name}
+                      </span>
+                      <span className="text-[10.5px]" style={{ color: C.muted }}>
+                        {c.time}
+                      </span>
+                    </div>
+                    <div className="text-[11.5px] truncate mt-0.5" style={{ color: C.muted }}>
+                      {c.last}
+                    </div>
+                  </div>
+                  {c.unread > 0 && (
+                    <span
+                      className="h-5 w-5 rounded-full flex items-center justify-center text-[10px] font-semibold"
+                      style={{ background: C.em, color: "#0D1612" }}
+                    >
+                      {c.unread}
+                    </span>
+                  )}
+                </div>
+              </button>
+            ))}
+          </Card>
+        ) : (
+          <Card className="flex flex-col" style={{ height: "calc(100vh - 200px)" }}>
+            <div className="px-4 py-3 flex items-center gap-3" style={{ borderBottom: `1px solid ${C.border}` }}>
+              <button
+                onClick={() => setShowList(true)}
+                className="h-8 w-8 rounded-xl flex items-center justify-center"
+                style={{ background: C.hover, color: C.muted }}
+              >
+                <ChevronRight className="h-4 w-4 rotate-180" strokeWidth={1.75} />
+              </button>
+              <div
+                className="h-8 w-8 rounded-full flex items-center justify-center text-[11px] font-semibold"
+                style={{ background: `linear-gradient(135deg,${C.em},#00A87A)`, color: "#0D1612" }}
+              >
+                {conv.name.charAt(0)}
+              </div>
+              <div>
+                <div className="text-[13.5px] font-semibold" style={{ color: C.fg }}>
+                  {conv.name}
+                </div>
+                <div className="text-[11.5px]" style={{ color: C.muted }}>
+                  {conv.project}
+                </div>
+              </div>
+            </div>
+            <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
+              {conv.msgs.map((m: Msg, i: number) => (
+                <div key={i} className={`flex ${m.from === "Você" ? "justify-end" : "justify-start"}`}>
+                  <div
+                    className="max-w-[80%] rounded-2xl px-4 py-2.5 text-[13px]"
+                    style={
+                      m.from === "Você"
+                        ? {
+                            background: `linear-gradient(135deg,${C.em},#00A87A)`,
+                            color: "#0D1612",
+                            borderRadius: "1rem 1rem 2px 1rem",
+                          }
+                        : {
+                            background: C.card,
+                            color: C.fg,
+                            border: `1px solid ${C.border}`,
+                            borderRadius: "1rem 1rem 1rem 2px",
+                          }
+                    }
+                  >
+                    <div>{m.text}</div>
+                    <div className="text-[10.5px] mt-1" style={{ opacity: 0.6 }}>
+                      {m.time}
+                    </div>
+                  </div>
+                </div>
+              ))}
+              <div ref={endRef} />
+            </div>
+            <div className="px-4 py-3 flex items-center gap-2" style={{ borderTop: `1px solid ${C.border}` }}>
+              <input
+                className="flex-1 rounded-xl px-4 py-2.5 text-[13px] outline-none"
+                style={{ background: C.card, border: `1px solid ${C.border}`, color: C.fg }}
+                placeholder="Escreva uma mensagem…"
+                value={draft}
+                onChange={(e) => setDraft(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && send()}
+              />
+              <button
+                onClick={send}
+                className="h-10 w-10 rounded-xl flex items-center justify-center shrink-0"
+                style={{ background: `linear-gradient(135deg,${C.em},#00A87A)`, color: "#0D1612" }}
+              >
+                <Send className="h-4 w-4" strokeWidth={1.75} />
+              </button>
+            </div>
+          </Card>
+        )}
+      </div>
+      {/* Desktop side-by-side */}
+      <Card className="hidden md:flex overflow-hidden" style={{ height: 560 }}>
         <div className="w-[260px] shrink-0 flex flex-col" style={{ borderRight: `1px solid ${C.border}` }}>
           <div className="p-3" style={{ borderBottom: `1px solid ${C.border}` }}>
             <div
@@ -2093,7 +2343,7 @@ function MensagensScreen({ convs, onSend }: { convs: any[]; onSend: (id: number,
             />
             <button
               onClick={send}
-              className="h-9 w-9 rounded-xl flex items-center justify-center shrink-0 transition-opacity hover:opacity-90"
+              className="h-9 w-9 rounded-xl flex items-center justify-center shrink-0 hover:opacity-90"
               style={{ background: `linear-gradient(135deg,${C.em},#00A87A)`, color: "#0D1612" }}
             >
               <Send className="h-4 w-4" strokeWidth={1.75} />
@@ -2105,6 +2355,9 @@ function MensagensScreen({ convs, onSend }: { convs: any[]; onSend: (id: number,
   );
 }
 
+/* ══════════════════════════════════════════
+   CONFIGURAÇÕES
+══════════════════════════════════════════ */
 function Toggle({ defaultOn }: { defaultOn: boolean }) {
   const [on, setOn] = useState(defaultOn);
   return (
@@ -2122,8 +2375,8 @@ function Toggle({ defaultOn }: { defaultOn: boolean }) {
 }
 
 function ConfiguracoesScreen() {
-  const [nome, setNome] = useState("Élise Marchand");
-  const [email, setEmail] = useState("elise@mediaworld.com.br");
+  const [nome, setNome] = useState("Media World");
+  const [email, setEmail] = useState("contato@mediaworld.com.br");
   const [empresa, setEmpresa] = useState("Media World");
   const [saved, setSaved] = useState(false);
   const save = () => {
@@ -2134,14 +2387,14 @@ function ConfiguracoesScreen() {
     <div className="max-w-2xl space-y-6">
       <PageHeader eyebrow="Sistema" title="Configurações" sub="Preferências da sua conta" />
       <Card className="overflow-hidden">
-        <div className="flex items-center gap-2 px-6 pt-5 pb-4" style={{ borderBottom: `1px solid ${C.border}` }}>
+        <div className="flex items-center gap-2 px-5 pt-5 pb-4" style={{ borderBottom: `1px solid ${C.border}` }}>
           <User className="h-4 w-4" style={{ color: C.em }} strokeWidth={1.75} />
           <h2 className="text-[15px] font-semibold" style={{ color: C.fg }}>
             Perfil
           </h2>
         </div>
-        <div className="px-6 py-5 space-y-4">
-          <div className="flex items-center gap-4 mb-6">
+        <div className="px-5 py-5 space-y-4">
+          <div className="flex items-center gap-4 mb-4">
             <div
               className="h-14 w-14 rounded-full flex items-center justify-center text-[18px] font-semibold"
               style={{ background: `linear-gradient(135deg,${C.em},#00A87A)`, color: "#0D1612" }}
@@ -2174,33 +2427,13 @@ function ConfiguracoesScreen() {
         </div>
       </Card>
       <Card className="overflow-hidden">
-        <div className="flex items-center gap-2 px-6 pt-5 pb-4" style={{ borderBottom: `1px solid ${C.border}` }}>
-          <Lock className="h-4 w-4" style={{ color: C.em }} strokeWidth={1.75} />
-          <h2 className="text-[15px] font-semibold" style={{ color: C.fg }}>
-            Segurança
-          </h2>
-        </div>
-        <div className="px-6 py-5 space-y-4">
-          {["Senha atual", "Nova senha", "Confirmar nova senha"].map((l) => (
-            <Field key={l} label={l}>
-              <input
-                type="password"
-                className="w-full rounded-xl px-3 py-2 text-[13px] outline-none"
-                style={{ background: C.hover, border: `1px solid ${C.border}`, color: C.fg }}
-                placeholder="••••••••"
-              />
-            </Field>
-          ))}
-        </div>
-      </Card>
-      <Card className="overflow-hidden">
-        <div className="flex items-center gap-2 px-6 pt-5 pb-4" style={{ borderBottom: `1px solid ${C.border}` }}>
+        <div className="flex items-center gap-2 px-5 pt-5 pb-4" style={{ borderBottom: `1px solid ${C.border}` }}>
           <Bell className="h-4 w-4" style={{ color: C.em }} strokeWidth={1.75} />
           <h2 className="text-[15px] font-semibold" style={{ color: C.fg }}>
             Notificações
           </h2>
         </div>
-        <div className="px-6 py-2">
+        <div className="px-5 py-2">
           {[
             { label: "Aprovações pendentes", desc: "Quando um projeto aguarda sua aprovação" },
             { label: "Novas mensagens", desc: "Quando clientes enviam mensagens" },
@@ -2228,7 +2461,7 @@ function ConfiguracoesScreen() {
       <div className="flex items-center gap-3">
         <button
           onClick={save}
-          className="flex items-center gap-2 rounded-xl px-5 py-2.5 text-[13px] font-semibold shadow-lg transition-opacity hover:opacity-90"
+          className="flex items-center gap-2 rounded-xl px-5 py-2.5 text-[13px] font-semibold shadow-lg transition-opacity hover:opacity-90 active:scale-95"
           style={{ background: `linear-gradient(135deg,${C.em},#00A87A)`, color: "#0D1612" }}
         >
           {saved ? (
@@ -2255,6 +2488,9 @@ function ConfiguracoesScreen() {
   );
 }
 
+/* ══════════════════════════════════════════
+   MODALS
+══════════════════════════════════════════ */
 function Modal({
   title,
   onClose,
@@ -2270,15 +2506,15 @@ function Modal({
 }) {
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center"
+      className="fixed inset-0 z-50 flex items-end md:items-center justify-center"
       style={{ background: "rgba(0,0,0,0.7)", backdropFilter: "blur(8px)" }}
     >
       <div
-        className="rounded-2xl w-full max-w-lg mx-4 overflow-hidden shadow-2xl"
+        className="w-full md:max-w-lg md:mx-4 overflow-hidden shadow-2xl md:rounded-2xl rounded-t-2xl"
         style={{ background: C.surface, border: `1px solid ${C.border}` }}
       >
         <div
-          className="flex items-center justify-between px-6 pt-6 pb-4"
+          className="flex items-center justify-between px-5 pt-5 pb-4"
           style={{ borderBottom: `1px solid ${C.border}` }}
         >
           <h2 className="text-[17px] font-semibold" style={{ color: C.fg }}>
@@ -2292,9 +2528,9 @@ function Modal({
             <X className="h-4 w-4" strokeWidth={1.75} />
           </button>
         </div>
-        <div className="px-6 py-5 space-y-4">{children}</div>
+        <div className="px-5 py-5 space-y-4 max-h-[70vh] overflow-y-auto">{children}</div>
         <div
-          className="flex items-center justify-end gap-3 px-6 py-4"
+          className="flex items-center justify-end gap-3 px-5 py-4"
           style={{ borderTop: `1px solid ${C.border}`, background: C.card }}
         >
           <button onClick={onClose} className="px-4 py-2 text-[13px] rounded-xl" style={{ color: C.muted }}>
@@ -2302,7 +2538,7 @@ function Modal({
           </button>
           <button
             onClick={onSave}
-            className="px-5 py-2 text-[13px] font-semibold rounded-xl shadow-lg hover:opacity-90"
+            className="px-5 py-2.5 text-[13px] font-semibold rounded-xl shadow-lg hover:opacity-90 active:scale-95"
             style={{ background: `linear-gradient(135deg,${C.em},#00A87A)`, color: "#0D1612" }}
           >
             {saveLabel}
@@ -2319,7 +2555,7 @@ function MInput({ label, value, onChange, placeholder, type = "text", list }: an
       <input
         type={type}
         list={list}
-        className="w-full rounded-xl px-3 py-2 text-[13px] outline-none"
+        className="w-full rounded-xl px-3 py-2.5 text-[13px] outline-none"
         style={{ background: C.card, border: `1px solid ${C.border}`, color: C.fg }}
         placeholder={placeholder}
         value={value}
@@ -2332,7 +2568,7 @@ function MSelect({ label, value, onChange, options }: any) {
   return (
     <Field label={label}>
       <select
-        className="w-full rounded-xl px-3 py-2 text-[13px] outline-none"
+        className="w-full rounded-xl px-3 py-2.5 text-[13px] outline-none"
         style={{ background: C.card, border: `1px solid ${C.border}`, color: C.fg }}
         value={value}
         onChange={(e) => onChange(e.target.value)}
@@ -2382,7 +2618,7 @@ function ProjectModal({ editing, clients, onSave, onClose }: any) {
           <option key={c.id} value={c.name} />
         ))}
       </datalist>
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-2 gap-3">
         <MSelect label="Status" value={f.status} onChange={(v: string) => s("status", v)} options={STATUS_OPTIONS} />
         <MInput label="Prazo" value={f.deadline} onChange={(v: string) => s("deadline", v)} placeholder="Ex: 30 jun" />
       </div>
@@ -2468,7 +2704,7 @@ function EntregaModal({ editing, projects, onSave, onClose }: any) {
         onChange={(v: string) => s("file", v)}
         placeholder="Ex: Corte_Final_v3.mp4"
       />
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-2 gap-3">
         <MSelect
           label="Status"
           value={f.status}
@@ -2571,7 +2807,7 @@ function GravacaoModal({ editing, clients, onSave, onClose }: any) {
         ))}
       </datalist>
       <MInput label="Local" value={f.local} onChange={(v: string) => s("local", v)} placeholder="Ex: Studio A" />
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-2 gap-3">
         <MInput label="Data" value={f.date} onChange={(v: string) => s("date", v)} placeholder="Ex: 20 jun" />
         <MInput label="Horário" value={f.time} onChange={(v: string) => s("time", v)} placeholder="Ex: 09:00" />
       </div>
