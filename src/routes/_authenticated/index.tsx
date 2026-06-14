@@ -274,7 +274,7 @@ function App() {
             {screen==="agenda"       && <AgendaScreen gravacoes={gravacoes} clients={clients} onNew={()=>setGravModal({open:true,e:null})} onEdit={(g:any)=>setGravModal({open:true,e:g})} onDelete={(id:string)=>deleteGravacaoM.mutate(id)} />}
             {screen==="entregas"     && <EntregasScreen entregas={entregas} projects={projects} onNew={()=>setEntregaModal({open:true,e:null})} onEdit={(e:any)=>setEntregaModal({open:true,e:e})} onDelete={(id:string)=>deleteEntregaM.mutate(id)} />}
             {screen==="propostas"    && <PropostasScreen propostas={propostas} clients={clients} onNew={()=>setPropModal({open:true,e:null})} onEdit={(p:any)=>setPropModal({open:true,e:p})} onDelete={(id:string)=>deletePropostaM.mutate(id)} />}
-            {screen==="financeiro"   && <FinanceiroScreen />}
+            {screen==="financeiro"   && <FinanceiroScreen lancamentos={lancamentos} onNew={()=>setLancModal({open:true,e:null})} onEdit={(l:LancamentoRow)=>setLancModal({open:true,e:l})} onDelete={(id:string)=>deleteLancamentoM.mutate(id)} />}
             {screen==="mensagens"    && <MensagensScreen convs={convs} onSend={sendMsg} />}
             {screen==="configuracoes"&& <ConfiguracoesScreen user={userProfile} onSignOut={handleSignOut} />}
           </div>
