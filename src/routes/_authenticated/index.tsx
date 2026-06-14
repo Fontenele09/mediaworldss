@@ -98,8 +98,8 @@ function ProgressBar({ value }: { value:number }) {
     </div>
   );
 }
-function Card({ children, className="" }: { children:React.ReactNode; className?:string }) {
-  return <div className={`rounded-2xl ${className}`} style={{background:C.card,border:`1px solid ${C.border}`}}>{children}</div>;
+function Card({ children, className="", style }: { children:React.ReactNode; className?:string; style?:React.CSSProperties }) {
+  return <div className={`rounded-2xl ${className}`} style={{background:C.card,border:`1px solid ${C.border}`,...style}}>{children}</div>;
 }
 function ActionButtons({ onEdit, onDelete }: { onEdit:()=>void; onDelete:()=>void }) {
   return (
