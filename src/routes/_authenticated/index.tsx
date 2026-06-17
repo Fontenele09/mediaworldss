@@ -1159,9 +1159,7 @@ function FinanceiroScreen({ lancamentos, onNew, onEdit, onDelete }: { lancamento
       )}
       {tab==="lancamentos"&&(
         lancamentos.length===0 ? (
-          <Card className="py-16 text-center text-[13px]" >
-            <div style={{color:C.muted}}>Nenhum lançamento. Crie o primeiro com “Novo lançamento”.</div>
-          </Card>
+          <EmptyState icon={Wallet} title="Sem lançamentos" sub="Registre seu primeiro lançamento financeiro para começar a acompanhar receitas e despesas." actionLabel="Novo lançamento" onAction={onNew} />
         ) : (
           <Card>
             {lancamentos.map((l,i)=>(
