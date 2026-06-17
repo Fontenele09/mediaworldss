@@ -943,6 +943,7 @@ function ProjetosScreen({ projects, clients, onNew, onEdit, onDelete }: any) {
           </div>
         )}
       </Card>
+      </>}
     </div>
   );
 }
