@@ -1021,6 +1021,9 @@ function EntregasScreen({ entregas, projects, onNew, onEdit, onDelete }: any) {
     <div>
       <PageHeader eyebrow="Operação" title="Entregas" sub={`${entregas.length} entregas ativas`}
         action={<Btn onClick={onNew}><Upload className="h-4 w-4" strokeWidth={2} />Nova entrega</Btn>} />
+      {entregas.length===0 ? (
+        <EmptyState icon={Send} title="Sem entregas registradas" sub="Adicione sua primeira entrega para acompanhar arquivos e prazos." actionLabel="Nova entrega" onAction={onNew} />
+      ) : <>
       <div className="md:hidden space-y-3">
         {entregas.map((e:Entrega)=>(
           <Card key={e.id} className="p-4 group">
@@ -1034,33 +1037,31 @@ function EntregasScreen({ entregas, projects, onNew, onEdit, onDelete }: any) {
             </div>
           </Card>
         ))}
-        {entregas.length===0&&<div className="py-16 text-center text-[13px]" style={{color:C.muted}}>Nenhuma entrega.</div>}
       </div>
       <Card className="hidden md:block">
-        {entregas.length===0?<div className="py-16 text-center text-[13px]" style={{color:C.muted}}>Nenhuma entrega.</div>:(
-          <div className="overflow-x-auto">
-            <table className="w-full text-[12.5px]">
-              <thead><tr style={{borderBottom:`1px solid ${C.border}`,color:C.muted}}>
-                {["Projeto","Arquivo","Status","Prazo","Tamanho",""].map(h=><th key={h} className="px-5 py-3 text-left text-[10px] uppercase tracking-[0.15em] font-semibold">{h}</th>)}
-              </tr></thead>
-              <tbody>
-                {entregas.map((e:Entrega,i:number)=>(
-                  <tr key={e.id} className="group transition-colors" style={{borderBottom:i<entregas.length-1?`1px solid ${C.border}`:"none"}}
-                    onMouseEnter={x=>(x.currentTarget as HTMLElement).style.background=C.hover}
-                    onMouseLeave={x=>(x.currentTarget as HTMLElement).style.background="transparent"}>
-                    <td className="px-5 py-3.5"><div className="font-medium" style={{color:C.fg}}>{e.project}</div><div className="text-[11px]" style={{color:C.muted}}>{e.client}</div></td>
-                    <td className="px-5 py-3.5 font-mono text-[11.5px]" style={{color:C.muted}}>{e.file}</td>
-                    <td className="px-5 py-3.5"><Badge label={e.status} color={sc2[e.status]||C.muted} /></td>
-                    <td className="px-5 py-3.5 tabular-nums font-medium" style={{color:e.urgent?C.danger:C.fgDim}}>{e.date}</td>
-                    <td className="px-5 py-3.5 tabular-nums" style={{color:C.muted}}>{e.size}</td>
-                    <td className="px-5 py-3.5"><ActionButtons onEdit={()=>onEdit(e)} onDelete={()=>onDelete(e.id)} /></td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+        <div className="overflow-x-auto">
+          <table className="w-full text-[12.5px]">
+            <thead><tr style={{borderBottom:`1px solid ${C.border}`,color:C.muted}}>
+              {["Projeto","Arquivo","Status","Prazo","Tamanho",""].map(h=><th key={h} className="px-5 py-3 text-left text-[10px] uppercase tracking-[0.15em] font-semibold">{h}</th>)}
+            </tr></thead>
+            <tbody>
+              {entregas.map((e:Entrega,i:number)=>(
+                <tr key={e.id} className="group transition-colors" style={{borderBottom:i<entregas.length-1?`1px solid ${C.border}`:"none"}}
+                  onMouseEnter={x=>(x.currentTarget as HTMLElement).style.background=C.hover}
+                  onMouseLeave={x=>(x.currentTarget as HTMLElement).style.background="transparent"}>
+                  <td className="px-5 py-3.5"><div className="font-medium" style={{color:C.fg}}>{e.project}</div><div className="text-[11px]" style={{color:C.muted}}>{e.client}</div></td>
+                  <td className="px-5 py-3.5 font-mono text-[11.5px]" style={{color:C.muted}}>{e.file}</td>
+                  <td className="px-5 py-3.5"><Badge label={e.status} color={sc2[e.status]||C.muted} /></td>
+                  <td className="px-5 py-3.5 tabular-nums font-medium" style={{color:e.urgent?C.danger:C.fgDim}}>{e.date}</td>
+                  <td className="px-5 py-3.5 tabular-nums" style={{color:C.muted}}>{e.size}</td>
+                  <td className="px-5 py-3.5"><ActionButtons onEdit={()=>onEdit(e)} onDelete={()=>onDelete(e.id)} /></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </Card>
+      </>}
     </div>
   );
 }
