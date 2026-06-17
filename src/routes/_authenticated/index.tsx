@@ -871,7 +871,10 @@ function ClientesScreen({ clients, onNew, onEdit, onDelete }: any) {
             </div>
           </Card>
         ))}
-        {filtered.length===0&&<div className="col-span-3 py-20 text-center text-[13px]" style={{color:C.muted}}>Nenhum cliente encontrado.</div>}
+        {filtered.length===0 && clients.length===0 && (
+          <div className="col-span-3"><EmptyState icon={UserPlus} title="Sem clientes ainda" sub="Cadastre seu primeiro cliente para começar a organizar projetos." actionLabel="Adicionar cliente" onAction={onNew} /></div>
+        )}
+        {filtered.length===0 && clients.length>0 && <div className="col-span-3 py-20 text-center text-[13px]" style={{color:C.muted}}>Nenhum cliente encontrado.</div>}
       </div>
     </div>
   );
