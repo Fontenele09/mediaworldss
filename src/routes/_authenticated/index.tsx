@@ -743,62 +743,93 @@ function ClientsTable({ clients, onEdit, onDelete }: any) {
   );
 }
 
-function AgendaWidget() {
-  const items=[{time:"09:00",title:"Kickoff Porsche",icon:Users},{time:"11:30",title:"Gravação Studio A",icon:Video},{time:"14:00",title:"Chamada Apple",icon:Phone},{time:"16:00",title:"Entrega corte Dior",icon:Send}];
+function AgendaWidget({ gravacoes = [] }: { gravacoes?: Gravacao[] }) {
+  // próximas 4 gravações ordenadas por data
+  const items = [...gravacoes]
+    .sort((a,b)=>String(a.date||"").localeCompare(String(b.date||"")))
+    .slice(0,4);
   return (
     <Card>
       <div className="flex items-center justify-between px-4 pt-4 pb-3" style={{borderBottom:`1px solid ${C.border}`}}>
-        <h2 className="text-[14px] font-semibold" style={{color:C.fg}}>Agenda do dia</h2>
+        <h2 className="text-[14px] font-semibold" style={{color:C.fg}}>Próximas gravações</h2>
         <Calendar className="h-4 w-4" style={{color:C.muted}} strokeWidth={1.75} />
       </div>
-      <ul>
-        {items.map((item,i)=>{const Icon=item.icon; return(
-          <li key={i} className="flex items-center gap-3 px-4 py-2.5 transition-colors" style={{borderBottom:i<items.length-1?`1px solid ${C.border}`:"none"}}
-            onMouseEnter={e=>(e.currentTarget as HTMLElement).style.background=C.hover}
-            onMouseLeave={e=>(e.currentTarget as HTMLElement).style.background="transparent"}>
-            <span className="text-[11.5px] font-semibold tabular-nums w-10" style={{color:C.em}}>{item.time}</span>
-            <div className="h-6 w-6 rounded-lg flex items-center justify-center shrink-0" style={{background:C.emDim,color:C.em}}><Icon className="h-3 w-3" strokeWidth={1.75} /></div>
-            <span className="text-[12.5px] font-medium truncate" style={{color:C.fgDim}}>{item.title}</span>
-          </li>
-        );})}
-      </ul>
+      {items.length === 0 ? (
+        <div className="px-4 py-6 text-center text-[12px]" style={{color:C.muted}}>Nenhuma gravação agendada.</div>
+      ) : (
+        <ul>
+          {items.map((g,i)=>(
+            <li key={g.id} className="flex items-center gap-3 px-4 py-2.5 transition-colors" style={{borderBottom:i<items.length-1?`1px solid ${C.border}`:"none"}}
+              onMouseEnter={e=>(e.currentTarget as HTMLElement).style.background=C.hover}
+              onMouseLeave={e=>(e.currentTarget as HTMLElement).style.background="transparent"}>
+              <span className="text-[11.5px] font-semibold tabular-nums w-12" style={{color:C.em}}>{g.time || "—"}</span>
+              <div className="h-6 w-6 rounded-lg flex items-center justify-center shrink-0" style={{background:C.emDim,color:C.em}}><Video className="h-3 w-3" strokeWidth={1.75} /></div>
+              <div className="flex-1 min-w-0">
+                <div className="text-[12.5px] font-medium truncate" style={{color:C.fgDim}}>{g.title}</div>
+                <div className="text-[11px] truncate" style={{color:C.muted}}>{g.date} · {g.client}</div>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
     </Card>
   );
 }
 
-function DeadlinesWidget() {
-  const items=[{project:"Apple — Silence",task:"Aprovação corte final",in:"Em 2 dias",urgent:true},{project:"Porsche 911 GTS",task:"Entrega dos brutos",in:"Em 4 dias",urgent:true},{project:"Hermès — Carré 90",task:"Color grading",in:"Em 1 sem",urgent:false}];
+function DeadlinesWidget({ projects = [] }: { projects?: Project[] }) {
+  // 3 projetos mais próximos do prazo, status diferente de "Entregue"
+  const items = [...projects]
+    .filter(p=>p.status!=="Entregue")
+    .sort((a,b)=>String(a.deadline||"").localeCompare(String(b.deadline||"")))
+    .slice(0,3);
   return (
     <Card>
       <div className="flex items-center justify-between px-4 pt-4 pb-3" style={{borderBottom:`1px solid ${C.border}`}}>
         <h2 className="text-[14px] font-semibold" style={{color:C.fg}}>Prazos</h2>
         <Clock className="h-4 w-4" style={{color:C.muted}} strokeWidth={1.75} />
       </div>
-      <ul>
-        {items.map((d,i)=>(
-          <li key={i} className="flex items-start gap-3 px-4 py-3 transition-colors" style={{borderBottom:i<items.length-1?`1px solid ${C.border}`:"none"}}
-            onMouseEnter={e=>(e.currentTarget as HTMLElement).style.background=C.hover}
-            onMouseLeave={e=>(e.currentTarget as HTMLElement).style.background="transparent"}>
-            <span className="mt-1.5 h-1.5 w-1.5 rounded-full shrink-0" style={{background:d.urgent?C.danger:C.border}} />
-            <div className="flex-1 min-w-0">
-              <div className="text-[12.5px] font-medium truncate" style={{color:C.fg}}>{d.project}</div>
-              <div className="text-[11px] truncate mt-0.5" style={{color:C.muted}}>{d.task}</div>
-            </div>
-            <span className="text-[11px] font-semibold whitespace-nowrap" style={{color:d.urgent?C.danger:C.muted}}>{d.in}</span>
-          </li>
-        ))}
-      </ul>
+      {items.length === 0 ? (
+        <div className="px-4 py-6 text-center text-[12px]" style={{color:C.muted}}>Sem prazos ativos.</div>
+      ) : (
+        <ul>
+          {items.map((d,i)=>{
+            const urgent = d.status==="Aprovação";
+            return (
+              <li key={d.id} className="flex items-start gap-3 px-4 py-3 transition-colors" style={{borderBottom:i<items.length-1?`1px solid ${C.border}`:"none"}}
+                onMouseEnter={e=>(e.currentTarget as HTMLElement).style.background=C.hover}
+                onMouseLeave={e=>(e.currentTarget as HTMLElement).style.background="transparent"}>
+                <span className="mt-1.5 h-1.5 w-1.5 rounded-full shrink-0" style={{background:urgent?C.danger:C.border}} />
+                <div className="flex-1 min-w-0">
+                  <div className="text-[12.5px] font-medium truncate" style={{color:C.fg}}>{d.name}</div>
+                  <div className="text-[11px] truncate mt-0.5" style={{color:C.muted}}>{d.client} · {d.status}</div>
+                </div>
+                <span className="text-[11px] font-semibold whitespace-nowrap" style={{color:urgent?C.danger:C.muted}}>{d.deadline || "—"}</span>
+              </li>
+            );
+          })}
+        </ul>
+      )}
     </Card>
   );
 }
 
-function FinancialWidget() {
-  const rows=[{label:"Faturamento",value:"R$ 482.350",delta:"+18,4%"},{label:"Mês anterior",value:"R$ 407.420",delta:null},{label:"A receber",value:"R$ 96.200",delta:"4 faturas"}];
+function FinancialWidget({ lancamentos = [] }: { lancamentos?: LancamentoRow[] }) {
+  const num = (l:LancamentoRow) => Number(l.valor) || 0;
+  const faturamento = lancamentos.filter(l=>l.tipo==="Entrada"&&l.status==="Recebido").reduce((s,l)=>s+num(l),0);
+  const despesas    = lancamentos.filter(l=>l.tipo==="Saída"&&l.status==="Pago").reduce((s,l)=>s+num(l),0);
+  const aReceber    = lancamentos.filter(l=>l.tipo==="Entrada"&&l.status==="Pendente").reduce((s,l)=>s+num(l),0);
+  const aReceberCt  = lancamentos.filter(l=>l.tipo==="Entrada"&&l.status==="Pendente").length;
+  const fmt = (n:number) => `R$ ${n.toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2})}`;
+  const rows = [
+    {label:"Faturamento", value:fmt(faturamento), delta:null as string|null},
+    {label:"Despesas",    value:fmt(despesas),    delta:null as string|null},
+    {label:"A receber",   value:fmt(aReceber),    delta:aReceberCt>0?`${aReceberCt} ${aReceberCt===1?"fatura":"faturas"}`:null},
+  ];
   return (
     <Card className="overflow-hidden">
       <div className="px-4 pt-4 pb-3" style={{borderBottom:`1px solid ${C.border}`,background:`linear-gradient(135deg,${C.emDim},transparent)`}}>
         <div className="text-[9.5px] uppercase tracking-[0.2em] font-semibold mb-1" style={{color:C.em}}>Financeiro</div>
-        <h2 className="text-[14px] font-semibold" style={{color:C.fg}}>Resumo do mês</h2>
+        <h2 className="text-[14px] font-semibold" style={{color:C.fg}}>Resumo</h2>
       </div>
       <ul>
         {rows.map((r,i)=>(
