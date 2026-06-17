@@ -898,6 +898,9 @@ function ProjetosScreen({ projects, clients, onNew, onEdit, onDelete }: any) {
           ))}
         </div>
       </div>
+      {projects.length===0 ? (
+        <EmptyState icon={Clapperboard} title="Sem projetos ainda" sub="Crie seu primeiro projeto para acompanhar produção, prazos e entregas." actionLabel="Criar projeto" onAction={onNew} />
+      ) : <>
       <div className="md:hidden space-y-3">
         {filtered.map((p:Project)=>(
           <Card key={p.id} className="p-4 group">
