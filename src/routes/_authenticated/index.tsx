@@ -1349,7 +1349,7 @@ function ConfiguracoesScreen({ user, onSignOut }: { user:UserProfile; onSignOut:
 /* ══ MODALS ══ */
 function Modal({ title, onClose, children, onSave, saveLabel="Salvar" }: { title:string; onClose:()=>void; children:React.ReactNode; onSave:()=>void; saveLabel?:string }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center" style={{background:"rgba(0,0,0,0.7)",backdropFilter:"blur(8px)"}}>
+    <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center" style={{background:"rgba(0,0,0,0.7)",backdropFilter:"blur(8px)"}} onClick={(e)=>{ if (e.target === e.currentTarget) onClose(); }}>
       <div className="w-full md:max-w-lg md:mx-4 overflow-hidden shadow-2xl md:rounded-2xl rounded-t-2xl" style={{background:C.surface,border:`1px solid ${C.border}`}}>
         <div className="flex items-center justify-between px-5 pt-5 pb-4" style={{borderBottom:`1px solid ${C.border}`}}>
           <h2 className="text-[17px] font-semibold" style={{color:C.fg}}>{title}</h2>
