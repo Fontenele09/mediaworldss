@@ -103,7 +103,7 @@ function Card({ children, className="", style }: { children:React.ReactNode; cla
 }
 function ActionButtons({ onEdit, onDelete }: { onEdit:()=>void; onDelete:()=>void }) {
   return (
-    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+    <div className="flex items-center gap-1 transition-opacity">
       <button onClick={onEdit} className="h-7 w-7 rounded-lg flex items-center justify-center" style={{color:C.muted}}
         onMouseEnter={e=>(e.currentTarget as HTMLElement).style.color=C.fg}
         onMouseLeave={e=>(e.currentTarget as HTMLElement).style.color=C.muted}>
@@ -114,6 +114,56 @@ function ActionButtons({ onEdit, onDelete }: { onEdit:()=>void; onDelete:()=>voi
         onMouseLeave={e=>(e.currentTarget as HTMLElement).style.color=C.muted}>
         <Trash2 className="h-3.5 w-3.5" strokeWidth={1.75} />
       </button>
+    </div>
+  );
+}
+function ListSkeleton() {
+  return (
+    <div className="space-y-3 mt-4">
+      {[0,1,2].map(i=>(
+        <div key={i} className="rounded-2xl h-20 animate-pulse" style={{background:C.card,border:`1px solid ${C.border}`}} />
+      ))}
+    </div>
+  );
+}
+function ErrorRetry({ error, onRetry }: { error:any; onRetry:()=>void }) {
+  return (
+    <div className="rounded-2xl p-6 mt-4 text-center" style={{background:C.dangerDim,border:`1px solid ${C.danger}40`}}>
+      <div className="text-[13px] font-medium mb-3" style={{color:C.danger}}>Erro ao carregar: {String(error?.message||error)}</div>
+      <button onClick={onRetry} className="rounded-xl px-4 py-2 text-[12.5px] font-semibold" style={{background:C.danger,color:"#fff"}}>Tentar novamente</button>
+    </div>
+  );
+}
+function EmptyState({ icon:Icon, title, sub, actionLabel, onAction }: { icon:any; title:string; sub:string; actionLabel:string; onAction:()=>void }) {
+  return (
+    <div className="rounded-2xl p-10 text-center mt-4" style={{border:`1px dashed ${C.border}`,background:C.card}}>
+      <div className="h-12 w-12 rounded-2xl flex items-center justify-center mx-auto mb-3" style={{background:C.emDim,color:C.em}}>
+        <Icon className="h-6 w-6" strokeWidth={1.5} />
+      </div>
+      <div className="text-[15px] font-semibold mb-1" style={{color:C.fg}}>{title}</div>
+      <div className="text-[12.5px] mb-4" style={{color:C.muted}}>{sub}</div>
+      <button onClick={onAction} className="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-[12.5px] font-semibold" style={{background:`linear-gradient(135deg,${C.em},#6B8EFF)`,color:"#fff"}}>
+        <Plus className="h-3.5 w-3.5" strokeWidth={2} />{actionLabel}
+      </button>
+    </div>
+  );
+}
+function ConfirmModal({ msg, onCancel, onConfirm }: { msg:string; onCancel:()=>void; onConfirm:()=>void }) {
+  return (
+    <div className="fixed inset-0 z-[60] flex items-center justify-center px-4" style={{background:"rgba(0,0,0,0.7)",backdropFilter:"blur(8px)"}} onClick={e=>{if(e.target===e.currentTarget)onCancel();}}>
+      <div className="w-full max-w-sm rounded-2xl overflow-hidden" style={{background:C.surface,border:`1px solid ${C.border}`}}>
+        <div className="px-5 py-5">
+          <div className="h-10 w-10 rounded-xl flex items-center justify-center mb-3" style={{background:C.dangerDim,color:C.danger}}>
+            <AlertCircle className="h-5 w-5" strokeWidth={1.75} />
+          </div>
+          <div className="text-[15px] font-semibold mb-1" style={{color:C.fg}}>Confirmar exclusão</div>
+          <div className="text-[13px]" style={{color:C.muted}}>{msg}</div>
+        </div>
+        <div className="flex items-center justify-end gap-2 px-5 py-3" style={{background:C.card,borderTop:`1px solid ${C.border}`}}>
+          <button onClick={onCancel} className="px-4 py-2 text-[13px] rounded-xl" style={{color:C.muted}}>Cancelar</button>
+          <button onClick={onConfirm} className="px-4 py-2 text-[13px] font-semibold rounded-xl" style={{background:C.danger,color:"#fff"}}>Excluir</button>
+        </div>
+      </div>
     </div>
   );
 }
@@ -210,6 +260,8 @@ function App() {
   const [searchQ,  setSearchQ]  = useState("");
   const [showSearch,setShowSearch] = useState(false);
   const [showNotifs,setShowNotifs] = useState(false);
+  const [confirm, setConfirm] = useState<{open:boolean;msg:string;onConfirm:()=>void}>({open:false,msg:"",onConfirm:()=>{}});
+  const askDelete = (msg:string, fn:()=>void) => setConfirm({open:true,msg,onConfirm:fn});
 
   const [projModal,   setProjModal]   = useState<{open:boolean;e:Project|null}>({open:false,e:null});
   const [clientModal, setClientModal] = useState<{open:boolean;e:Client|null}>({open:false,e:null});
@@ -220,12 +272,35 @@ function App() {
 
   const unread = notifs.filter(n=>!n.read).length;
 
+  // Auto-popular notificações a partir dos dados reais
+  const notifSig = JSON.stringify({
+    p: projects.map(p=>[p.id,p.status]),
+    e: entregas.map(e=>[e.id,e.urgent]),
+    l: lancamentos.map(l=>[l.id,l.tipo,l.status]),
+  });
+  useEffect(()=>{
+    const list: Notif[] = [];
+    let id = 1;
+    projects.filter(p=>p.status==="Aprovação").forEach(p=>list.push({id:id++,type:"warn",text:`Aprovação pendente: ${p.name}`,read:false,time:"agora"}));
+    entregas.filter(e=>e.urgent).forEach(e=>list.push({id:id++,type:"alert",text:`Entrega urgente: ${e.project}`,read:false,time:"agora"}));
+    lancamentos.filter(l=>l.tipo==="Entrada"&&l.status==="Pendente").forEach(l=>list.push({id:id++,type:"info",text:`A receber: ${l.descricao}`,read:false,time:"agora"}));
+    setNotifs(list);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  },[notifSig]);
+
   const saveProject  = async (d:Omit<Project,"id">)  => { await saveProjectM.mutateAsync(projModal.e?{...d,id:projModal.e.id}:d);    setProjModal({open:false,e:null}); };
   const saveClient   = async (d:Omit<Client,"id">)   => { await saveClientM.mutateAsync(clientModal.e?{...d,id:clientModal.e.id}:d); setClientModal({open:false,e:null}); };
   const saveEntrega  = async (d:Omit<Entrega,"id">)  => { await saveEntregaM.mutateAsync(entregaModal.e?{...d,id:entregaModal.e.id}:d); setEntregaModal({open:false,e:null}); };
   const saveProposta = async (d:Omit<Proposta,"id">) => { await savePropostaM.mutateAsync(propModal.e?{...d,id:propModal.e.id}:d);   setPropModal({open:false,e:null}); };
   const saveGravacao = async (d:Omit<Gravacao,"id">) => { await saveGravacaoM.mutateAsync(gravModal.e?{...d,id:gravModal.e.id}:d);   setGravModal({open:false,e:null}); };
   const saveLancamento = async (d:Omit<LancamentoRow,"id">) => { await saveLancamentoM.mutateAsync(lancModal.e?{...d,id:lancModal.e.id}:d as any); setLancModal({open:false,e:null}); };
+
+  const delProject  = (id:string) => askDelete("Excluir este projeto? Esta ação não pode ser desfeita.",   ()=>deleteProjectM.mutate(id));
+  const delClient   = (id:string) => askDelete("Excluir este cliente? Esta ação não pode ser desfeita.",   ()=>deleteClientM.mutate(id));
+  const delEntrega  = (id:string) => askDelete("Excluir esta entrega? Esta ação não pode ser desfeita.",  ()=>deleteEntregaM.mutate(id));
+  const delProposta = (id:string) => askDelete("Excluir esta proposta? Esta ação não pode ser desfeita.", ()=>deletePropostaM.mutate(id));
+  const delGravacao = (id:string) => askDelete("Excluir esta gravação? Esta ação não pode ser desfeita.", ()=>deleteGravacaoM.mutate(id));
+  const delLancamento = (id:string) => askDelete("Excluir este lançamento? Esta ação não pode ser desfeita.", ()=>deleteLancamentoM.mutate(id));
 
   const sendMsg = (cid:number,text:string) => {
     const now=new Date(); const t=`${now.getHours().toString().padStart(2,"0")}:${now.getMinutes().toString().padStart(2,"0")}`;
@@ -240,6 +315,13 @@ function App() {
   ] : [];
 
   const nav=(s:Screen)=>{ setScreen(s); setShowSearch(false); setShowNotifs(false); setSidebarOpen(false); };
+
+  const renderScreen = (q:any, screenEl:React.ReactNode) => {
+    if (q.isLoading) return <ListSkeleton />;
+    if (q.error) return <ErrorRetry error={q.error} onRetry={()=>q.refetch()} />;
+    return screenEl;
+  };
+
 
   return (
     <div style={{background:C.bg,color:C.fg,minHeight:"100vh",fontFamily:"Inter,sans-serif"}}>
@@ -267,14 +349,14 @@ function App() {
             user={userProfile}
           />
           <div className="flex-1 px-4 md:px-8 py-6 md:py-8 max-w-[1480px] w-full pb-24 lg:pb-8">
-            {screen==="dashboard"    && <DashboardScreen projects={projects} clients={clients} gravacoes={gravacoes} onNewProject={()=>setProjModal({open:true,e:null})} onNewClient={()=>setClientModal({open:true,e:null})} onNewGravacao={()=>setGravModal({open:true,e:null})} onEditProject={(p:any)=>setProjModal({open:true,e:p})} onDeleteProject={(id:string)=>deleteProjectM.mutate(id)} onEditClient={(c:any)=>setClientModal({open:true,e:c})} onDeleteClient={(id:string)=>deleteClientM.mutate(id)} user={userProfile} />}
-            {screen==="clientes"     && <ClientesScreen clients={clients} onNew={()=>setClientModal({open:true,e:null})} onEdit={(c:any)=>setClientModal({open:true,e:c})} onDelete={(id:string)=>deleteClientM.mutate(id)} />}
-            {screen==="projetos"     && <ProjetosScreen projects={projects} clients={clients} onNew={()=>setProjModal({open:true,e:null})} onEdit={(p:any)=>setProjModal({open:true,e:p})} onDelete={(id:string)=>deleteProjectM.mutate(id)} />}
-            {screen==="pipeline"     && <PipelineScreen projects={projects} />}
-            {screen==="agenda"       && <AgendaScreen gravacoes={gravacoes} clients={clients} onNew={()=>setGravModal({open:true,e:null})} onEdit={(g:any)=>setGravModal({open:true,e:g})} onDelete={(id:string)=>deleteGravacaoM.mutate(id)} />}
-            {screen==="entregas"     && <EntregasScreen entregas={entregas} projects={projects} onNew={()=>setEntregaModal({open:true,e:null})} onEdit={(e:any)=>setEntregaModal({open:true,e:e})} onDelete={(id:string)=>deleteEntregaM.mutate(id)} />}
-            {screen==="propostas"    && <PropostasScreen propostas={propostas} clients={clients} onNew={()=>setPropModal({open:true,e:null})} onEdit={(p:any)=>setPropModal({open:true,e:p})} onDelete={(id:string)=>deletePropostaM.mutate(id)} />}
-            {screen==="financeiro"   && <FinanceiroScreen lancamentos={lancamentos} onNew={()=>setLancModal({open:true,e:null})} onEdit={(l:LancamentoRow)=>setLancModal({open:true,e:l})} onDelete={(id:string)=>deleteLancamentoM.mutate(id)} />}
+            {screen==="dashboard"    && <DashboardScreen projects={projects} clients={clients} gravacoes={gravacoes} entregas={entregas} lancamentos={lancamentos} onNewProject={()=>setProjModal({open:true,e:null})} onNewClient={()=>setClientModal({open:true,e:null})} onNewGravacao={()=>setGravModal({open:true,e:null})} onEditProject={(p:any)=>setProjModal({open:true,e:p})} onDeleteProject={delProject} onEditClient={(c:any)=>setClientModal({open:true,e:c})} onDeleteClient={delClient} user={userProfile} />}
+            {screen==="clientes"     && renderScreen(clientsQ,  <ClientesScreen clients={clients} onNew={()=>setClientModal({open:true,e:null})} onEdit={(c:any)=>setClientModal({open:true,e:c})} onDelete={delClient} />)}
+            {screen==="projetos"     && renderScreen(projectsQ, <ProjetosScreen projects={projects} clients={clients} onNew={()=>setProjModal({open:true,e:null})} onEdit={(p:any)=>setProjModal({open:true,e:p})} onDelete={delProject} />)}
+            {screen==="pipeline"     && renderScreen(projectsQ, <PipelineScreen projects={projects} />)}
+            {screen==="agenda"       && renderScreen(gravacoesQ,<AgendaScreen gravacoes={gravacoes} clients={clients} onNew={()=>setGravModal({open:true,e:null})} onEdit={(g:any)=>setGravModal({open:true,e:g})} onDelete={delGravacao} />)}
+            {screen==="entregas"     && renderScreen(entregasQ, <EntregasScreen entregas={entregas} projects={projects} onNew={()=>setEntregaModal({open:true,e:null})} onEdit={(e:any)=>setEntregaModal({open:true,e:e})} onDelete={delEntrega} />)}
+            {screen==="propostas"    && renderScreen(propostasQ,<PropostasScreen propostas={propostas} clients={clients} onNew={()=>setPropModal({open:true,e:null})} onEdit={(p:any)=>setPropModal({open:true,e:p})} onDelete={delProposta} />)}
+            {screen==="financeiro"   && renderScreen(lancamentosQ,<FinanceiroScreen lancamentos={lancamentos} onNew={()=>setLancModal({open:true,e:null})} onEdit={(l:LancamentoRow)=>setLancModal({open:true,e:l})} onDelete={delLancamento} />)}
             {screen==="mensagens"    && <MensagensScreen convs={convs} onSend={sendMsg} />}
             {screen==="configuracoes"&& <ConfiguracoesScreen user={userProfile} onSignOut={handleSignOut} />}
           </div>
@@ -287,6 +369,7 @@ function App() {
       {propModal.open    && <PropostaModal  editing={propModal.e}    clients={clients}   onSave={saveProposta} onClose={()=>setPropModal({open:false,e:null})} />}
       {gravModal.open    && <GravacaoModal  editing={gravModal.e}    clients={clients}   onSave={saveGravacao} onClose={()=>setGravModal({open:false,e:null})} />}
       {lancModal.open    && <LancamentoModal editing={lancModal.e}                       onSave={saveLancamento} onClose={()=>setLancModal({open:false,e:null})} />}
+      {confirm.open && <ConfirmModal msg={confirm.msg} onCancel={()=>setConfirm({open:false,msg:"",onConfirm:()=>{}})} onConfirm={()=>{confirm.onConfirm(); setConfirm({open:false,msg:"",onConfirm:()=>{}});}} />}
     </div>
   );
 }
@@ -333,7 +416,6 @@ function Sidebar({ current, onNavigate, user, onSignOut }: { current:Screen; onN
       {icon:TrendingUp, label:"Pipeline",   screen:"pipeline"    as Screen},
     ]},
     { label:"Equipe", items:[
-      {icon:Calendar,      label:"Agenda",        screen:"agenda"        as Screen},
       {icon:MessageSquare, label:"Mensagens",     screen:"mensagens"     as Screen},
       {icon:Settings,      label:"Configurações", screen:"configuracoes" as Screen},
     ]},
@@ -486,18 +568,24 @@ function TopBar({ screen, unread, notifs, showNotifs, onToggleNotifs, onMarkRead
 }
 
 /* ══ DASHBOARD ══ */
-function DashboardScreen({ projects, clients, gravacoes, onNewProject, onNewClient, onNewGravacao, onEditProject, onDeleteProject, onEditClient, onDeleteClient, user }: any) {
+function DashboardScreen({ projects, clients, gravacoes, entregas, lancamentos, onNewProject, onNewClient, onNewGravacao, onEditProject, onDeleteProject, onEditClient, onDeleteClient, user }: any) {
   const active   = projects.filter((p:Project)=>p.status!=="Entregue").length;
   const pending  = projects.filter((p:Project)=>p.status==="Aprovação").length;
   const delivered= projects.filter((p:Project)=>p.status==="Entregue").length;
+  const lanc     = (lancamentos ?? []) as LancamentoRow[];
+  const num      = (l:LancamentoRow) => Number(l.valor) || 0;
+  const faturamento = lanc.filter(l=>l.tipo==="Entrada"&&l.status==="Recebido").reduce((s,l)=>s+num(l),0);
+  const aReceber    = lanc.filter(l=>l.tipo==="Entrada"&&l.status==="Pendente").reduce((s,l)=>s+num(l),0);
+  const aReceberCt  = lanc.filter(l=>l.tipo==="Entrada"&&l.status==="Pendente").length;
+  const fmtK = (n:number) => n>=1000 ? `R$ ${(n/1000).toFixed(n>=10000?0:1)}k` : `R$ ${n.toFixed(0)}`;
   const kpis = [
     {label:"Clientes",     value:String(clients.length),  delta:`${clients.length} ativos`,    tone:"up",   icon:Users},
     {label:"Em andamento", value:String(active),           delta:`${projects.length} no total`, tone:"up",   icon:Clapperboard},
     {label:"Aprovação",    value:String(pending),          delta:pending>0?"Atenção":"OK",       tone:pending>0?"warn":"up", icon:CheckCircle2},
     {label:"Entregues",    value:String(delivered),        delta:"Concluídos",                   tone:"neutral",icon:Send},
     {label:"Gravações",    value:String(gravacoes.length), delta:"Agendadas",                    tone:"neutral",icon:Video},
-    {label:"Faturamento",  value:"R$ 482k",                delta:"+18,4%",                       tone:"up",   icon:TrendingUp},
-    {label:"A receber",    value:"R$ 96k",                 delta:"4 faturas",                    tone:"warn", icon:Wallet},
+    {label:"Faturamento",  value:fmtK(faturamento),        delta:faturamento>0?"Recebido":"—",   tone:"up",   icon:TrendingUp},
+    {label:"A receber",    value:fmtK(aReceber),           delta:`${aReceberCt} ${aReceberCt===1?"fatura":"faturas"}`, tone:"warn", icon:Wallet},
   ];
   const greeting = () => { const h=new Date().getHours(); return h<12?"Bom dia":h<18?"Boa tarde":"Boa noite"; };
   return (
@@ -543,14 +631,15 @@ function DashboardScreen({ projects, clients, gravacoes, onNewProject, onNewClie
           <ClientsTable clients={clients} onEdit={onEditClient} onDelete={onDeleteClient} />
         </div>
         <div className="xl:col-span-4 space-y-4">
-          <AgendaWidget />
-          <DeadlinesWidget />
-          <FinancialWidget />
+          <AgendaWidget gravacoes={gravacoes} />
+          <DeadlinesWidget projects={projects} />
+          <FinancialWidget lancamentos={lanc} />
         </div>
       </div>
     </div>
   );
 }
+
 
 function ProjectsTable({ projects, onEdit, onDelete }: any) {
   return (
@@ -654,62 +743,93 @@ function ClientsTable({ clients, onEdit, onDelete }: any) {
   );
 }
 
-function AgendaWidget() {
-  const items=[{time:"09:00",title:"Kickoff Porsche",icon:Users},{time:"11:30",title:"Gravação Studio A",icon:Video},{time:"14:00",title:"Chamada Apple",icon:Phone},{time:"16:00",title:"Entrega corte Dior",icon:Send}];
+function AgendaWidget({ gravacoes = [] }: { gravacoes?: Gravacao[] }) {
+  // próximas 4 gravações ordenadas por data
+  const items = [...gravacoes]
+    .sort((a,b)=>String(a.date||"").localeCompare(String(b.date||"")))
+    .slice(0,4);
   return (
     <Card>
       <div className="flex items-center justify-between px-4 pt-4 pb-3" style={{borderBottom:`1px solid ${C.border}`}}>
-        <h2 className="text-[14px] font-semibold" style={{color:C.fg}}>Agenda do dia</h2>
+        <h2 className="text-[14px] font-semibold" style={{color:C.fg}}>Próximas gravações</h2>
         <Calendar className="h-4 w-4" style={{color:C.muted}} strokeWidth={1.75} />
       </div>
-      <ul>
-        {items.map((item,i)=>{const Icon=item.icon; return(
-          <li key={i} className="flex items-center gap-3 px-4 py-2.5 transition-colors" style={{borderBottom:i<items.length-1?`1px solid ${C.border}`:"none"}}
-            onMouseEnter={e=>(e.currentTarget as HTMLElement).style.background=C.hover}
-            onMouseLeave={e=>(e.currentTarget as HTMLElement).style.background="transparent"}>
-            <span className="text-[11.5px] font-semibold tabular-nums w-10" style={{color:C.em}}>{item.time}</span>
-            <div className="h-6 w-6 rounded-lg flex items-center justify-center shrink-0" style={{background:C.emDim,color:C.em}}><Icon className="h-3 w-3" strokeWidth={1.75} /></div>
-            <span className="text-[12.5px] font-medium truncate" style={{color:C.fgDim}}>{item.title}</span>
-          </li>
-        );})}
-      </ul>
+      {items.length === 0 ? (
+        <div className="px-4 py-6 text-center text-[12px]" style={{color:C.muted}}>Nenhuma gravação agendada.</div>
+      ) : (
+        <ul>
+          {items.map((g,i)=>(
+            <li key={g.id} className="flex items-center gap-3 px-4 py-2.5 transition-colors" style={{borderBottom:i<items.length-1?`1px solid ${C.border}`:"none"}}
+              onMouseEnter={e=>(e.currentTarget as HTMLElement).style.background=C.hover}
+              onMouseLeave={e=>(e.currentTarget as HTMLElement).style.background="transparent"}>
+              <span className="text-[11.5px] font-semibold tabular-nums w-12" style={{color:C.em}}>{g.time || "—"}</span>
+              <div className="h-6 w-6 rounded-lg flex items-center justify-center shrink-0" style={{background:C.emDim,color:C.em}}><Video className="h-3 w-3" strokeWidth={1.75} /></div>
+              <div className="flex-1 min-w-0">
+                <div className="text-[12.5px] font-medium truncate" style={{color:C.fgDim}}>{g.title}</div>
+                <div className="text-[11px] truncate" style={{color:C.muted}}>{g.date} · {g.client}</div>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
     </Card>
   );
 }
 
-function DeadlinesWidget() {
-  const items=[{project:"Apple — Silence",task:"Aprovação corte final",in:"Em 2 dias",urgent:true},{project:"Porsche 911 GTS",task:"Entrega dos brutos",in:"Em 4 dias",urgent:true},{project:"Hermès — Carré 90",task:"Color grading",in:"Em 1 sem",urgent:false}];
+function DeadlinesWidget({ projects = [] }: { projects?: Project[] }) {
+  // 3 projetos mais próximos do prazo, status diferente de "Entregue"
+  const items = [...projects]
+    .filter(p=>p.status!=="Entregue")
+    .sort((a,b)=>String(a.deadline||"").localeCompare(String(b.deadline||"")))
+    .slice(0,3);
   return (
     <Card>
       <div className="flex items-center justify-between px-4 pt-4 pb-3" style={{borderBottom:`1px solid ${C.border}`}}>
         <h2 className="text-[14px] font-semibold" style={{color:C.fg}}>Prazos</h2>
         <Clock className="h-4 w-4" style={{color:C.muted}} strokeWidth={1.75} />
       </div>
-      <ul>
-        {items.map((d,i)=>(
-          <li key={i} className="flex items-start gap-3 px-4 py-3 transition-colors" style={{borderBottom:i<items.length-1?`1px solid ${C.border}`:"none"}}
-            onMouseEnter={e=>(e.currentTarget as HTMLElement).style.background=C.hover}
-            onMouseLeave={e=>(e.currentTarget as HTMLElement).style.background="transparent"}>
-            <span className="mt-1.5 h-1.5 w-1.5 rounded-full shrink-0" style={{background:d.urgent?C.danger:C.border}} />
-            <div className="flex-1 min-w-0">
-              <div className="text-[12.5px] font-medium truncate" style={{color:C.fg}}>{d.project}</div>
-              <div className="text-[11px] truncate mt-0.5" style={{color:C.muted}}>{d.task}</div>
-            </div>
-            <span className="text-[11px] font-semibold whitespace-nowrap" style={{color:d.urgent?C.danger:C.muted}}>{d.in}</span>
-          </li>
-        ))}
-      </ul>
+      {items.length === 0 ? (
+        <div className="px-4 py-6 text-center text-[12px]" style={{color:C.muted}}>Sem prazos ativos.</div>
+      ) : (
+        <ul>
+          {items.map((d,i)=>{
+            const urgent = d.status==="Aprovação";
+            return (
+              <li key={d.id} className="flex items-start gap-3 px-4 py-3 transition-colors" style={{borderBottom:i<items.length-1?`1px solid ${C.border}`:"none"}}
+                onMouseEnter={e=>(e.currentTarget as HTMLElement).style.background=C.hover}
+                onMouseLeave={e=>(e.currentTarget as HTMLElement).style.background="transparent"}>
+                <span className="mt-1.5 h-1.5 w-1.5 rounded-full shrink-0" style={{background:urgent?C.danger:C.border}} />
+                <div className="flex-1 min-w-0">
+                  <div className="text-[12.5px] font-medium truncate" style={{color:C.fg}}>{d.name}</div>
+                  <div className="text-[11px] truncate mt-0.5" style={{color:C.muted}}>{d.client} · {d.status}</div>
+                </div>
+                <span className="text-[11px] font-semibold whitespace-nowrap" style={{color:urgent?C.danger:C.muted}}>{d.deadline || "—"}</span>
+              </li>
+            );
+          })}
+        </ul>
+      )}
     </Card>
   );
 }
 
-function FinancialWidget() {
-  const rows=[{label:"Faturamento",value:"R$ 482.350",delta:"+18,4%"},{label:"Mês anterior",value:"R$ 407.420",delta:null},{label:"A receber",value:"R$ 96.200",delta:"4 faturas"}];
+function FinancialWidget({ lancamentos = [] }: { lancamentos?: LancamentoRow[] }) {
+  const num = (l:LancamentoRow) => Number(l.valor) || 0;
+  const faturamento = lancamentos.filter(l=>l.tipo==="Entrada"&&l.status==="Recebido").reduce((s,l)=>s+num(l),0);
+  const despesas    = lancamentos.filter(l=>l.tipo==="Saída"&&l.status==="Pago").reduce((s,l)=>s+num(l),0);
+  const aReceber    = lancamentos.filter(l=>l.tipo==="Entrada"&&l.status==="Pendente").reduce((s,l)=>s+num(l),0);
+  const aReceberCt  = lancamentos.filter(l=>l.tipo==="Entrada"&&l.status==="Pendente").length;
+  const fmt = (n:number) => `R$ ${n.toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2})}`;
+  const rows = [
+    {label:"Faturamento", value:fmt(faturamento), delta:null as string|null},
+    {label:"Despesas",    value:fmt(despesas),    delta:null as string|null},
+    {label:"A receber",   value:fmt(aReceber),    delta:aReceberCt>0?`${aReceberCt} ${aReceberCt===1?"fatura":"faturas"}`:null},
+  ];
   return (
     <Card className="overflow-hidden">
       <div className="px-4 pt-4 pb-3" style={{borderBottom:`1px solid ${C.border}`,background:`linear-gradient(135deg,${C.emDim},transparent)`}}>
         <div className="text-[9.5px] uppercase tracking-[0.2em] font-semibold mb-1" style={{color:C.em}}>Financeiro</div>
-        <h2 className="text-[14px] font-semibold" style={{color:C.fg}}>Resumo do mês</h2>
+        <h2 className="text-[14px] font-semibold" style={{color:C.fg}}>Resumo</h2>
       </div>
       <ul>
         {rows.map((r,i)=>(
@@ -751,7 +871,10 @@ function ClientesScreen({ clients, onNew, onEdit, onDelete }: any) {
             </div>
           </Card>
         ))}
-        {filtered.length===0&&<div className="col-span-3 py-20 text-center text-[13px]" style={{color:C.muted}}>Nenhum cliente encontrado.</div>}
+        {filtered.length===0 && clients.length===0 && (
+          <div className="col-span-3"><EmptyState icon={UserPlus} title="Sem clientes ainda" sub="Cadastre seu primeiro cliente para começar a organizar projetos." actionLabel="Adicionar cliente" onAction={onNew} /></div>
+        )}
+        {filtered.length===0 && clients.length>0 && <div className="col-span-3 py-20 text-center text-[13px]" style={{color:C.muted}}>Nenhum cliente encontrado.</div>}
       </div>
     </div>
   );
@@ -775,6 +898,9 @@ function ProjetosScreen({ projects, clients, onNew, onEdit, onDelete }: any) {
           ))}
         </div>
       </div>
+      {projects.length===0 ? (
+        <EmptyState icon={Clapperboard} title="Sem projetos ainda" sub="Crie seu primeiro projeto para acompanhar produção, prazos e entregas." actionLabel="Criar projeto" onAction={onNew} />
+      ) : <>
       <div className="md:hidden space-y-3">
         {filtered.map((p:Project)=>(
           <Card key={p.id} className="p-4 group">
@@ -817,6 +943,7 @@ function ProjetosScreen({ projects, clients, onNew, onEdit, onDelete }: any) {
           </div>
         )}
       </Card>
+      </>}
     </div>
   );
 }
@@ -866,10 +993,7 @@ function AgendaScreen({ gravacoes, clients, onNew, onEdit, onDelete }: any) {
         action={<Btn onClick={onNew}><Plus className="h-4 w-4" strokeWidth={2} />Agendar</Btn>} />
       <div className="space-y-3">
         {gravacoes.length===0&&(
-          <div className="rounded-2xl p-8 text-center text-[13px]" style={{border:`1px dashed ${C.border}`,color:C.muted}}>
-            Nenhuma gravação agendada.{" "}
-            <button onClick={onNew} style={{color:C.em}} className="underline ml-1">Agendar agora</button>
-          </div>
+          <EmptyState icon={Video} title="Sem gravações agendadas" sub="Agende sua primeira gravação para organizar a equipe e os locais." actionLabel="Agendar gravação" onAction={onNew} />
         )}
         {gravacoes.map((g:Gravacao)=>(
           <Card key={g.id} className="p-4 group hover:-translate-y-0.5 transition-all duration-200">
@@ -897,6 +1021,9 @@ function EntregasScreen({ entregas, projects, onNew, onEdit, onDelete }: any) {
     <div>
       <PageHeader eyebrow="Operação" title="Entregas" sub={`${entregas.length} entregas ativas`}
         action={<Btn onClick={onNew}><Upload className="h-4 w-4" strokeWidth={2} />Nova entrega</Btn>} />
+      {entregas.length===0 ? (
+        <EmptyState icon={Send} title="Sem entregas registradas" sub="Adicione sua primeira entrega para acompanhar arquivos e prazos." actionLabel="Nova entrega" onAction={onNew} />
+      ) : <>
       <div className="md:hidden space-y-3">
         {entregas.map((e:Entrega)=>(
           <Card key={e.id} className="p-4 group">
@@ -910,33 +1037,31 @@ function EntregasScreen({ entregas, projects, onNew, onEdit, onDelete }: any) {
             </div>
           </Card>
         ))}
-        {entregas.length===0&&<div className="py-16 text-center text-[13px]" style={{color:C.muted}}>Nenhuma entrega.</div>}
       </div>
       <Card className="hidden md:block">
-        {entregas.length===0?<div className="py-16 text-center text-[13px]" style={{color:C.muted}}>Nenhuma entrega.</div>:(
-          <div className="overflow-x-auto">
-            <table className="w-full text-[12.5px]">
-              <thead><tr style={{borderBottom:`1px solid ${C.border}`,color:C.muted}}>
-                {["Projeto","Arquivo","Status","Prazo","Tamanho",""].map(h=><th key={h} className="px-5 py-3 text-left text-[10px] uppercase tracking-[0.15em] font-semibold">{h}</th>)}
-              </tr></thead>
-              <tbody>
-                {entregas.map((e:Entrega,i:number)=>(
-                  <tr key={e.id} className="group transition-colors" style={{borderBottom:i<entregas.length-1?`1px solid ${C.border}`:"none"}}
-                    onMouseEnter={x=>(x.currentTarget as HTMLElement).style.background=C.hover}
-                    onMouseLeave={x=>(x.currentTarget as HTMLElement).style.background="transparent"}>
-                    <td className="px-5 py-3.5"><div className="font-medium" style={{color:C.fg}}>{e.project}</div><div className="text-[11px]" style={{color:C.muted}}>{e.client}</div></td>
-                    <td className="px-5 py-3.5 font-mono text-[11.5px]" style={{color:C.muted}}>{e.file}</td>
-                    <td className="px-5 py-3.5"><Badge label={e.status} color={sc2[e.status]||C.muted} /></td>
-                    <td className="px-5 py-3.5 tabular-nums font-medium" style={{color:e.urgent?C.danger:C.fgDim}}>{e.date}</td>
-                    <td className="px-5 py-3.5 tabular-nums" style={{color:C.muted}}>{e.size}</td>
-                    <td className="px-5 py-3.5"><ActionButtons onEdit={()=>onEdit(e)} onDelete={()=>onDelete(e.id)} /></td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+        <div className="overflow-x-auto">
+          <table className="w-full text-[12.5px]">
+            <thead><tr style={{borderBottom:`1px solid ${C.border}`,color:C.muted}}>
+              {["Projeto","Arquivo","Status","Prazo","Tamanho",""].map(h=><th key={h} className="px-5 py-3 text-left text-[10px] uppercase tracking-[0.15em] font-semibold">{h}</th>)}
+            </tr></thead>
+            <tbody>
+              {entregas.map((e:Entrega,i:number)=>(
+                <tr key={e.id} className="group transition-colors" style={{borderBottom:i<entregas.length-1?`1px solid ${C.border}`:"none"}}
+                  onMouseEnter={x=>(x.currentTarget as HTMLElement).style.background=C.hover}
+                  onMouseLeave={x=>(x.currentTarget as HTMLElement).style.background="transparent"}>
+                  <td className="px-5 py-3.5"><div className="font-medium" style={{color:C.fg}}>{e.project}</div><div className="text-[11px]" style={{color:C.muted}}>{e.client}</div></td>
+                  <td className="px-5 py-3.5 font-mono text-[11.5px]" style={{color:C.muted}}>{e.file}</td>
+                  <td className="px-5 py-3.5"><Badge label={e.status} color={sc2[e.status]||C.muted} /></td>
+                  <td className="px-5 py-3.5 tabular-nums font-medium" style={{color:e.urgent?C.danger:C.fgDim}}>{e.date}</td>
+                  <td className="px-5 py-3.5 tabular-nums" style={{color:C.muted}}>{e.size}</td>
+                  <td className="px-5 py-3.5"><ActionButtons onEdit={()=>onEdit(e)} onDelete={()=>onDelete(e.id)} /></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </Card>
+      </>}
     </div>
   );
 }
@@ -958,7 +1083,9 @@ function PropostasScreen({ propostas, clients, onNew, onEdit, onDelete }: any) {
             <ActionButtons onEdit={()=>onEdit(p)} onDelete={()=>onDelete(p.id)} />
           </Card>
         ))}
-        {propostas.length===0&&<div className="py-16 text-center text-[13px]" style={{color:C.muted}}>Nenhuma proposta.</div>}
+        {propostas.length===0 && (
+          <EmptyState icon={FileText} title="Sem propostas ainda" sub="Crie sua primeira proposta comercial para enviar a clientes." actionLabel="Nova proposta" onAction={onNew} />
+        )}
       </div>
     </div>
   );
@@ -1032,9 +1159,7 @@ function FinanceiroScreen({ lancamentos, onNew, onEdit, onDelete }: { lancamento
       )}
       {tab==="lancamentos"&&(
         lancamentos.length===0 ? (
-          <Card className="py-16 text-center text-[13px]" >
-            <div style={{color:C.muted}}>Nenhum lançamento. Crie o primeiro com “Novo lançamento”.</div>
-          </Card>
+          <EmptyState icon={Wallet} title="Sem lançamentos" sub="Registre seu primeiro lançamento financeiro para começar a acompanhar receitas e despesas." actionLabel="Novo lançamento" onAction={onNew} />
         ) : (
           <Card>
             {lancamentos.map((l,i)=>(
@@ -1229,7 +1354,7 @@ function ConfiguracoesScreen({ user, onSignOut }: { user:UserProfile; onSignOut:
 /* ══ MODALS ══ */
 function Modal({ title, onClose, children, onSave, saveLabel="Salvar" }: { title:string; onClose:()=>void; children:React.ReactNode; onSave:()=>void; saveLabel?:string }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center" style={{background:"rgba(0,0,0,0.7)",backdropFilter:"blur(8px)"}}>
+    <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center" style={{background:"rgba(0,0,0,0.7)",backdropFilter:"blur(8px)"}} onClick={(e)=>{ if (e.target === e.currentTarget) onClose(); }}>
       <div className="w-full md:max-w-lg md:mx-4 overflow-hidden shadow-2xl md:rounded-2xl rounded-t-2xl" style={{background:C.surface,border:`1px solid ${C.border}`}}>
         <div className="flex items-center justify-between px-5 pt-5 pb-4" style={{borderBottom:`1px solid ${C.border}`}}>
           <h2 className="text-[17px] font-semibold" style={{color:C.fg}}>{title}</h2>
