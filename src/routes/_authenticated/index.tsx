@@ -260,6 +260,8 @@ function App() {
   const [searchQ,  setSearchQ]  = useState("");
   const [showSearch,setShowSearch] = useState(false);
   const [showNotifs,setShowNotifs] = useState(false);
+  const [confirm, setConfirm] = useState<{open:boolean;msg:string;onConfirm:()=>void}>({open:false,msg:"",onConfirm:()=>{}});
+  const askDelete = (msg:string, fn:()=>void) => setConfirm({open:true,msg,onConfirm:fn});
 
   const [projModal,   setProjModal]   = useState<{open:boolean;e:Project|null}>({open:false,e:null});
   const [clientModal, setClientModal] = useState<{open:boolean;e:Client|null}>({open:false,e:null});
@@ -270,12 +272,35 @@ function App() {
 
   const unread = notifs.filter(n=>!n.read).length;
 
+  // Auto-popular notificações a partir dos dados reais
+  const notifSig = JSON.stringify({
+    p: projects.map(p=>[p.id,p.status]),
+    e: entregas.map(e=>[e.id,e.urgent]),
+    l: lancamentos.map(l=>[l.id,l.tipo,l.status]),
+  });
+  useEffect(()=>{
+    const list: Notif[] = [];
+    let id = 1;
+    projects.filter(p=>p.status==="Aprovação").forEach(p=>list.push({id:id++,type:"warn",text:`Aprovação pendente: ${p.name}`,read:false,time:"agora"}));
+    entregas.filter(e=>e.urgent).forEach(e=>list.push({id:id++,type:"alert",text:`Entrega urgente: ${e.project}`,read:false,time:"agora"}));
+    lancamentos.filter(l=>l.tipo==="Entrada"&&l.status==="Pendente").forEach(l=>list.push({id:id++,type:"info",text:`A receber: ${l.descricao}`,read:false,time:"agora"}));
+    setNotifs(list);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  },[notifSig]);
+
   const saveProject  = async (d:Omit<Project,"id">)  => { await saveProjectM.mutateAsync(projModal.e?{...d,id:projModal.e.id}:d);    setProjModal({open:false,e:null}); };
   const saveClient   = async (d:Omit<Client,"id">)   => { await saveClientM.mutateAsync(clientModal.e?{...d,id:clientModal.e.id}:d); setClientModal({open:false,e:null}); };
   const saveEntrega  = async (d:Omit<Entrega,"id">)  => { await saveEntregaM.mutateAsync(entregaModal.e?{...d,id:entregaModal.e.id}:d); setEntregaModal({open:false,e:null}); };
   const saveProposta = async (d:Omit<Proposta,"id">) => { await savePropostaM.mutateAsync(propModal.e?{...d,id:propModal.e.id}:d);   setPropModal({open:false,e:null}); };
   const saveGravacao = async (d:Omit<Gravacao,"id">) => { await saveGravacaoM.mutateAsync(gravModal.e?{...d,id:gravModal.e.id}:d);   setGravModal({open:false,e:null}); };
   const saveLancamento = async (d:Omit<LancamentoRow,"id">) => { await saveLancamentoM.mutateAsync(lancModal.e?{...d,id:lancModal.e.id}:d as any); setLancModal({open:false,e:null}); };
+
+  const delProject  = (id:string) => askDelete("Excluir este projeto? Esta ação não pode ser desfeita.",   ()=>deleteProjectM.mutate(id));
+  const delClient   = (id:string) => askDelete("Excluir este cliente? Esta ação não pode ser desfeita.",   ()=>deleteClientM.mutate(id));
+  const delEntrega  = (id:string) => askDelete("Excluir esta entrega? Esta ação não pode ser desfeita.",  ()=>deleteEntregaM.mutate(id));
+  const delProposta = (id:string) => askDelete("Excluir esta proposta? Esta ação não pode ser desfeita.", ()=>deletePropostaM.mutate(id));
+  const delGravacao = (id:string) => askDelete("Excluir esta gravação? Esta ação não pode ser desfeita.", ()=>deleteGravacaoM.mutate(id));
+  const delLancamento = (id:string) => askDelete("Excluir este lançamento? Esta ação não pode ser desfeita.", ()=>deleteLancamentoM.mutate(id));
 
   const sendMsg = (cid:number,text:string) => {
     const now=new Date(); const t=`${now.getHours().toString().padStart(2,"0")}:${now.getMinutes().toString().padStart(2,"0")}`;
@@ -290,6 +315,13 @@ function App() {
   ] : [];
 
   const nav=(s:Screen)=>{ setScreen(s); setShowSearch(false); setShowNotifs(false); setSidebarOpen(false); };
+
+  const renderScreen = (q:any, screenEl:React.ReactNode) => {
+    if (q.isLoading) return <ListSkeleton />;
+    if (q.error) return <ErrorRetry error={q.error} onRetry={()=>q.refetch()} />;
+    return screenEl;
+  };
+
 
   return (
     <div style={{background:C.bg,color:C.fg,minHeight:"100vh",fontFamily:"Inter,sans-serif"}}>
