@@ -993,10 +993,7 @@ function AgendaScreen({ gravacoes, clients, onNew, onEdit, onDelete }: any) {
         action={<Btn onClick={onNew}><Plus className="h-4 w-4" strokeWidth={2} />Agendar</Btn>} />
       <div className="space-y-3">
         {gravacoes.length===0&&(
-          <div className="rounded-2xl p-8 text-center text-[13px]" style={{border:`1px dashed ${C.border}`,color:C.muted}}>
-            Nenhuma gravação agendada.{" "}
-            <button onClick={onNew} style={{color:C.em}} className="underline ml-1">Agendar agora</button>
-          </div>
+          <EmptyState icon={Video} title="Sem gravações agendadas" sub="Agende sua primeira gravação para organizar a equipe e os locais." actionLabel="Agendar gravação" onAction={onNew} />
         )}
         {gravacoes.map((g:Gravacao)=>(
           <Card key={g.id} className="p-4 group hover:-translate-y-0.5 transition-all duration-200">
