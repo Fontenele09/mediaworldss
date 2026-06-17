@@ -1083,7 +1083,9 @@ function PropostasScreen({ propostas, clients, onNew, onEdit, onDelete }: any) {
             <ActionButtons onEdit={()=>onEdit(p)} onDelete={()=>onDelete(p.id)} />
           </Card>
         ))}
-        {propostas.length===0&&<div className="py-16 text-center text-[13px]" style={{color:C.muted}}>Nenhuma proposta.</div>}
+        {propostas.length===0 && (
+          <EmptyState icon={FileText} title="Sem propostas ainda" sub="Crie sua primeira proposta comercial para enviar a clientes." actionLabel="Nova proposta" onAction={onNew} />
+        )}
       </div>
     </div>
   );
