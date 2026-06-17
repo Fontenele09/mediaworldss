@@ -103,7 +103,7 @@ function Card({ children, className="", style }: { children:React.ReactNode; cla
 }
 function ActionButtons({ onEdit, onDelete }: { onEdit:()=>void; onDelete:()=>void }) {
   return (
-    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+    <div className="flex items-center gap-1 transition-opacity">
       <button onClick={onEdit} className="h-7 w-7 rounded-lg flex items-center justify-center" style={{color:C.muted}}
         onMouseEnter={e=>(e.currentTarget as HTMLElement).style.color=C.fg}
         onMouseLeave={e=>(e.currentTarget as HTMLElement).style.color=C.muted}>
@@ -114,6 +114,56 @@ function ActionButtons({ onEdit, onDelete }: { onEdit:()=>void; onDelete:()=>voi
         onMouseLeave={e=>(e.currentTarget as HTMLElement).style.color=C.muted}>
         <Trash2 className="h-3.5 w-3.5" strokeWidth={1.75} />
       </button>
+    </div>
+  );
+}
+function ListSkeleton() {
+  return (
+    <div className="space-y-3 mt-4">
+      {[0,1,2].map(i=>(
+        <div key={i} className="rounded-2xl h-20 animate-pulse" style={{background:C.card,border:`1px solid ${C.border}`}} />
+      ))}
+    </div>
+  );
+}
+function ErrorRetry({ error, onRetry }: { error:any; onRetry:()=>void }) {
+  return (
+    <div className="rounded-2xl p-6 mt-4 text-center" style={{background:C.dangerDim,border:`1px solid ${C.danger}40`}}>
+      <div className="text-[13px] font-medium mb-3" style={{color:C.danger}}>Erro ao carregar: {String(error?.message||error)}</div>
+      <button onClick={onRetry} className="rounded-xl px-4 py-2 text-[12.5px] font-semibold" style={{background:C.danger,color:"#fff"}}>Tentar novamente</button>
+    </div>
+  );
+}
+function EmptyState({ icon:Icon, title, sub, actionLabel, onAction }: { icon:any; title:string; sub:string; actionLabel:string; onAction:()=>void }) {
+  return (
+    <div className="rounded-2xl p-10 text-center mt-4" style={{border:`1px dashed ${C.border}`,background:C.card}}>
+      <div className="h-12 w-12 rounded-2xl flex items-center justify-center mx-auto mb-3" style={{background:C.emDim,color:C.em}}>
+        <Icon className="h-6 w-6" strokeWidth={1.5} />
+      </div>
+      <div className="text-[15px] font-semibold mb-1" style={{color:C.fg}}>{title}</div>
+      <div className="text-[12.5px] mb-4" style={{color:C.muted}}>{sub}</div>
+      <button onClick={onAction} className="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-[12.5px] font-semibold" style={{background:`linear-gradient(135deg,${C.em},#6B8EFF)`,color:"#fff"}}>
+        <Plus className="h-3.5 w-3.5" strokeWidth={2} />{actionLabel}
+      </button>
+    </div>
+  );
+}
+function ConfirmModal({ msg, onCancel, onConfirm }: { msg:string; onCancel:()=>void; onConfirm:()=>void }) {
+  return (
+    <div className="fixed inset-0 z-[60] flex items-center justify-center px-4" style={{background:"rgba(0,0,0,0.7)",backdropFilter:"blur(8px)"}} onClick={e=>{if(e.target===e.currentTarget)onCancel();}}>
+      <div className="w-full max-w-sm rounded-2xl overflow-hidden" style={{background:C.surface,border:`1px solid ${C.border}`}}>
+        <div className="px-5 py-5">
+          <div className="h-10 w-10 rounded-xl flex items-center justify-center mb-3" style={{background:C.dangerDim,color:C.danger}}>
+            <AlertCircle className="h-5 w-5" strokeWidth={1.75} />
+          </div>
+          <div className="text-[15px] font-semibold mb-1" style={{color:C.fg}}>Confirmar exclusão</div>
+          <div className="text-[13px]" style={{color:C.muted}}>{msg}</div>
+        </div>
+        <div className="flex items-center justify-end gap-2 px-5 py-3" style={{background:C.card,borderTop:`1px solid ${C.border}`}}>
+          <button onClick={onCancel} className="px-4 py-2 text-[13px] rounded-xl" style={{color:C.muted}}>Cancelar</button>
+          <button onClick={onConfirm} className="px-4 py-2 text-[13px] font-semibold rounded-xl" style={{background:C.danger,color:"#fff"}}>Excluir</button>
+        </div>
+      </div>
     </div>
   );
 }
