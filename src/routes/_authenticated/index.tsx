@@ -349,14 +349,14 @@ function App() {
             user={userProfile}
           />
           <div className="flex-1 px-4 md:px-8 py-6 md:py-8 max-w-[1480px] w-full pb-24 lg:pb-8">
-            {screen==="dashboard"    && <DashboardScreen projects={projects} clients={clients} gravacoes={gravacoes} onNewProject={()=>setProjModal({open:true,e:null})} onNewClient={()=>setClientModal({open:true,e:null})} onNewGravacao={()=>setGravModal({open:true,e:null})} onEditProject={(p:any)=>setProjModal({open:true,e:p})} onDeleteProject={(id:string)=>deleteProjectM.mutate(id)} onEditClient={(c:any)=>setClientModal({open:true,e:c})} onDeleteClient={(id:string)=>deleteClientM.mutate(id)} user={userProfile} />}
-            {screen==="clientes"     && <ClientesScreen clients={clients} onNew={()=>setClientModal({open:true,e:null})} onEdit={(c:any)=>setClientModal({open:true,e:c})} onDelete={(id:string)=>deleteClientM.mutate(id)} />}
-            {screen==="projetos"     && <ProjetosScreen projects={projects} clients={clients} onNew={()=>setProjModal({open:true,e:null})} onEdit={(p:any)=>setProjModal({open:true,e:p})} onDelete={(id:string)=>deleteProjectM.mutate(id)} />}
-            {screen==="pipeline"     && <PipelineScreen projects={projects} />}
-            {screen==="agenda"       && <AgendaScreen gravacoes={gravacoes} clients={clients} onNew={()=>setGravModal({open:true,e:null})} onEdit={(g:any)=>setGravModal({open:true,e:g})} onDelete={(id:string)=>deleteGravacaoM.mutate(id)} />}
-            {screen==="entregas"     && <EntregasScreen entregas={entregas} projects={projects} onNew={()=>setEntregaModal({open:true,e:null})} onEdit={(e:any)=>setEntregaModal({open:true,e:e})} onDelete={(id:string)=>deleteEntregaM.mutate(id)} />}
-            {screen==="propostas"    && <PropostasScreen propostas={propostas} clients={clients} onNew={()=>setPropModal({open:true,e:null})} onEdit={(p:any)=>setPropModal({open:true,e:p})} onDelete={(id:string)=>deletePropostaM.mutate(id)} />}
-            {screen==="financeiro"   && <FinanceiroScreen lancamentos={lancamentos} onNew={()=>setLancModal({open:true,e:null})} onEdit={(l:LancamentoRow)=>setLancModal({open:true,e:l})} onDelete={(id:string)=>deleteLancamentoM.mutate(id)} />}
+            {screen==="dashboard"    && <DashboardScreen projects={projects} clients={clients} gravacoes={gravacoes} entregas={entregas} lancamentos={lancamentos} onNewProject={()=>setProjModal({open:true,e:null})} onNewClient={()=>setClientModal({open:true,e:null})} onNewGravacao={()=>setGravModal({open:true,e:null})} onEditProject={(p:any)=>setProjModal({open:true,e:p})} onDeleteProject={delProject} onEditClient={(c:any)=>setClientModal({open:true,e:c})} onDeleteClient={delClient} user={userProfile} />}
+            {screen==="clientes"     && renderScreen(clientsQ,  <ClientesScreen clients={clients} onNew={()=>setClientModal({open:true,e:null})} onEdit={(c:any)=>setClientModal({open:true,e:c})} onDelete={delClient} />)}
+            {screen==="projetos"     && renderScreen(projectsQ, <ProjetosScreen projects={projects} clients={clients} onNew={()=>setProjModal({open:true,e:null})} onEdit={(p:any)=>setProjModal({open:true,e:p})} onDelete={delProject} />)}
+            {screen==="pipeline"     && renderScreen(projectsQ, <PipelineScreen projects={projects} />)}
+            {screen==="agenda"       && renderScreen(gravacoesQ,<AgendaScreen gravacoes={gravacoes} clients={clients} onNew={()=>setGravModal({open:true,e:null})} onEdit={(g:any)=>setGravModal({open:true,e:g})} onDelete={delGravacao} />)}
+            {screen==="entregas"     && renderScreen(entregasQ, <EntregasScreen entregas={entregas} projects={projects} onNew={()=>setEntregaModal({open:true,e:null})} onEdit={(e:any)=>setEntregaModal({open:true,e:e})} onDelete={delEntrega} />)}
+            {screen==="propostas"    && renderScreen(propostasQ,<PropostasScreen propostas={propostas} clients={clients} onNew={()=>setPropModal({open:true,e:null})} onEdit={(p:any)=>setPropModal({open:true,e:p})} onDelete={delProposta} />)}
+            {screen==="financeiro"   && renderScreen(lancamentosQ,<FinanceiroScreen lancamentos={lancamentos} onNew={()=>setLancModal({open:true,e:null})} onEdit={(l:LancamentoRow)=>setLancModal({open:true,e:l})} onDelete={delLancamento} />)}
             {screen==="mensagens"    && <MensagensScreen convs={convs} onSend={sendMsg} />}
             {screen==="configuracoes"&& <ConfiguracoesScreen user={userProfile} onSignOut={handleSignOut} />}
           </div>
@@ -369,6 +369,7 @@ function App() {
       {propModal.open    && <PropostaModal  editing={propModal.e}    clients={clients}   onSave={saveProposta} onClose={()=>setPropModal({open:false,e:null})} />}
       {gravModal.open    && <GravacaoModal  editing={gravModal.e}    clients={clients}   onSave={saveGravacao} onClose={()=>setGravModal({open:false,e:null})} />}
       {lancModal.open    && <LancamentoModal editing={lancModal.e}                       onSave={saveLancamento} onClose={()=>setLancModal({open:false,e:null})} />}
+      {confirm.open && <ConfirmModal msg={confirm.msg} onCancel={()=>setConfirm({open:false,msg:"",onConfirm:()=>{}})} onConfirm={()=>{confirm.onConfirm(); setConfirm({open:false,msg:"",onConfirm:()=>{}});}} />}
     </div>
   );
 }
