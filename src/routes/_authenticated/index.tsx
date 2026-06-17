@@ -568,18 +568,24 @@ function TopBar({ screen, unread, notifs, showNotifs, onToggleNotifs, onMarkRead
 }
 
 /* ══ DASHBOARD ══ */
-function DashboardScreen({ projects, clients, gravacoes, onNewProject, onNewClient, onNewGravacao, onEditProject, onDeleteProject, onEditClient, onDeleteClient, user }: any) {
+function DashboardScreen({ projects, clients, gravacoes, entregas, lancamentos, onNewProject, onNewClient, onNewGravacao, onEditProject, onDeleteProject, onEditClient, onDeleteClient, user }: any) {
   const active   = projects.filter((p:Project)=>p.status!=="Entregue").length;
   const pending  = projects.filter((p:Project)=>p.status==="Aprovação").length;
   const delivered= projects.filter((p:Project)=>p.status==="Entregue").length;
+  const lanc     = (lancamentos ?? []) as LancamentoRow[];
+  const num      = (l:LancamentoRow) => Number(l.valor) || 0;
+  const faturamento = lanc.filter(l=>l.tipo==="Entrada"&&l.status==="Recebido").reduce((s,l)=>s+num(l),0);
+  const aReceber    = lanc.filter(l=>l.tipo==="Entrada"&&l.status==="Pendente").reduce((s,l)=>s+num(l),0);
+  const aReceberCt  = lanc.filter(l=>l.tipo==="Entrada"&&l.status==="Pendente").length;
+  const fmtK = (n:number) => n>=1000 ? `R$ ${(n/1000).toFixed(n>=10000?0:1)}k` : `R$ ${n.toFixed(0)}`;
   const kpis = [
     {label:"Clientes",     value:String(clients.length),  delta:`${clients.length} ativos`,    tone:"up",   icon:Users},
     {label:"Em andamento", value:String(active),           delta:`${projects.length} no total`, tone:"up",   icon:Clapperboard},
     {label:"Aprovação",    value:String(pending),          delta:pending>0?"Atenção":"OK",       tone:pending>0?"warn":"up", icon:CheckCircle2},
     {label:"Entregues",    value:String(delivered),        delta:"Concluídos",                   tone:"neutral",icon:Send},
     {label:"Gravações",    value:String(gravacoes.length), delta:"Agendadas",                    tone:"neutral",icon:Video},
-    {label:"Faturamento",  value:"R$ 482k",                delta:"+18,4%",                       tone:"up",   icon:TrendingUp},
-    {label:"A receber",    value:"R$ 96k",                 delta:"4 faturas",                    tone:"warn", icon:Wallet},
+    {label:"Faturamento",  value:fmtK(faturamento),        delta:faturamento>0?"Recebido":"—",   tone:"up",   icon:TrendingUp},
+    {label:"A receber",    value:fmtK(aReceber),           delta:`${aReceberCt} ${aReceberCt===1?"fatura":"faturas"}`, tone:"warn", icon:Wallet},
   ];
   const greeting = () => { const h=new Date().getHours(); return h<12?"Bom dia":h<18?"Boa tarde":"Boa noite"; };
   return (
@@ -625,14 +631,15 @@ function DashboardScreen({ projects, clients, gravacoes, onNewProject, onNewClie
           <ClientsTable clients={clients} onEdit={onEditClient} onDelete={onDeleteClient} />
         </div>
         <div className="xl:col-span-4 space-y-4">
-          <AgendaWidget />
-          <DeadlinesWidget />
-          <FinancialWidget />
+          <AgendaWidget gravacoes={gravacoes} />
+          <DeadlinesWidget projects={projects} />
+          <FinancialWidget lancamentos={lanc} />
         </div>
       </div>
     </div>
   );
 }
+
 
 function ProjectsTable({ projects, onEdit, onDelete }: any) {
   return (
