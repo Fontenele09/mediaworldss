@@ -416,7 +416,6 @@ function Sidebar({ current, onNavigate, user, onSignOut }: { current:Screen; onN
       {icon:TrendingUp, label:"Pipeline",   screen:"pipeline"    as Screen},
     ]},
     { label:"Equipe", items:[
-      {icon:Calendar,      label:"Agenda",        screen:"agenda"        as Screen},
       {icon:MessageSquare, label:"Mensagens",     screen:"mensagens"     as Screen},
       {icon:Settings,      label:"Configurações", screen:"configuracoes" as Screen},
     ]},
