@@ -242,6 +242,7 @@ function App() {
   const propostas = (propostasQ.data ?? []) as unknown as Proposta[];
   const gravacoes = (gravacoesQ.data ?? []) as unknown as Gravacao[];
   const lancamentos = (lancamentosQ.data ?? []) as LancamentoRow[];
+  const metas       = (metasQ.data ?? []) as MetaRow[];
 
   const saveProjectM   = projectsApi.useSave();
   const deleteProjectM = projectsApi.useRemove();
