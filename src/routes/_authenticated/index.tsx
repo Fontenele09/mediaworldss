@@ -234,6 +234,7 @@ function App() {
   const propostasQ= propostasApi.useList();
   const gravacoesQ= gravacoesApi.useList();
   const lancamentosQ = lancamentosApi.useList();
+  const metasQ       = metasApi.useList();
 
   const projects  = (projectsQ.data  ?? []) as unknown as Project[];
   const clients   = (clientsQ.data   ?? []) as unknown as Client[];
