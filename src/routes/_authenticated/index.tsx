@@ -354,8 +354,8 @@ function App() {
             {screen==="propostas"    && renderScreen(propostasQ,<PropostasScreen propostas={propostas} clients={clients} onNew={()=>setPropModal({open:true,e:null})} onEdit={(p:any)=>setPropModal({open:true,e:p})} onDelete={delProposta} />)}
             {screen==="financeiro"   && renderScreen(lancamentosQ,<FinanceiroScreen lancamentos={lancamentos} onNew={()=>setLancModal({open:true,e:null})} onEdit={(l:LancamentoRow)=>setLancModal({open:true,e:l})} onDelete={delLancamento} />)}
             {screen==="metas"        && renderScreen(metasQ,      <MetasScreen metas={metas} onNew={()=>setMetaModal({open:true,e:null})} onEdit={(m:MetaRow)=>setMetaModal({open:true,e:m})} onDelete={delMeta} />)}
-            {screen==="mensagens"    && <MensagensScreen convs={convs} onSend={sendMsg} />}
-            {screen==="configuracoes"&& <ConfiguracoesScreen user={userProfile} onSignOut={handleSignOut} />}
+            {screen==="mensagens"    && renderScreen(mensagensQ, <MensagensScreen mensagens={mensagens} onSend={sendMsg} onRefetch={()=>mensagensQ.refetch()} />)}
+            {screen==="configuracoes"&& <ConfiguracoesScreen user={userProfile} onSignOut={handleSignOut} onProfileUpdate={loadProfile} />}
           </div>
           <MobileNav current={screen} onNavigate={nav} />
         </main>
