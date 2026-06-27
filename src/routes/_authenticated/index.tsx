@@ -1182,15 +1182,52 @@ function FinanceiroScreen({ lancamentos, onNew, onEdit, onDelete }: { lancamento
 }
 
 /* ══ MENSAGENS ══ */
-function MensagensScreen({ convs, onSend }: { convs:any[]; onSend:(id:number,text:string)=>void }) {
+function MensagensScreen({ mensagens, onSend, onRefetch }: { mensagens:MensagemRow[]; onSend:(cid:string,cname:string,cproj:string|null,texto:string)=>Promise<void>; onRefetch:()=>void }) {
+  // Group messages by conversa_id
+  const convs = React.useMemo(()=>{
+    const map = new Map<string,{id:string;name:string;project:string|null;msgs:MensagemRow[];last:string;time:string;unread:number}>();
+    const sorted = [...mensagens].sort((a,b)=> new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+    for (const m of sorted) {
+      const existing = map.get(m.conversa_id);
+      const t = new Date(m.created_at);
+      const time = `${t.getHours().toString().padStart(2,"0")}:${t.getMinutes().toString().padStart(2,"0")}`;
+      if (existing) {
+        existing.msgs.push(m); existing.last = m.texto; existing.time = time;
+      } else {
+        map.set(m.conversa_id,{ id:m.conversa_id, name:m.conversa_nome, project:m.conversa_projeto, msgs:[m], last:m.texto, time, unread:0 });
+      }
+    }
+    return Array.from(map.values());
+  },[mensagens]);
+
   const [active,setActive]=useState(0);
   const [draft,setDraft]=useState("");
+  const [sending,setSending]=useState(false);
   const [showList,setShowList]=useState(true);
   const endRef=useRef<HTMLDivElement>(null);
   const conv=convs[active];
-  useEffect(()=>endRef.current?.scrollIntoView({behavior:"smooth"}),[active,convs]);
-  const send=()=>{ if(!draft.trim()) return; onSend(conv.id,draft.trim()); setDraft(""); };
+  useEffect(()=>{ endRef.current?.scrollIntoView({behavior:"smooth"}); },[active,convs.length, conv?.msgs.length]);
+
+  const send=async()=>{
+    if(!draft.trim()||!conv||sending) return;
+    setSending(true);
+    try {
+      await onSend(conv.id, conv.name, conv.project, draft.trim());
+      setDraft("");
+      onRefetch();
+    } finally { setSending(false); }
+  };
   const selectConv=(i:number)=>{ setActive(i); setShowList(false); };
+
+  if (convs.length === 0) {
+    return (
+      <div>
+        <PageHeader eyebrow="Equipe" title="Mensagens" sub="Comunicação com clientes" />
+        <EmptyState icon={MessageSquare} title="Nenhuma conversa ainda" subtitle="As conversas com clientes vão aparecer aqui." />
+      </div>
+    );
+  }
+
   return (
     <div>
       <PageHeader eyebrow="Equipe" title="Mensagens" sub="Comunicação com clientes" />
@@ -1205,7 +1242,6 @@ function MensagensScreen({ convs, onSend }: { convs:any[]; onSend:(id:number,tex
                     <div className="flex items-center justify-between"><span className="text-[13px] font-semibold" style={{color:C.fg}}>{c.name}</span><span className="text-[10.5px]" style={{color:C.muted}}>{c.time}</span></div>
                     <div className="text-[11.5px] truncate mt-0.5" style={{color:C.muted}}>{c.last}</div>
                   </div>
-                  {c.unread>0&&<span className="h-5 w-5 rounded-full flex items-center justify-center text-[10px] font-semibold" style={{background:C.em,color:"#fff"}}>{c.unread}</span>}
                 </div>
               </button>
             ))}
@@ -1215,21 +1251,24 @@ function MensagensScreen({ convs, onSend }: { convs:any[]; onSend:(id:number,tex
             <div className="px-4 py-3 flex items-center gap-3" style={{borderBottom:`1px solid ${C.border}`}}>
               <button onClick={()=>setShowList(true)} className="h-8 w-8 rounded-xl flex items-center justify-center" style={{background:C.hover,color:C.muted}}><ChevronRight className="h-4 w-4 rotate-180" strokeWidth={1.75} /></button>
               <div className="h-8 w-8 rounded-full flex items-center justify-center text-[11px] font-semibold" style={{background:`linear-gradient(135deg,${C.em},#6B8EFF)`,color:"#fff"}}>{conv.name.charAt(0)}</div>
-              <div><div className="text-[13.5px] font-semibold" style={{color:C.fg}}>{conv.name}</div><div className="text-[11.5px]" style={{color:C.muted}}>{conv.project}</div></div>
+              <div><div className="text-[13.5px] font-semibold" style={{color:C.fg}}>{conv.name}</div>{conv.project&&<div className="text-[11.5px]" style={{color:C.muted}}>{conv.project}</div>}</div>
             </div>
             <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
-              {conv.msgs.map((m:Msg,i:number)=>(
-                <div key={i} className={`flex ${m.from==="Você"?"justify-end":"justify-start"}`}>
-                  <div className="max-w-[80%] rounded-2xl px-4 py-2.5 text-[13px]" style={m.from==="Você"?{background:`linear-gradient(135deg,${C.em},#6B8EFF)`,color:"#fff",borderRadius:"1rem 1rem 2px 1rem"}:{background:C.card,color:C.fg,border:`1px solid ${C.border}`,borderRadius:"1rem 1rem 1rem 2px"}}>
-                    <div>{m.text}</div><div className="text-[10.5px] mt-1" style={{opacity:0.6}}>{m.time}</div>
+              {conv.msgs.map((m)=>{
+                const t=new Date(m.created_at); const time=`${t.getHours().toString().padStart(2,"0")}:${t.getMinutes().toString().padStart(2,"0")}`;
+                return (
+                  <div key={m.id} className={`flex ${m.remetente==="Você"?"justify-end":"justify-start"}`}>
+                    <div className="max-w-[80%] rounded-2xl px-4 py-2.5 text-[13px]" style={m.remetente==="Você"?{background:`linear-gradient(135deg,${C.em},#6B8EFF)`,color:"#fff",borderRadius:"1rem 1rem 2px 1rem"}:{background:C.card,color:C.fg,border:`1px solid ${C.border}`,borderRadius:"1rem 1rem 1rem 2px"}}>
+                      <div>{m.texto}</div><div className="text-[10.5px] mt-1" style={{opacity:0.6}}>{time}</div>
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
               <div ref={endRef} />
             </div>
             <div className="px-4 py-3 flex items-center gap-2" style={{borderTop:`1px solid ${C.border}`}}>
               <input className="flex-1 rounded-xl px-4 py-2.5 text-[13px] outline-none" style={{background:C.card,border:`1px solid ${C.border}`,color:C.fg}} placeholder="Escreva uma mensagem…" value={draft} onChange={e=>setDraft(e.target.value)} onKeyDown={e=>e.key==="Enter"&&send()} />
-              <button onClick={send} className="h-10 w-10 rounded-xl flex items-center justify-center shrink-0" style={{background:`linear-gradient(135deg,${C.em},#6B8EFF)`,color:"#fff"}}><Send className="h-4 w-4" strokeWidth={1.75} /></button>
+              <button onClick={send} disabled={sending} className="h-10 w-10 rounded-xl flex items-center justify-center shrink-0 disabled:opacity-50" style={{background:`linear-gradient(135deg,${C.em},#6B8EFF)`,color:"#fff"}}><Send className="h-4 w-4" strokeWidth={1.75} /></button>
             </div>
           </Card>
         )}
@@ -1248,7 +1287,6 @@ function MensagensScreen({ convs, onSend }: { convs:any[]; onSend:(id:number,tex
                     <div className="flex items-center justify-between"><span className="text-[13px] font-semibold truncate" style={{color:C.fg}}>{c.name}</span><span className="text-[10.5px] shrink-0 ml-2" style={{color:C.muted}}>{c.time}</span></div>
                     <div className="text-[11.5px] truncate mt-0.5" style={{color:C.muted}}>{c.last}</div>
                   </div>
-                  {c.unread>0&&<span className="h-5 w-5 rounded-full flex items-center justify-center text-[10px] font-semibold shrink-0" style={{background:C.em,color:"#fff"}}>{c.unread}</span>}
                 </div>
               </button>
             ))}
@@ -1257,21 +1295,24 @@ function MensagensScreen({ convs, onSend }: { convs:any[]; onSend:(id:number,tex
         <div className="flex-1 flex flex-col">
           <div className="px-5 py-3.5 flex items-center gap-3" style={{borderBottom:`1px solid ${C.border}`}}>
             <div className="h-8 w-8 rounded-full flex items-center justify-center text-[11px] font-semibold" style={{background:`linear-gradient(135deg,${C.em},#6B8EFF)`,color:"#fff"}}>{conv.name.charAt(0)}</div>
-            <div><div className="text-[13.5px] font-semibold" style={{color:C.fg}}>{conv.name}</div><div className="text-[11.5px]" style={{color:C.muted}}>{conv.project}</div></div>
+            <div><div className="text-[13.5px] font-semibold" style={{color:C.fg}}>{conv.name}</div>{conv.project&&<div className="text-[11.5px]" style={{color:C.muted}}>{conv.project}</div>}</div>
           </div>
           <div className="flex-1 overflow-y-auto px-5 py-4 space-y-3">
-            {conv.msgs.map((m:Msg,i:number)=>(
-              <div key={i} className={`flex ${m.from==="Você"?"justify-end":"justify-start"}`}>
-                <div className="max-w-[70%] rounded-2xl px-4 py-2.5 text-[13px]" style={m.from==="Você"?{background:`linear-gradient(135deg,${C.em},#6B8EFF)`,color:"#fff",borderRadius:"1rem 1rem 2px 1rem"}:{background:C.card,color:C.fg,border:`1px solid ${C.border}`,borderRadius:"1rem 1rem 1rem 2px"}}>
-                  <div>{m.text}</div><div className="text-[10.5px] mt-1" style={{opacity:0.6}}>{m.time}</div>
+            {conv.msgs.map((m)=>{
+              const t=new Date(m.created_at); const time=`${t.getHours().toString().padStart(2,"0")}:${t.getMinutes().toString().padStart(2,"0")}`;
+              return (
+                <div key={m.id} className={`flex ${m.remetente==="Você"?"justify-end":"justify-start"}`}>
+                  <div className="max-w-[70%] rounded-2xl px-4 py-2.5 text-[13px]" style={m.remetente==="Você"?{background:`linear-gradient(135deg,${C.em},#6B8EFF)`,color:"#fff",borderRadius:"1rem 1rem 2px 1rem"}:{background:C.card,color:C.fg,border:`1px solid ${C.border}`,borderRadius:"1rem 1rem 1rem 2px"}}>
+                    <div>{m.texto}</div><div className="text-[10.5px] mt-1" style={{opacity:0.6}}>{time}</div>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
             <div ref={endRef} />
           </div>
           <div className="px-5 py-3.5 flex items-center gap-3" style={{borderTop:`1px solid ${C.border}`}}>
             <input className="flex-1 rounded-xl px-4 py-2 text-[13px] outline-none" style={{background:C.card,border:`1px solid ${C.border}`,color:C.fg}} placeholder="Escreva uma mensagem…" value={draft} onChange={e=>setDraft(e.target.value)} onKeyDown={e=>e.key==="Enter"&&send()} />
-            <button onClick={send} className="h-9 w-9 rounded-xl flex items-center justify-center shrink-0 hover:opacity-90" style={{background:`linear-gradient(135deg,${C.em},#6B8EFF)`,color:"#fff"}}><Send className="h-4 w-4" strokeWidth={1.75} /></button>
+            <button onClick={send} disabled={sending} className="h-9 w-9 rounded-xl flex items-center justify-center shrink-0 hover:opacity-90 disabled:opacity-50" style={{background:`linear-gradient(135deg,${C.em},#6B8EFF)`,color:"#fff"}}><Send className="h-4 w-4" strokeWidth={1.75} /></button>
           </div>
         </div>
       </Card>
