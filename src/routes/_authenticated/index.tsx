@@ -248,7 +248,7 @@ function App() {
   const saveMensagemM    = mensagensApi.useSave();
 
   const [notifs,   setNotifs]   = useState<Notif[]>([]);
-  const [convs,    setConvs]    = useState(initConvs);
+  const [notifs,   setNotifs]   = useState<Notif[]>([]);
   const [searchQ,  setSearchQ]  = useState("");
   const [showSearch,setShowSearch] = useState(false);
   const [showNotifs,setShowNotifs] = useState(false);
