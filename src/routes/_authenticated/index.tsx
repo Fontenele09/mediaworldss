@@ -119,17 +119,20 @@ function ErrorRetry({ error, onRetry }: { error:any; onRetry:()=>void }) {
     </div>
   );
 }
-function EmptyState({ icon:Icon, title, sub, actionLabel, onAction }: { icon:any; title:string; sub:string; actionLabel:string; onAction:()=>void }) {
+function EmptyState({ icon:Icon, title, sub, subtitle, actionLabel, onAction }: { icon:any; title:string; sub?:string; subtitle?:string; actionLabel?:string; onAction?:()=>void }) {
+  const text = sub ?? subtitle ?? "";
   return (
     <div className="rounded-2xl p-10 text-center mt-4" style={{border:`1px dashed ${C.border}`,background:C.card}}>
       <div className="h-12 w-12 rounded-2xl flex items-center justify-center mx-auto mb-3" style={{background:C.emDim,color:C.em}}>
         <Icon className="h-6 w-6" strokeWidth={1.5} />
       </div>
       <div className="text-[15px] font-semibold mb-1" style={{color:C.fg}}>{title}</div>
-      <div className="text-[12.5px] mb-4" style={{color:C.muted}}>{sub}</div>
-      <button onClick={onAction} className="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-[12.5px] font-semibold" style={{background:`linear-gradient(135deg,${C.em},#6B8EFF)`,color:"#fff"}}>
-        <Plus className="h-3.5 w-3.5" strokeWidth={2} />{actionLabel}
-      </button>
+      <div className="text-[12.5px] mb-4" style={{color:C.muted}}>{text}</div>
+      {actionLabel && onAction && (
+        <button onClick={onAction} className="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-[12.5px] font-semibold" style={{background:`linear-gradient(135deg,${C.em},#6B8EFF)`,color:"#fff"}}>
+          <Plus className="h-3.5 w-3.5" strokeWidth={2} />{actionLabel}
+        </button>
+      )}
     </div>
   );
 }
