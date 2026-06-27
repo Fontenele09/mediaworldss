@@ -56,21 +56,6 @@ interface UserProfile { name:string; email:string; avatar:string|null; }
 
 const STATUS_OPTIONS: ProjectStatus[] = ["Pré-produção","Gravação","Edição","Pós-produção","Aprovação","Entregue"];
 
-const initConvs = [
-  {id:1,name:"Maison Hermès",project:"Carré 90",last:"Aprovado o grade final ✓",time:"14:32",unread:2,msgs:[
-    {from:"Hermès",text:"Podemos revisar o color grading da cena 3?",time:"14:10"},
-    {from:"Você",text:"Claro, vou verificar agora.",time:"14:15"},
-    {from:"Hermès",text:"Aprovado o grade final ✓",time:"14:32"},
-  ]},
-  {id:2,name:"Porsche AG",project:"911 GTS",last:"Quando ficam prontos os brutos?",time:"13:05",unread:1,msgs:[
-    {from:"Porsche",text:"Quando ficam prontos os brutos?",time:"13:05"},
-  ]},
-  {id:3,name:"Apple Originals",project:"Silence",last:"Reunião amanhã às 14h?",time:"11:48",unread:4,msgs:[
-    {from:"Apple",text:"Precisamos alinhar o corte final.",time:"11:40"},
-    {from:"Você",text:"Pode ser amanhã de manhã?",time:"11:44"},
-    {from:"Apple",text:"Reunião amanhã às 14h?",time:"11:48"},
-  ]},
-];
 
 /* ── Helpers ── */
 function Field({ label, children }: { label:string; children:React.ReactNode }) {
