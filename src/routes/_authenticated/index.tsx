@@ -273,6 +273,7 @@ function App() {
   const [propModal,   setPropModal]   = useState<{open:boolean;e:Proposta|null}>({open:false,e:null});
   const [gravModal,   setGravModal]   = useState<{open:boolean;e:Gravacao|null}>({open:false,e:null});
   const [lancModal,   setLancModal]   = useState<{open:boolean;e:LancamentoRow|null}>({open:false,e:null});
+  const [metaModal,   setMetaModal]   = useState<{open:boolean;e:MetaRow|null}>({open:false,e:null});
 
   const unread = notifs.filter(n=>!n.read).length;
 
