@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
-type Table = "projects" | "clients" | "entregas" | "propostas" | "gravacoes" | "lancamentos";
+type Table = "projects" | "clients" | "entregas" | "propostas" | "gravacoes" | "lancamentos" | "metas";
 
 async function getUid() {
   const { data } = await supabase.auth.getUser();
