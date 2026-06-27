@@ -298,9 +298,8 @@ function App() {
   const delLancamento = (id:string) => askDelete("Excluir este lançamento? Esta ação não pode ser desfeita.", ()=>deleteLancamentoM.mutate(id));
   const delMeta = (id:string) => askDelete("Excluir esta meta? Esta ação não pode ser desfeita.", ()=>deleteMetaM.mutate(id));
 
-  const sendMsg = (cid:number,text:string) => {
-    const now=new Date(); const t=`${now.getHours().toString().padStart(2,"0")}:${now.getMinutes().toString().padStart(2,"0")}`;
-    setConvs(p=>p.map(c=>c.id===cid?{...c,last:text,time:t,msgs:[...c.msgs,{from:"Você",text,time:t}]}:c));
+  const sendMsg = async (conversa_id:string, conversa_nome:string, conversa_projeto:string|null, texto:string) => {
+    await saveMensagemM.mutateAsync({ conversa_id, conversa_nome, conversa_projeto, remetente:"Você", texto } as Partial<MensagemRow>);
   };
 
   const handleSignOut = async () => { await supabase.auth.signOut(); window.location.href="/auth"; };
