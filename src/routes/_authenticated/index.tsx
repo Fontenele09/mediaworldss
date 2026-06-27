@@ -309,6 +309,7 @@ function App() {
   const delProposta = (id:string) => askDelete("Excluir esta proposta? Esta ação não pode ser desfeita.", ()=>deletePropostaM.mutate(id));
   const delGravacao = (id:string) => askDelete("Excluir esta gravação? Esta ação não pode ser desfeita.", ()=>deleteGravacaoM.mutate(id));
   const delLancamento = (id:string) => askDelete("Excluir este lançamento? Esta ação não pode ser desfeita.", ()=>deleteLancamentoM.mutate(id));
+  const delMeta = (id:string) => askDelete("Excluir esta meta? Esta ação não pode ser desfeita.", ()=>deleteMetaM.mutate(id));
 
   const sendMsg = (cid:number,text:string) => {
     const now=new Date(); const t=`${now.getHours().toString().padStart(2,"0")}:${now.getMinutes().toString().padStart(2,"0")}`;
