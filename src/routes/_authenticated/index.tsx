@@ -426,6 +426,7 @@ function Sidebar({ current, onNavigate, user, onSignOut }: { current:Screen; onN
       {icon:FileText,   label:"Propostas",  screen:"propostas"   as Screen},
       {icon:Wallet,     label:"Financeiro", screen:"financeiro"  as Screen},
       {icon:TrendingUp, label:"Pipeline",   screen:"pipeline"    as Screen},
+      {icon:TrendingUp, label:"Metas",      screen:"metas"       as Screen},
     ]},
     { label:"Equipe", items:[
       {icon:MessageSquare, label:"Mensagens",     screen:"mensagens"     as Screen},
