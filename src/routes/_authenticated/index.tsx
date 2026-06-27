@@ -201,17 +201,17 @@ function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [userProfile, setUserProfile] = useState<UserProfile>({name:"",email:"",avatar:null});
 
-  useEffect(()=>{
-    supabase.auth.getUser().then(({data})=>{
-      if (data.user) {
-        setUserProfile({
-          name: data.user.user_metadata?.full_name || data.user.user_metadata?.name || data.user.email?.split("@")[0] || "Usuário",
-          email: data.user.email || "",
-          avatar: data.user.user_metadata?.avatar_url || data.user.user_metadata?.picture || null,
-        });
-      }
-    });
-  },[]);
+  const loadProfile = async () => {
+    const { data } = await supabase.auth.getUser();
+    if (data.user) {
+      setUserProfile({
+        name: data.user.user_metadata?.full_name || data.user.user_metadata?.name || data.user.email?.split("@")[0] || "Usuário",
+        email: data.user.email || "",
+        avatar: data.user.user_metadata?.avatar_url || data.user.user_metadata?.picture || null,
+      });
+    }
+  };
+  useEffect(()=>{ loadProfile(); },[]);
 
   const projectsQ = projectsApi.useList();
   const clientsQ  = clientsApi.useList();
