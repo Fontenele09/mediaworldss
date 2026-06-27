@@ -282,6 +282,7 @@ function App() {
     p: projects.map(p=>[p.id,p.status]),
     e: entregas.map(e=>[e.id,e.urgent]),
     l: lancamentos.map(l=>[l.id,l.tipo,l.status]),
+    m: metas.map(m=>[m.id,m.status]),
   });
   useEffect(()=>{
     const list: Notif[] = [];
@@ -289,6 +290,7 @@ function App() {
     projects.filter(p=>p.status==="Aprovação").forEach(p=>list.push({id:id++,type:"warn",text:`Aprovação pendente: ${p.name}`,read:false,time:"agora"}));
     entregas.filter(e=>e.urgent).forEach(e=>list.push({id:id++,type:"alert",text:`Entrega urgente: ${e.project}`,read:false,time:"agora"}));
     lancamentos.filter(l=>l.tipo==="Entrada"&&l.status==="Pendente").forEach(l=>list.push({id:id++,type:"info",text:`A receber: ${l.descricao}`,read:false,time:"agora"}));
+    metas.filter(m=>m.status==="Atrasada").forEach(m=>list.push({id:id++,type:"alert",text:`Meta atrasada: ${m.titulo}`,read:false,time:"agora"}));
     setNotifs(list);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   },[notifSig]);
