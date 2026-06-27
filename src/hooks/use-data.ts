@@ -91,6 +91,15 @@ export type MetaRow = {
   unidade: string; prazo: string | null;
   status: "Em andamento" | "Concluída" | "Atrasada";
 };
+export type MensagemRow = {
+  id: string;
+  conversa_id: string;
+  conversa_nome: string;
+  conversa_projeto: string | null;
+  remetente: string;
+  texto: string;
+  created_at: string;
+};
 
 export const projectsApi = makeHooks<ProjectRow>("projects");
 export const clientsApi = makeHooks<ClientRow>("clients");
@@ -99,3 +108,4 @@ export const propostasApi = makeHooks<PropostaRow>("propostas");
 export const gravacoesApi = makeHooks<GravacaoRow>("gravacoes");
 export const lancamentosApi = makeHooks<LancamentoRow>("lancamentos", "data");
 export const metasApi = makeHooks<MetaRow>("metas");
+export const mensagensApi = makeHooks<MensagemRow>("mensagens");
