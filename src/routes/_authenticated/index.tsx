@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState, useRef, useEffect } from "react";
-import { projectsApi, clientsApi, entregasApi, propostasApi, gravacoesApi, lancamentosApi, metasApi, type LancamentoRow, type MetaRow } from "@/hooks/use-data";
+import { useState, useRef, useEffect, useMemo } from "react";
+import { projectsApi, clientsApi, entregasApi, propostasApi, gravacoesApi, lancamentosApi, metasApi, mensagensApi, type LancamentoRow, type MetaRow, type MensagemRow } from "@/hooks/use-data";
 import { supabase } from "@/integrations/supabase/client";
 import {
   ArrowRight, ArrowUpRight, Bell, Calendar, CheckCircle2,
@@ -56,21 +56,6 @@ interface UserProfile { name:string; email:string; avatar:string|null; }
 
 const STATUS_OPTIONS: ProjectStatus[] = ["Pré-produção","Gravação","Edição","Pós-produção","Aprovação","Entregue"];
 
-const initConvs = [
-  {id:1,name:"Maison Hermès",project:"Carré 90",last:"Aprovado o grade final ✓",time:"14:32",unread:2,msgs:[
-    {from:"Hermès",text:"Podemos revisar o color grading da cena 3?",time:"14:10"},
-    {from:"Você",text:"Claro, vou verificar agora.",time:"14:15"},
-    {from:"Hermès",text:"Aprovado o grade final ✓",time:"14:32"},
-  ]},
-  {id:2,name:"Porsche AG",project:"911 GTS",last:"Quando ficam prontos os brutos?",time:"13:05",unread:1,msgs:[
-    {from:"Porsche",text:"Quando ficam prontos os brutos?",time:"13:05"},
-  ]},
-  {id:3,name:"Apple Originals",project:"Silence",last:"Reunião amanhã às 14h?",time:"11:48",unread:4,msgs:[
-    {from:"Apple",text:"Precisamos alinhar o corte final.",time:"11:40"},
-    {from:"Você",text:"Pode ser amanhã de manhã?",time:"11:44"},
-    {from:"Apple",text:"Reunião amanhã às 14h?",time:"11:48"},
-  ]},
-];
 
 /* ── Helpers ── */
 function Field({ label, children }: { label:string; children:React.ReactNode }) {
@@ -134,17 +119,20 @@ function ErrorRetry({ error, onRetry }: { error:any; onRetry:()=>void }) {
     </div>
   );
 }
-function EmptyState({ icon:Icon, title, sub, actionLabel, onAction }: { icon:any; title:string; sub:string; actionLabel:string; onAction:()=>void }) {
+function EmptyState({ icon:Icon, title, sub, subtitle, actionLabel, onAction }: { icon:any; title:string; sub?:string; subtitle?:string; actionLabel?:string; onAction?:()=>void }) {
+  const text = sub ?? subtitle ?? "";
   return (
     <div className="rounded-2xl p-10 text-center mt-4" style={{border:`1px dashed ${C.border}`,background:C.card}}>
       <div className="h-12 w-12 rounded-2xl flex items-center justify-center mx-auto mb-3" style={{background:C.emDim,color:C.em}}>
         <Icon className="h-6 w-6" strokeWidth={1.5} />
       </div>
       <div className="text-[15px] font-semibold mb-1" style={{color:C.fg}}>{title}</div>
-      <div className="text-[12.5px] mb-4" style={{color:C.muted}}>{sub}</div>
-      <button onClick={onAction} className="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-[12.5px] font-semibold" style={{background:`linear-gradient(135deg,${C.em},#6B8EFF)`,color:"#fff"}}>
-        <Plus className="h-3.5 w-3.5" strokeWidth={2} />{actionLabel}
-      </button>
+      <div className="text-[12.5px] mb-4" style={{color:C.muted}}>{text}</div>
+      {actionLabel && onAction && (
+        <button onClick={onAction} className="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-[12.5px] font-semibold" style={{background:`linear-gradient(135deg,${C.em},#6B8EFF)`,color:"#fff"}}>
+          <Plus className="h-3.5 w-3.5" strokeWidth={2} />{actionLabel}
+        </button>
+      )}
     </div>
   );
 }
@@ -216,17 +204,17 @@ function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [userProfile, setUserProfile] = useState<UserProfile>({name:"",email:"",avatar:null});
 
-  useEffect(()=>{
-    supabase.auth.getUser().then(({data})=>{
-      if (data.user) {
-        setUserProfile({
-          name: data.user.user_metadata?.full_name || data.user.user_metadata?.name || data.user.email?.split("@")[0] || "Usuário",
-          email: data.user.email || "",
-          avatar: data.user.user_metadata?.avatar_url || data.user.user_metadata?.picture || null,
-        });
-      }
-    });
-  },[]);
+  const loadProfile = async () => {
+    const { data } = await supabase.auth.getUser();
+    if (data.user) {
+      setUserProfile({
+        name: data.user.user_metadata?.full_name || data.user.user_metadata?.name || data.user.email?.split("@")[0] || "Usuário",
+        email: data.user.email || "",
+        avatar: data.user.user_metadata?.avatar_url || data.user.user_metadata?.picture || null,
+      });
+    }
+  };
+  useEffect(()=>{ loadProfile(); },[]);
 
   const projectsQ = projectsApi.useList();
   const clientsQ  = clientsApi.useList();
@@ -235,6 +223,7 @@ function App() {
   const gravacoesQ= gravacoesApi.useList();
   const lancamentosQ = lancamentosApi.useList();
   const metasQ       = metasApi.useList();
+  const mensagensQ   = mensagensApi.useList();
 
   const projects  = (projectsQ.data  ?? []) as unknown as Project[];
   const clients   = (clientsQ.data   ?? []) as unknown as Client[];
@@ -243,6 +232,7 @@ function App() {
   const gravacoes = (gravacoesQ.data ?? []) as unknown as Gravacao[];
   const lancamentos = (lancamentosQ.data ?? []) as LancamentoRow[];
   const metas       = (metasQ.data ?? []) as MetaRow[];
+  const mensagens   = (mensagensQ.data ?? []) as MensagemRow[];
 
   const saveProjectM   = projectsApi.useSave();
   const deleteProjectM = projectsApi.useRemove();
@@ -258,9 +248,9 @@ function App() {
   const deleteLancamentoM= lancamentosApi.useRemove();
   const saveMetaM        = metasApi.useSave();
   const deleteMetaM      = metasApi.useRemove();
+  const saveMensagemM    = mensagensApi.useSave();
 
   const [notifs,   setNotifs]   = useState<Notif[]>([]);
-  const [convs,    setConvs]    = useState(initConvs);
   const [searchQ,  setSearchQ]  = useState("");
   const [showSearch,setShowSearch] = useState(false);
   const [showNotifs,setShowNotifs] = useState(false);
@@ -311,9 +301,8 @@ function App() {
   const delLancamento = (id:string) => askDelete("Excluir este lançamento? Esta ação não pode ser desfeita.", ()=>deleteLancamentoM.mutate(id));
   const delMeta = (id:string) => askDelete("Excluir esta meta? Esta ação não pode ser desfeita.", ()=>deleteMetaM.mutate(id));
 
-  const sendMsg = (cid:number,text:string) => {
-    const now=new Date(); const t=`${now.getHours().toString().padStart(2,"0")}:${now.getMinutes().toString().padStart(2,"0")}`;
-    setConvs(p=>p.map(c=>c.id===cid?{...c,last:text,time:t,msgs:[...c.msgs,{from:"Você",text,time:t}]}:c));
+  const sendMsg = async (conversa_id:string, conversa_nome:string, conversa_projeto:string|null, texto:string) => {
+    await saveMensagemM.mutateAsync({ conversa_id, conversa_nome, conversa_projeto, remetente:"Você", texto } as Partial<MensagemRow>);
   };
 
   const handleSignOut = async () => { await supabase.auth.signOut(); window.location.href="/auth"; };
@@ -368,8 +357,8 @@ function App() {
             {screen==="propostas"    && renderScreen(propostasQ,<PropostasScreen propostas={propostas} clients={clients} onNew={()=>setPropModal({open:true,e:null})} onEdit={(p:any)=>setPropModal({open:true,e:p})} onDelete={delProposta} />)}
             {screen==="financeiro"   && renderScreen(lancamentosQ,<FinanceiroScreen lancamentos={lancamentos} onNew={()=>setLancModal({open:true,e:null})} onEdit={(l:LancamentoRow)=>setLancModal({open:true,e:l})} onDelete={delLancamento} />)}
             {screen==="metas"        && renderScreen(metasQ,      <MetasScreen metas={metas} onNew={()=>setMetaModal({open:true,e:null})} onEdit={(m:MetaRow)=>setMetaModal({open:true,e:m})} onDelete={delMeta} />)}
-            {screen==="mensagens"    && <MensagensScreen convs={convs} onSend={sendMsg} />}
-            {screen==="configuracoes"&& <ConfiguracoesScreen user={userProfile} onSignOut={handleSignOut} />}
+            {screen==="mensagens"    && renderScreen(mensagensQ, <MensagensScreen mensagens={mensagens} onSend={sendMsg} onRefetch={()=>mensagensQ.refetch()} />)}
+            {screen==="configuracoes"&& <ConfiguracoesScreen user={userProfile} onSignOut={handleSignOut} onProfileUpdate={loadProfile} />}
           </div>
           <MobileNav current={screen} onNavigate={nav} />
         </main>
@@ -1196,15 +1185,52 @@ function FinanceiroScreen({ lancamentos, onNew, onEdit, onDelete }: { lancamento
 }
 
 /* ══ MENSAGENS ══ */
-function MensagensScreen({ convs, onSend }: { convs:any[]; onSend:(id:number,text:string)=>void }) {
+function MensagensScreen({ mensagens, onSend, onRefetch }: { mensagens:MensagemRow[]; onSend:(cid:string,cname:string,cproj:string|null,texto:string)=>Promise<void>; onRefetch:()=>void }) {
+  // Group messages by conversa_id
+  const convs = useMemo(()=>{
+    const map = new Map<string,{id:string;name:string;project:string|null;msgs:MensagemRow[];last:string;time:string;unread:number}>();
+    const sorted = [...mensagens].sort((a,b)=> new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+    for (const m of sorted) {
+      const existing = map.get(m.conversa_id);
+      const t = new Date(m.created_at);
+      const time = `${t.getHours().toString().padStart(2,"0")}:${t.getMinutes().toString().padStart(2,"0")}`;
+      if (existing) {
+        existing.msgs.push(m); existing.last = m.texto; existing.time = time;
+      } else {
+        map.set(m.conversa_id,{ id:m.conversa_id, name:m.conversa_nome, project:m.conversa_projeto, msgs:[m], last:m.texto, time, unread:0 });
+      }
+    }
+    return Array.from(map.values());
+  },[mensagens]);
+
   const [active,setActive]=useState(0);
   const [draft,setDraft]=useState("");
+  const [sending,setSending]=useState(false);
   const [showList,setShowList]=useState(true);
   const endRef=useRef<HTMLDivElement>(null);
   const conv=convs[active];
-  useEffect(()=>endRef.current?.scrollIntoView({behavior:"smooth"}),[active,convs]);
-  const send=()=>{ if(!draft.trim()) return; onSend(conv.id,draft.trim()); setDraft(""); };
+  useEffect(()=>{ endRef.current?.scrollIntoView({behavior:"smooth"}); },[active,convs.length, conv?.msgs.length]);
+
+  const send=async()=>{
+    if(!draft.trim()||!conv||sending) return;
+    setSending(true);
+    try {
+      await onSend(conv.id, conv.name, conv.project, draft.trim());
+      setDraft("");
+      onRefetch();
+    } finally { setSending(false); }
+  };
   const selectConv=(i:number)=>{ setActive(i); setShowList(false); };
+
+  if (convs.length === 0) {
+    return (
+      <div>
+        <PageHeader eyebrow="Equipe" title="Mensagens" sub="Comunicação com clientes" />
+        <EmptyState icon={MessageSquare} title="Nenhuma conversa ainda" subtitle="As conversas com clientes vão aparecer aqui." />
+      </div>
+    );
+  }
+
   return (
     <div>
       <PageHeader eyebrow="Equipe" title="Mensagens" sub="Comunicação com clientes" />
@@ -1219,7 +1245,6 @@ function MensagensScreen({ convs, onSend }: { convs:any[]; onSend:(id:number,tex
                     <div className="flex items-center justify-between"><span className="text-[13px] font-semibold" style={{color:C.fg}}>{c.name}</span><span className="text-[10.5px]" style={{color:C.muted}}>{c.time}</span></div>
                     <div className="text-[11.5px] truncate mt-0.5" style={{color:C.muted}}>{c.last}</div>
                   </div>
-                  {c.unread>0&&<span className="h-5 w-5 rounded-full flex items-center justify-center text-[10px] font-semibold" style={{background:C.em,color:"#fff"}}>{c.unread}</span>}
                 </div>
               </button>
             ))}
@@ -1229,21 +1254,24 @@ function MensagensScreen({ convs, onSend }: { convs:any[]; onSend:(id:number,tex
             <div className="px-4 py-3 flex items-center gap-3" style={{borderBottom:`1px solid ${C.border}`}}>
               <button onClick={()=>setShowList(true)} className="h-8 w-8 rounded-xl flex items-center justify-center" style={{background:C.hover,color:C.muted}}><ChevronRight className="h-4 w-4 rotate-180" strokeWidth={1.75} /></button>
               <div className="h-8 w-8 rounded-full flex items-center justify-center text-[11px] font-semibold" style={{background:`linear-gradient(135deg,${C.em},#6B8EFF)`,color:"#fff"}}>{conv.name.charAt(0)}</div>
-              <div><div className="text-[13.5px] font-semibold" style={{color:C.fg}}>{conv.name}</div><div className="text-[11.5px]" style={{color:C.muted}}>{conv.project}</div></div>
+              <div><div className="text-[13.5px] font-semibold" style={{color:C.fg}}>{conv.name}</div>{conv.project&&<div className="text-[11.5px]" style={{color:C.muted}}>{conv.project}</div>}</div>
             </div>
             <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
-              {conv.msgs.map((m:Msg,i:number)=>(
-                <div key={i} className={`flex ${m.from==="Você"?"justify-end":"justify-start"}`}>
-                  <div className="max-w-[80%] rounded-2xl px-4 py-2.5 text-[13px]" style={m.from==="Você"?{background:`linear-gradient(135deg,${C.em},#6B8EFF)`,color:"#fff",borderRadius:"1rem 1rem 2px 1rem"}:{background:C.card,color:C.fg,border:`1px solid ${C.border}`,borderRadius:"1rem 1rem 1rem 2px"}}>
-                    <div>{m.text}</div><div className="text-[10.5px] mt-1" style={{opacity:0.6}}>{m.time}</div>
+              {conv.msgs.map((m)=>{
+                const t=new Date(m.created_at); const time=`${t.getHours().toString().padStart(2,"0")}:${t.getMinutes().toString().padStart(2,"0")}`;
+                return (
+                  <div key={m.id} className={`flex ${m.remetente==="Você"?"justify-end":"justify-start"}`}>
+                    <div className="max-w-[80%] rounded-2xl px-4 py-2.5 text-[13px]" style={m.remetente==="Você"?{background:`linear-gradient(135deg,${C.em},#6B8EFF)`,color:"#fff",borderRadius:"1rem 1rem 2px 1rem"}:{background:C.card,color:C.fg,border:`1px solid ${C.border}`,borderRadius:"1rem 1rem 1rem 2px"}}>
+                      <div>{m.texto}</div><div className="text-[10.5px] mt-1" style={{opacity:0.6}}>{time}</div>
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
               <div ref={endRef} />
             </div>
             <div className="px-4 py-3 flex items-center gap-2" style={{borderTop:`1px solid ${C.border}`}}>
               <input className="flex-1 rounded-xl px-4 py-2.5 text-[13px] outline-none" style={{background:C.card,border:`1px solid ${C.border}`,color:C.fg}} placeholder="Escreva uma mensagem…" value={draft} onChange={e=>setDraft(e.target.value)} onKeyDown={e=>e.key==="Enter"&&send()} />
-              <button onClick={send} className="h-10 w-10 rounded-xl flex items-center justify-center shrink-0" style={{background:`linear-gradient(135deg,${C.em},#6B8EFF)`,color:"#fff"}}><Send className="h-4 w-4" strokeWidth={1.75} /></button>
+              <button onClick={send} disabled={sending} className="h-10 w-10 rounded-xl flex items-center justify-center shrink-0 disabled:opacity-50" style={{background:`linear-gradient(135deg,${C.em},#6B8EFF)`,color:"#fff"}}><Send className="h-4 w-4" strokeWidth={1.75} /></button>
             </div>
           </Card>
         )}
@@ -1262,7 +1290,6 @@ function MensagensScreen({ convs, onSend }: { convs:any[]; onSend:(id:number,tex
                     <div className="flex items-center justify-between"><span className="text-[13px] font-semibold truncate" style={{color:C.fg}}>{c.name}</span><span className="text-[10.5px] shrink-0 ml-2" style={{color:C.muted}}>{c.time}</span></div>
                     <div className="text-[11.5px] truncate mt-0.5" style={{color:C.muted}}>{c.last}</div>
                   </div>
-                  {c.unread>0&&<span className="h-5 w-5 rounded-full flex items-center justify-center text-[10px] font-semibold shrink-0" style={{background:C.em,color:"#fff"}}>{c.unread}</span>}
                 </div>
               </button>
             ))}
@@ -1271,21 +1298,24 @@ function MensagensScreen({ convs, onSend }: { convs:any[]; onSend:(id:number,tex
         <div className="flex-1 flex flex-col">
           <div className="px-5 py-3.5 flex items-center gap-3" style={{borderBottom:`1px solid ${C.border}`}}>
             <div className="h-8 w-8 rounded-full flex items-center justify-center text-[11px] font-semibold" style={{background:`linear-gradient(135deg,${C.em},#6B8EFF)`,color:"#fff"}}>{conv.name.charAt(0)}</div>
-            <div><div className="text-[13.5px] font-semibold" style={{color:C.fg}}>{conv.name}</div><div className="text-[11.5px]" style={{color:C.muted}}>{conv.project}</div></div>
+            <div><div className="text-[13.5px] font-semibold" style={{color:C.fg}}>{conv.name}</div>{conv.project&&<div className="text-[11.5px]" style={{color:C.muted}}>{conv.project}</div>}</div>
           </div>
           <div className="flex-1 overflow-y-auto px-5 py-4 space-y-3">
-            {conv.msgs.map((m:Msg,i:number)=>(
-              <div key={i} className={`flex ${m.from==="Você"?"justify-end":"justify-start"}`}>
-                <div className="max-w-[70%] rounded-2xl px-4 py-2.5 text-[13px]" style={m.from==="Você"?{background:`linear-gradient(135deg,${C.em},#6B8EFF)`,color:"#fff",borderRadius:"1rem 1rem 2px 1rem"}:{background:C.card,color:C.fg,border:`1px solid ${C.border}`,borderRadius:"1rem 1rem 1rem 2px"}}>
-                  <div>{m.text}</div><div className="text-[10.5px] mt-1" style={{opacity:0.6}}>{m.time}</div>
+            {conv.msgs.map((m)=>{
+              const t=new Date(m.created_at); const time=`${t.getHours().toString().padStart(2,"0")}:${t.getMinutes().toString().padStart(2,"0")}`;
+              return (
+                <div key={m.id} className={`flex ${m.remetente==="Você"?"justify-end":"justify-start"}`}>
+                  <div className="max-w-[70%] rounded-2xl px-4 py-2.5 text-[13px]" style={m.remetente==="Você"?{background:`linear-gradient(135deg,${C.em},#6B8EFF)`,color:"#fff",borderRadius:"1rem 1rem 2px 1rem"}:{background:C.card,color:C.fg,border:`1px solid ${C.border}`,borderRadius:"1rem 1rem 1rem 2px"}}>
+                    <div>{m.texto}</div><div className="text-[10.5px] mt-1" style={{opacity:0.6}}>{time}</div>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
             <div ref={endRef} />
           </div>
           <div className="px-5 py-3.5 flex items-center gap-3" style={{borderTop:`1px solid ${C.border}`}}>
             <input className="flex-1 rounded-xl px-4 py-2 text-[13px] outline-none" style={{background:C.card,border:`1px solid ${C.border}`,color:C.fg}} placeholder="Escreva uma mensagem…" value={draft} onChange={e=>setDraft(e.target.value)} onKeyDown={e=>e.key==="Enter"&&send()} />
-            <button onClick={send} className="h-9 w-9 rounded-xl flex items-center justify-center shrink-0 hover:opacity-90" style={{background:`linear-gradient(135deg,${C.em},#6B8EFF)`,color:"#fff"}}><Send className="h-4 w-4" strokeWidth={1.75} /></button>
+            <button onClick={send} disabled={sending} className="h-9 w-9 rounded-xl flex items-center justify-center shrink-0 hover:opacity-90 disabled:opacity-50" style={{background:`linear-gradient(135deg,${C.em},#6B8EFF)`,color:"#fff"}}><Send className="h-4 w-4" strokeWidth={1.75} /></button>
           </div>
         </div>
       </Card>
@@ -1303,12 +1333,27 @@ function Toggle({ defaultOn }: { defaultOn:boolean }) {
   );
 }
 
-function ConfiguracoesScreen({ user, onSignOut }: { user:UserProfile; onSignOut:()=>void }) {
+function ConfiguracoesScreen({ user, onSignOut, onProfileUpdate }: { user:UserProfile; onSignOut:()=>void; onProfileUpdate?:()=>void|Promise<void> }) {
   const [nome,setNome]=useState(user.name||"");
   const [email]=useState(user.email||"");
   const [saved,setSaved]=useState(false);
+  const [saving,setSaving]=useState(false);
+  const [error,setError]=useState<string|null>(null);
   useEffect(()=>{ if(user.name) setNome(user.name); },[user.name]);
-  const save=()=>{ setSaved(true); setTimeout(()=>setSaved(false),2000); };
+  const save=async()=>{
+    setSaving(true); setError(null);
+    try {
+      const { error } = await supabase.auth.updateUser({ data: { full_name: nome } });
+      if (error) throw error;
+      await onProfileUpdate?.();
+      setSaved(true);
+      setTimeout(()=>setSaved(false),2000);
+    } catch (e:any) {
+      setError(e.message||"Erro ao salvar.");
+    } finally {
+      setSaving(false);
+    }
+  };
   return (
     <div className="max-w-2xl space-y-6">
       <PageHeader eyebrow="Sistema" title="Configurações" sub="Preferências da sua conta" />
@@ -1351,14 +1396,17 @@ function ConfiguracoesScreen({ user, onSignOut }: { user:UserProfile; onSignOut:
           ))}
         </div>
       </Card>
-      <div className="flex items-center gap-3">
-        <button onClick={save} className="flex items-center gap-2 rounded-xl px-5 py-2.5 text-[13px] font-semibold shadow-lg transition-opacity hover:opacity-90 active:scale-95"
-          style={{background:`linear-gradient(135deg,${C.em},#6B8EFF)`,color:"#fff"}}>
-          {saved?<><Check className="h-4 w-4" strokeWidth={2.5} />Salvo!</>:<><Save className="h-4 w-4" strokeWidth={1.75} />Salvar alterações</>}
-        </button>
-        <button onClick={onSignOut} className="flex items-center gap-2 rounded-xl px-5 py-2.5 text-[13px] font-medium" style={{background:C.card,border:`1px solid ${C.border}`,color:C.muted}}>
-          <LogOut className="h-4 w-4" strokeWidth={1.75} />Sair da conta
-        </button>
+      <div className="space-y-2">
+        <div className="flex items-center gap-3">
+          <button onClick={save} disabled={saving} className="flex items-center gap-2 rounded-xl px-5 py-2.5 text-[13px] font-semibold shadow-lg transition-opacity hover:opacity-90 active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed"
+            style={{background:`linear-gradient(135deg,${C.em},#6B8EFF)`,color:"#fff"}}>
+            {saving?<>Salvando…</>:saved?<><Check className="h-4 w-4" strokeWidth={2.5} />Salvo!</>:<><Save className="h-4 w-4" strokeWidth={1.75} />Salvar alterações</>}
+          </button>
+          <button onClick={onSignOut} className="flex items-center gap-2 rounded-xl px-5 py-2.5 text-[13px] font-medium" style={{background:C.card,border:`1px solid ${C.border}`,color:C.muted}}>
+            <LogOut className="h-4 w-4" strokeWidth={1.75} />Sair da conta
+          </button>
+        </div>
+        {error && <div className="text-[12px]" style={{color:"#EF4444"}}>{error}</div>}
       </div>
     </div>
   );

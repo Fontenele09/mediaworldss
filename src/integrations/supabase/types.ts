@@ -164,6 +164,42 @@ export type Database = {
         }
         Relationships: []
       }
+      mensagens: {
+        Row: {
+          conversa_id: string
+          conversa_nome: string
+          conversa_projeto: string | null
+          created_at: string
+          id: string
+          remetente: string
+          texto: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          conversa_id: string
+          conversa_nome: string
+          conversa_projeto?: string | null
+          created_at?: string
+          id?: string
+          remetente: string
+          texto: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          conversa_id?: string
+          conversa_nome?: string
+          conversa_projeto?: string | null
+          created_at?: string
+          id?: string
+          remetente?: string
+          texto?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       metas: {
         Row: {
           created_at: string
