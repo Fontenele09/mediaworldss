@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useRef, useEffect } from "react";
-import { projectsApi, clientsApi, entregasApi, propostasApi, gravacoesApi, lancamentosApi, metasApi, type LancamentoRow, type MetaRow } from "@/hooks/use-data";
+import { projectsApi, clientsApi, entregasApi, propostasApi, gravacoesApi, lancamentosApi, metasApi, mensagensApi, type LancamentoRow, type MetaRow, type MensagemRow } from "@/hooks/use-data";
 import { supabase } from "@/integrations/supabase/client";
 import {
   ArrowRight, ArrowUpRight, Bell, Calendar, CheckCircle2,
