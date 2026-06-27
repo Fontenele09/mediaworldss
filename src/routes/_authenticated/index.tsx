@@ -476,7 +476,7 @@ function Sidebar({ current, onNavigate, user, onSignOut }: { current:Screen; onN
 const screenLabels: Record<Screen,string> = {
   dashboard:"Visão geral", clientes:"Clientes", projetos:"Projetos",
   pipeline:"Pipeline", agenda:"Agenda", entregas:"Entregas",
-  propostas:"Propostas", financeiro:"Financeiro", mensagens:"Mensagens", configuracoes:"Configurações",
+  propostas:"Propostas", financeiro:"Financeiro", metas:"Metas", mensagens:"Mensagens", configuracoes:"Configurações",
 };
 
 function TopBar({ screen, unread, notifs, showNotifs, onToggleNotifs, onMarkRead, showSearch, searchQ, searchResults, onToggleSearch, onSearchChange, onNewProject, onMenuOpen, user }: any) {
