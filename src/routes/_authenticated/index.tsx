@@ -256,6 +256,8 @@ function App() {
   const deleteGravacaoM= gravacoesApi.useRemove();
   const saveLancamentoM  = lancamentosApi.useSave();
   const deleteLancamentoM= lancamentosApi.useRemove();
+  const saveMetaM        = metasApi.useSave();
+  const deleteMetaM      = metasApi.useRemove();
 
   const [notifs,   setNotifs]   = useState<Notif[]>([]);
   const [convs,    setConvs]    = useState(initConvs);
