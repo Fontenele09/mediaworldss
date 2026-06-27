@@ -1187,7 +1187,7 @@ function FinanceiroScreen({ lancamentos, onNew, onEdit, onDelete }: { lancamento
 /* ══ MENSAGENS ══ */
 function MensagensScreen({ mensagens, onSend, onRefetch }: { mensagens:MensagemRow[]; onSend:(cid:string,cname:string,cproj:string|null,texto:string)=>Promise<void>; onRefetch:()=>void }) {
   // Group messages by conversa_id
-  const convs = React.useMemo(()=>{
+  const convs = useMemo(()=>{
     const map = new Map<string,{id:string;name:string;project:string|null;msgs:MensagemRow[];last:string;time:string;unread:number}>();
     const sorted = [...mensagens].sort((a,b)=> new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
     for (const m of sorted) {
