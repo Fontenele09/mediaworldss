@@ -321,6 +321,7 @@ function App() {
   const searchResults = searchQ.length>1 ? [
     ...projects.filter(p=>p.name.toLowerCase().includes(searchQ.toLowerCase())||p.client.toLowerCase().includes(searchQ.toLowerCase())).map(p=>({type:"Projeto",label:p.name,sub:p.client})),
     ...clients.filter(c=>c.name.toLowerCase().includes(searchQ.toLowerCase())).map(c=>({type:"Cliente",label:c.name,sub:c.project})),
+    ...metas.filter(m=>m.titulo.toLowerCase().includes(searchQ.toLowerCase())).map(m=>({type:"Meta",label:m.titulo,sub:`${m.tipo} · ${m.status}`})),
   ] : [];
 
   const nav=(s:Screen)=>{ setScreen(s); setShowSearch(false); setShowNotifs(false); setSidebarOpen(false); };
