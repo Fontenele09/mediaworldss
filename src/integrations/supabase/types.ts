@@ -164,6 +164,51 @@ export type Database = {
         }
         Relationships: []
       }
+      metas: {
+        Row: {
+          created_at: string
+          descricao: string | null
+          id: string
+          prazo: string | null
+          status: string
+          tipo: string
+          titulo: string
+          unidade: string
+          updated_at: string
+          user_id: string
+          valor_atual: number
+          valor_meta: number
+        }
+        Insert: {
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          prazo?: string | null
+          status?: string
+          tipo?: string
+          titulo: string
+          unidade?: string
+          updated_at?: string
+          user_id: string
+          valor_atual?: number
+          valor_meta?: number
+        }
+        Update: {
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          prazo?: string | null
+          status?: string
+          tipo?: string
+          titulo?: string
+          unidade?: string
+          updated_at?: string
+          user_id?: string
+          valor_atual?: number
+          valor_meta?: number
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null

@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
-type Table = "projects" | "clients" | "entregas" | "propostas" | "gravacoes" | "lancamentos";
+type Table = "projects" | "clients" | "entregas" | "propostas" | "gravacoes" | "lancamentos" | "metas";
 
 async function getUid() {
   const { data } = await supabase.auth.getUser();
@@ -84,6 +84,13 @@ export type LancamentoRow = {
   id: string; descricao: string; tipo: "Entrada" | "Saída"; valor: number;
   data: string; status: "Recebido" | "Pago" | "Pendente";
 };
+export type MetaRow = {
+  id: string; tipo: "Financeiro" | "Equipamento" | "Cliente" | "Customizada";
+  titulo: string; descricao: string | null;
+  valor_atual: number; valor_meta: number;
+  unidade: string; prazo: string | null;
+  status: "Em andamento" | "Concluída" | "Atrasada";
+};
 
 export const projectsApi = makeHooks<ProjectRow>("projects");
 export const clientsApi = makeHooks<ClientRow>("clients");
@@ -91,3 +98,4 @@ export const entregasApi = makeHooks<EntregaRow>("entregas");
 export const propostasApi = makeHooks<PropostaRow>("propostas");
 export const gravacoesApi = makeHooks<GravacaoRow>("gravacoes");
 export const lancamentosApi = makeHooks<LancamentoRow>("lancamentos", "data");
+export const metasApi = makeHooks<MetaRow>("metas");

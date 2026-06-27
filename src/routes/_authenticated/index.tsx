@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useRef, useEffect } from "react";
-import { projectsApi, clientsApi, entregasApi, propostasApi, gravacoesApi, lancamentosApi, type LancamentoRow } from "@/hooks/use-data";
+import { projectsApi, clientsApi, entregasApi, propostasApi, gravacoesApi, lancamentosApi, metasApi, type LancamentoRow, type MetaRow } from "@/hooks/use-data";
 import { supabase } from "@/integrations/supabase/client";
 import {
   ArrowRight, ArrowUpRight, Bell, Calendar, CheckCircle2,
@@ -42,7 +42,7 @@ const C = {
   infoDim:  "#00C8FF20",
 };
 
-type Screen = "dashboard"|"clientes"|"projetos"|"pipeline"|"agenda"|"entregas"|"propostas"|"financeiro"|"mensagens"|"configuracoes";
+type Screen = "dashboard"|"clientes"|"projetos"|"pipeline"|"agenda"|"entregas"|"propostas"|"financeiro"|"metas"|"mensagens"|"configuracoes";
 type ProjectStatus = "Pré-produção"|"Gravação"|"Edição"|"Pós-produção"|"Aprovação"|"Entregue";
 
 interface Project { id:string; name:string; client:string; status:ProjectStatus; deadline:string; owner:string; progress:number; }
@@ -234,6 +234,7 @@ function App() {
   const propostasQ= propostasApi.useList();
   const gravacoesQ= gravacoesApi.useList();
   const lancamentosQ = lancamentosApi.useList();
+  const metasQ       = metasApi.useList();
 
   const projects  = (projectsQ.data  ?? []) as unknown as Project[];
   const clients   = (clientsQ.data   ?? []) as unknown as Client[];
@@ -241,6 +242,7 @@ function App() {
   const propostas = (propostasQ.data ?? []) as unknown as Proposta[];
   const gravacoes = (gravacoesQ.data ?? []) as unknown as Gravacao[];
   const lancamentos = (lancamentosQ.data ?? []) as LancamentoRow[];
+  const metas       = (metasQ.data ?? []) as MetaRow[];
 
   const saveProjectM   = projectsApi.useSave();
   const deleteProjectM = projectsApi.useRemove();
@@ -254,6 +256,8 @@ function App() {
   const deleteGravacaoM= gravacoesApi.useRemove();
   const saveLancamentoM  = lancamentosApi.useSave();
   const deleteLancamentoM= lancamentosApi.useRemove();
+  const saveMetaM        = metasApi.useSave();
+  const deleteMetaM      = metasApi.useRemove();
 
   const [notifs,   setNotifs]   = useState<Notif[]>([]);
   const [convs,    setConvs]    = useState(initConvs);
@@ -269,6 +273,7 @@ function App() {
   const [propModal,   setPropModal]   = useState<{open:boolean;e:Proposta|null}>({open:false,e:null});
   const [gravModal,   setGravModal]   = useState<{open:boolean;e:Gravacao|null}>({open:false,e:null});
   const [lancModal,   setLancModal]   = useState<{open:boolean;e:LancamentoRow|null}>({open:false,e:null});
+  const [metaModal,   setMetaModal]   = useState<{open:boolean;e:MetaRow|null}>({open:false,e:null});
 
   const unread = notifs.filter(n=>!n.read).length;
 
@@ -277,6 +282,7 @@ function App() {
     p: projects.map(p=>[p.id,p.status]),
     e: entregas.map(e=>[e.id,e.urgent]),
     l: lancamentos.map(l=>[l.id,l.tipo,l.status]),
+    m: metas.map(m=>[m.id,m.status]),
   });
   useEffect(()=>{
     const list: Notif[] = [];
@@ -284,6 +290,7 @@ function App() {
     projects.filter(p=>p.status==="Aprovação").forEach(p=>list.push({id:id++,type:"warn",text:`Aprovação pendente: ${p.name}`,read:false,time:"agora"}));
     entregas.filter(e=>e.urgent).forEach(e=>list.push({id:id++,type:"alert",text:`Entrega urgente: ${e.project}`,read:false,time:"agora"}));
     lancamentos.filter(l=>l.tipo==="Entrada"&&l.status==="Pendente").forEach(l=>list.push({id:id++,type:"info",text:`A receber: ${l.descricao}`,read:false,time:"agora"}));
+    metas.filter(m=>m.status==="Atrasada").forEach(m=>list.push({id:id++,type:"alert",text:`Meta atrasada: ${m.titulo}`,read:false,time:"agora"}));
     setNotifs(list);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   },[notifSig]);
@@ -294,6 +301,7 @@ function App() {
   const saveProposta = async (d:Omit<Proposta,"id">) => { await savePropostaM.mutateAsync(propModal.e?{...d,id:propModal.e.id}:d);   setPropModal({open:false,e:null}); };
   const saveGravacao = async (d:Omit<Gravacao,"id">) => { await saveGravacaoM.mutateAsync(gravModal.e?{...d,id:gravModal.e.id}:d);   setGravModal({open:false,e:null}); };
   const saveLancamento = async (d:Omit<LancamentoRow,"id">) => { await saveLancamentoM.mutateAsync(lancModal.e?{...d,id:lancModal.e.id}:d as any); setLancModal({open:false,e:null}); };
+  const saveMeta = async (d:Omit<MetaRow,"id">) => { await saveMetaM.mutateAsync(metaModal.e?{...d,id:metaModal.e.id}:d as any); setMetaModal({open:false,e:null}); };
 
   const delProject  = (id:string) => askDelete("Excluir este projeto? Esta ação não pode ser desfeita.",   ()=>deleteProjectM.mutate(id));
   const delClient   = (id:string) => askDelete("Excluir este cliente? Esta ação não pode ser desfeita.",   ()=>deleteClientM.mutate(id));
@@ -301,6 +309,7 @@ function App() {
   const delProposta = (id:string) => askDelete("Excluir esta proposta? Esta ação não pode ser desfeita.", ()=>deletePropostaM.mutate(id));
   const delGravacao = (id:string) => askDelete("Excluir esta gravação? Esta ação não pode ser desfeita.", ()=>deleteGravacaoM.mutate(id));
   const delLancamento = (id:string) => askDelete("Excluir este lançamento? Esta ação não pode ser desfeita.", ()=>deleteLancamentoM.mutate(id));
+  const delMeta = (id:string) => askDelete("Excluir esta meta? Esta ação não pode ser desfeita.", ()=>deleteMetaM.mutate(id));
 
   const sendMsg = (cid:number,text:string) => {
     const now=new Date(); const t=`${now.getHours().toString().padStart(2,"0")}:${now.getMinutes().toString().padStart(2,"0")}`;
@@ -312,6 +321,7 @@ function App() {
   const searchResults = searchQ.length>1 ? [
     ...projects.filter(p=>p.name.toLowerCase().includes(searchQ.toLowerCase())||p.client.toLowerCase().includes(searchQ.toLowerCase())).map(p=>({type:"Projeto",label:p.name,sub:p.client})),
     ...clients.filter(c=>c.name.toLowerCase().includes(searchQ.toLowerCase())).map(c=>({type:"Cliente",label:c.name,sub:c.project})),
+    ...metas.filter(m=>m.titulo.toLowerCase().includes(searchQ.toLowerCase())).map(m=>({type:"Meta",label:m.titulo,sub:`${m.tipo} · ${m.status}`})),
   ] : [];
 
   const nav=(s:Screen)=>{ setScreen(s); setShowSearch(false); setShowNotifs(false); setSidebarOpen(false); };
@@ -357,6 +367,7 @@ function App() {
             {screen==="entregas"     && renderScreen(entregasQ, <EntregasScreen entregas={entregas} projects={projects} onNew={()=>setEntregaModal({open:true,e:null})} onEdit={(e:any)=>setEntregaModal({open:true,e:e})} onDelete={delEntrega} />)}
             {screen==="propostas"    && renderScreen(propostasQ,<PropostasScreen propostas={propostas} clients={clients} onNew={()=>setPropModal({open:true,e:null})} onEdit={(p:any)=>setPropModal({open:true,e:p})} onDelete={delProposta} />)}
             {screen==="financeiro"   && renderScreen(lancamentosQ,<FinanceiroScreen lancamentos={lancamentos} onNew={()=>setLancModal({open:true,e:null})} onEdit={(l:LancamentoRow)=>setLancModal({open:true,e:l})} onDelete={delLancamento} />)}
+            {screen==="metas"        && renderScreen(metasQ,      <MetasScreen metas={metas} onNew={()=>setMetaModal({open:true,e:null})} onEdit={(m:MetaRow)=>setMetaModal({open:true,e:m})} onDelete={delMeta} />)}
             {screen==="mensagens"    && <MensagensScreen convs={convs} onSend={sendMsg} />}
             {screen==="configuracoes"&& <ConfiguracoesScreen user={userProfile} onSignOut={handleSignOut} />}
           </div>
@@ -369,6 +380,7 @@ function App() {
       {propModal.open    && <PropostaModal  editing={propModal.e}    clients={clients}   onSave={saveProposta} onClose={()=>setPropModal({open:false,e:null})} />}
       {gravModal.open    && <GravacaoModal  editing={gravModal.e}    clients={clients}   onSave={saveGravacao} onClose={()=>setGravModal({open:false,e:null})} />}
       {lancModal.open    && <LancamentoModal editing={lancModal.e}                       onSave={saveLancamento} onClose={()=>setLancModal({open:false,e:null})} />}
+      {metaModal.open    && <MetaModal      editing={metaModal.e}                       onSave={saveMeta}       onClose={()=>setMetaModal({open:false,e:null})} />}
       {confirm.open && <ConfirmModal msg={confirm.msg} onCancel={()=>setConfirm({open:false,msg:"",onConfirm:()=>{}})} onConfirm={()=>{confirm.onConfirm(); setConfirm({open:false,msg:"",onConfirm:()=>{}});}} />}
     </div>
   );
@@ -414,6 +426,7 @@ function Sidebar({ current, onNavigate, user, onSignOut }: { current:Screen; onN
       {icon:FileText,   label:"Propostas",  screen:"propostas"   as Screen},
       {icon:Wallet,     label:"Financeiro", screen:"financeiro"  as Screen},
       {icon:TrendingUp, label:"Pipeline",   screen:"pipeline"    as Screen},
+      {icon:TrendingUp, label:"Metas",      screen:"metas"       as Screen},
     ]},
     { label:"Equipe", items:[
       {icon:MessageSquare, label:"Mensagens",     screen:"mensagens"     as Screen},
@@ -476,7 +489,7 @@ function Sidebar({ current, onNavigate, user, onSignOut }: { current:Screen; onN
 const screenLabels: Record<Screen,string> = {
   dashboard:"Visão geral", clientes:"Clientes", projetos:"Projetos",
   pipeline:"Pipeline", agenda:"Agenda", entregas:"Entregas",
-  propostas:"Propostas", financeiro:"Financeiro", mensagens:"Mensagens", configuracoes:"Configurações",
+  propostas:"Propostas", financeiro:"Financeiro", metas:"Metas", mensagens:"Mensagens", configuracoes:"Configurações",
 };
 
 function TopBar({ screen, unread, notifs, showNotifs, onToggleNotifs, onMarkRead, showSearch, searchQ, searchResults, onToggleSearch, onSearchChange, onNewProject, onMenuOpen, user }: any) {
@@ -1488,6 +1501,137 @@ function LancamentoModal({ editing, onSave, onClose }: { editing:LancamentoRow|n
       <div className="grid grid-cols-2 gap-3">
         <MInput label="Data" type="date" value={f.data} onChange={(v:string)=>s("data",v)} />
         <MSelect label="Status" value={f.status} onChange={(v:string)=>s("status",v)} options={["Recebido","Pago","Pendente"]} />
+      </div>
+    </Modal>
+  );
+}
+
+/* ══ METAS ══ */
+const META_TIPOS = ["Financeiro","Equipamento","Cliente","Customizada"] as const;
+const META_STATUS = ["Em andamento","Concluída","Atrasada"] as const;
+function metaTipoColor(t:string){ return ({Financeiro:C.em,Equipamento:C.info,Cliente:"#A78BFA",Customizada:C.warn} as Record<string,string>)[t]||C.muted; }
+function metaTipoIcon(t:string){ return ({Financeiro:TrendingUp,Equipamento:Video,Cliente:Users,Customizada:Command} as Record<string,any>)[t]||TrendingUp; }
+function metaStatusColor(s:string){ return s==="Concluída"?C.em : s==="Atrasada"?C.danger : C.info; }
+function fmtMetaValor(v:number, u:string){
+  if (u==="R$") return `R$ ${v.toLocaleString("pt-BR",{minimumFractionDigits:0,maximumFractionDigits:2})}`;
+  if (u==="%")  return `${v}%`;
+  return `${v.toLocaleString("pt-BR")} ${u}`;
+}
+function fmtMetaPrazo(d:string|null){
+  if (!d) return "Sem prazo";
+  try { const [y,m,day]=d.split("-"); const months=["jan","fev","mar","abr","mai","jun","jul","ago","set","out","nov","dez"]; return `${day} ${months[+m-1]} ${y}`; } catch { return d; }
+}
+function MetasScreen({ metas, onNew, onEdit, onDelete }: { metas:MetaRow[]; onNew:()=>void; onEdit:(m:MetaRow)=>void; onDelete:(id:string)=>void }) {
+  const ativas = metas.filter(m=>m.status==="Em andamento").length;
+  const concluidas = metas.filter(m=>m.status==="Concluída").length;
+  const atrasadas = metas.filter(m=>m.status==="Atrasada").length;
+  const resumo = [
+    {label:"Total de metas", value:String(metas.length),      color:C.fg},
+    {label:"Em andamento",   value:String(ativas),            color:C.info},
+    {label:"Concluídas",     value:String(concluidas),        color:C.em},
+  ];
+  return (
+    <div>
+      <PageHeader eyebrow="Comercial" title="Metas" sub={`${ativas} ${ativas===1?"meta ativa":"metas ativas"}${atrasadas>0?` · ${atrasadas} atrasada${atrasadas===1?"":"s"}`:""}`}
+        action={<Btn onClick={onNew}><Plus className="h-4 w-4" strokeWidth={2} />Nova meta</Btn>} />
+      <div className="grid grid-cols-3 gap-3 mb-6">
+        {resumo.map(r=>(
+          <Card key={r.label} className="p-4">
+            <div className="text-[10px] uppercase tracking-[0.16em] font-semibold mb-2" style={{color:C.muted}}>{r.label}</div>
+            <div className="text-[22px] font-semibold tabular-nums leading-none" style={{color:r.color}}>{r.value}</div>
+          </Card>
+        ))}
+      </div>
+      {metas.length===0 ? (
+        <EmptyState icon={TrendingUp} title="Sem metas definidas" sub="Defina metas de faturamento, equipamento ou outros objetivos da agência." actionLabel="Nova meta" onAction={onNew} />
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+          {metas.map(m=>{
+            const Icon = metaTipoIcon(m.tipo);
+            const tipoColor = metaTipoColor(m.tipo);
+            const pct = m.valor_meta>0 ? Math.min(100, Math.round((Number(m.valor_atual)/Number(m.valor_meta))*100)) : 0;
+            const sColor = metaStatusColor(m.status);
+            return (
+              <Card key={m.id} className="p-5 flex flex-col gap-4">
+                <div className="flex items-start gap-3">
+                  <div className="h-10 w-10 rounded-xl flex items-center justify-center shrink-0" style={{background:`${tipoColor}18`,color:tipoColor,border:`1px solid ${tipoColor}30`}}>
+                    <Icon className="h-5 w-5" strokeWidth={1.75} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1"><Badge label={m.tipo} color={tipoColor} /></div>
+                    <div className="text-[14px] font-semibold leading-tight truncate" style={{color:C.fg}}>{m.titulo}</div>
+                    {m.descricao && <div className="text-[11.5px] mt-1 line-clamp-2" style={{color:C.muted}}>{m.descricao}</div>}
+                  </div>
+                  <ActionButtons onEdit={()=>onEdit(m)} onDelete={()=>onDelete(m.id)} />
+                </div>
+                <div>
+                  <ProgressBar value={pct} />
+                  <div className="flex items-baseline justify-between mt-2.5">
+                    <span className="text-[12.5px] tabular-nums" style={{color:C.fgDim}}>
+                      <span className="font-semibold" style={{color:C.fg}}>{fmtMetaValor(Number(m.valor_atual), m.unidade)}</span>
+                      <span className="mx-1" style={{color:C.muted}}>/</span>
+                      <span>{fmtMetaValor(Number(m.valor_meta), m.unidade)}</span>
+                    </span>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between pt-3" style={{borderTop:`1px solid ${C.border}`}}>
+                  <div className="flex items-center gap-1.5 text-[11.5px]" style={{color:C.muted}}>
+                    <Clock className="h-3.5 w-3.5" strokeWidth={1.75} />{fmtMetaPrazo(m.prazo)}
+                  </div>
+                  <Badge label={m.status} color={sColor} />
+                </div>
+              </Card>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function MetaModal({ editing, onSave, onClose }: { editing:MetaRow|null; onSave:(d:Omit<MetaRow,"id">)=>void; onClose:()=>void }) {
+  const [f,setF] = useState({
+    tipo: (editing?.tipo as MetaRow["tipo"]) ?? "Financeiro",
+    titulo: editing?.titulo ?? "",
+    descricao: editing?.descricao ?? "",
+    valor_atual: editing ? String(editing.valor_atual) : "0",
+    valor_meta: editing ? String(editing.valor_meta) : "",
+    unidade: editing?.unidade ?? "R$",
+    prazo: editing?.prazo ?? "",
+    status: (editing?.status as MetaRow["status"]) ?? "Em andamento",
+  });
+  const s = (k:string,v:any) => setF(p=>({...p,[k]:v}));
+  const setTipo = (v:string) => {
+    setF(p=>{
+      const sugg = v==="Financeiro" ? "R$" : (v==="Equipamento"||v==="Cliente") ? "unidades" : p.unidade;
+      return {...p, tipo:v as MetaRow["tipo"], unidade: editing ? p.unidade : sugg};
+    });
+  };
+  return (
+    <Modal title={editing?"Editar meta":"Nova meta"} onClose={onClose}
+      onSave={()=>{
+        if(!f.titulo.trim()) return;
+        onSave({
+          tipo:f.tipo, titulo:f.titulo.trim(), descricao:f.descricao.trim()||null,
+          valor_atual: Number(String(f.valor_atual).replace(",","."))||0,
+          valor_meta:  Number(String(f.valor_meta).replace(",","."))||0,
+          unidade: f.unidade.trim()||"R$",
+          prazo: f.prazo||null,
+          status: f.status,
+        });
+      }}
+      saveLabel={editing?"Salvar":"Criar meta"}>
+      <MSelect label="Tipo" value={f.tipo} onChange={setTipo} options={META_TIPOS as unknown as string[]} />
+      <MInput label="Título" value={f.titulo} onChange={(v:string)=>s("titulo",v)} placeholder="Ex: Faturar R$ 50.000 em junho" />
+      <MInput label="Descrição" value={f.descricao} onChange={(v:string)=>s("descricao",v)} placeholder="Detalhe o objetivo desta meta" />
+      <div className="grid grid-cols-2 gap-3">
+        <MInput label="Valor atual" type="number" value={f.valor_atual} onChange={(v:string)=>s("valor_atual",v)} placeholder="0" />
+        <MInput label="Valor da meta" type="number" value={f.valor_meta} onChange={(v:string)=>s("valor_meta",v)} placeholder="0" />
+      </div>
+      <MInput label="Unidade" value={f.unidade} onChange={(v:string)=>s("unidade",v)} placeholder="R$, unidades, %, clientes..." />
+      <div className="grid grid-cols-2 gap-3">
+        <MInput label="Prazo" type="date" value={f.prazo} onChange={(v:string)=>s("prazo",v)} />
+        <MSelect label="Status" value={f.status} onChange={(v:string)=>s("status",v)} options={META_STATUS as unknown as string[]} />
       </div>
     </Modal>
   );
