@@ -1333,12 +1333,27 @@ function Toggle({ defaultOn }: { defaultOn:boolean }) {
   );
 }
 
-function ConfiguracoesScreen({ user, onSignOut }: { user:UserProfile; onSignOut:()=>void }) {
+function ConfiguracoesScreen({ user, onSignOut, onProfileUpdate }: { user:UserProfile; onSignOut:()=>void; onProfileUpdate?:()=>void|Promise<void> }) {
   const [nome,setNome]=useState(user.name||"");
   const [email]=useState(user.email||"");
   const [saved,setSaved]=useState(false);
+  const [saving,setSaving]=useState(false);
+  const [error,setError]=useState<string|null>(null);
   useEffect(()=>{ if(user.name) setNome(user.name); },[user.name]);
-  const save=()=>{ setSaved(true); setTimeout(()=>setSaved(false),2000); };
+  const save=async()=>{
+    setSaving(true); setError(null);
+    try {
+      const { error } = await supabase.auth.updateUser({ data: { full_name: nome } });
+      if (error) throw error;
+      await onProfileUpdate?.();
+      setSaved(true);
+      setTimeout(()=>setSaved(false),2000);
+    } catch (e:any) {
+      setError(e.message||"Erro ao salvar.");
+    } finally {
+      setSaving(false);
+    }
+  };
   return (
     <div className="max-w-2xl space-y-6">
       <PageHeader eyebrow="Sistema" title="Configurações" sub="Preferências da sua conta" />
@@ -1381,14 +1396,17 @@ function ConfiguracoesScreen({ user, onSignOut }: { user:UserProfile; onSignOut:
           ))}
         </div>
       </Card>
-      <div className="flex items-center gap-3">
-        <button onClick={save} className="flex items-center gap-2 rounded-xl px-5 py-2.5 text-[13px] font-semibold shadow-lg transition-opacity hover:opacity-90 active:scale-95"
-          style={{background:`linear-gradient(135deg,${C.em},#6B8EFF)`,color:"#fff"}}>
-          {saved?<><Check className="h-4 w-4" strokeWidth={2.5} />Salvo!</>:<><Save className="h-4 w-4" strokeWidth={1.75} />Salvar alterações</>}
-        </button>
-        <button onClick={onSignOut} className="flex items-center gap-2 rounded-xl px-5 py-2.5 text-[13px] font-medium" style={{background:C.card,border:`1px solid ${C.border}`,color:C.muted}}>
-          <LogOut className="h-4 w-4" strokeWidth={1.75} />Sair da conta
-        </button>
+      <div className="space-y-2">
+        <div className="flex items-center gap-3">
+          <button onClick={save} disabled={saving} className="flex items-center gap-2 rounded-xl px-5 py-2.5 text-[13px] font-semibold shadow-lg transition-opacity hover:opacity-90 active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed"
+            style={{background:`linear-gradient(135deg,${C.em},#6B8EFF)`,color:"#fff"}}>
+            {saving?<>Salvando…</>:saved?<><Check className="h-4 w-4" strokeWidth={2.5} />Salvo!</>:<><Save className="h-4 w-4" strokeWidth={1.75} />Salvar alterações</>}
+          </button>
+          <button onClick={onSignOut} className="flex items-center gap-2 rounded-xl px-5 py-2.5 text-[13px] font-medium" style={{background:C.card,border:`1px solid ${C.border}`,color:C.muted}}>
+            <LogOut className="h-4 w-4" strokeWidth={1.75} />Sair da conta
+          </button>
+        </div>
+        {error && <div className="text-[12px]" style={{color:"#EF4444"}}>{error}</div>}
       </div>
     </div>
   );
