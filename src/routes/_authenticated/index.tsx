@@ -380,6 +380,7 @@ function App() {
       {propModal.open    && <PropostaModal  editing={propModal.e}    clients={clients}   onSave={saveProposta} onClose={()=>setPropModal({open:false,e:null})} />}
       {gravModal.open    && <GravacaoModal  editing={gravModal.e}    clients={clients}   onSave={saveGravacao} onClose={()=>setGravModal({open:false,e:null})} />}
       {lancModal.open    && <LancamentoModal editing={lancModal.e}                       onSave={saveLancamento} onClose={()=>setLancModal({open:false,e:null})} />}
+      {metaModal.open    && <MetaModal      editing={metaModal.e}                       onSave={saveMeta}       onClose={()=>setMetaModal({open:false,e:null})} />}
       {confirm.open && <ConfirmModal msg={confirm.msg} onCancel={()=>setConfirm({open:false,msg:"",onConfirm:()=>{}})} onConfirm={()=>{confirm.onConfirm(); setConfirm({open:false,msg:"",onConfirm:()=>{}});}} />}
     </div>
   );
