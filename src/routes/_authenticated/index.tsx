@@ -1467,13 +1467,13 @@ function ProjectModal({ editing, clients, onSave, onClose }: any) {
   );
 }
 function ClientModal({ editing, onSave, onClose }: any) {
-  const [f,setF]=useState({name:editing?.name??"",project:editing?.project??"",status:editing?.status??"",last:editing?.last??"agora"});
+  const [f,setF]=useState({name:editing?.name??"",project:editing?.project??"",status:editing?.status??"Freelancer",last:editing?.last??"agora"});
   const s=(k:string,v:string)=>setF(p=>({...p,[k]:v}));
   return (
     <Modal title={editing?"Editar cliente":"Novo cliente"} onClose={onClose} onSave={()=>{if(f.name.trim())onSave(f);}} saveLabel={editing?"Salvar":"Adicionar"}>
       <MInput label="Nome" value={f.name} onChange={(v:string)=>s("name",v)} placeholder="Ex: Nike Brasil" />
       <MInput label="Projeto atual" value={f.project} onChange={(v:string)=>s("project",v)} placeholder="Nome do projeto" />
-      <MInput label="Status" value={f.status} onChange={(v:string)=>s("status",v)} placeholder="Ex: Em produção" />
+      <MSelect label="Tipo de cliente" value={f.status} onChange={(v:string)=>s("status",v)} options={["Freelancer","Recorrente"]} />
     </Modal>
   );
 }
