@@ -302,8 +302,32 @@ function App() {
   const saveGravacao = async (d:Omit<Gravacao,"id">) => { await saveGravacaoM.mutateAsync(gravModal.e?{...d,id:gravModal.e.id}:d);   setGravModal({open:false,e:null}); };
   const saveLancamento = async (d:Omit<LancamentoRow,"id">) => { await saveLancamentoM.mutateAsync(lancModal.e?{...d,id:lancModal.e.id}:d as any); setLancModal({open:false,e:null}); };
   const saveMeta = async (d:Omit<MetaRow,"id">) => { await saveMetaM.mutateAsync(metaModal.e?{...d,id:metaModal.e.id}:d as any); setMetaModal({open:false,e:null}); };
-  const saveDividaFixa = async (d:Omit<DividaFixaRow,"id">) => { await saveDividaFixaM.mutateAsync(dividaFixaModal.e?{...d,id:dividaFixaModal.e.id}:d as any); setDividaFixaModal({open:false,e:null}); };
-  const saveProlabore = async (d:Omit<ProlaboreRow,"id"|"created_at">) => { await saveProlaboreM.mutateAsync(prolaboreModal.e?{...d,id:prolaboreModal.e.id}:d as any); setProlaboreModal({open:false,e:null}); };
+  const saveDividaFixa = async (d:Omit<DividaFixaRow,"id">) => {
+    const prev = dividaFixaModal.e;
+    await saveDividaFixaM.mutateAsync(prev?{...d,id:prev.id}:d as any);
+    if (d.status === "Paga" && prev?.status !== "Paga") {
+      await saveLancamentoM.mutateAsync({
+        descricao: `Dívida fixa: ${d.descricao}`,
+        tipo: "Saída", valor: d.valor,
+        data: new Date().toISOString().slice(0,10),
+        status: "Pago", categoria: "Fixo",
+      } as any);
+    }
+    setDividaFixaModal({open:false,e:null});
+  };
+  const saveProlabore = async (d:Omit<ProlaboreRow,"id"|"created_at">) => {
+    const prev = prolaboreModal.e;
+    await saveProlaboreM.mutateAsync(prev?{...d,id:prev.id}:d as any);
+    if (d.status === "Pago" && prev?.status !== "Pago") {
+      await saveLancamentoM.mutateAsync({
+        descricao: `Pró-labore: ${d.socio} — ${d.mes}`,
+        tipo: "Saída", valor: d.valor,
+        data: new Date().toISOString().slice(0,10),
+        status: "Pago", categoria: "Fixo",
+      } as any);
+    }
+    setProlaboreModal({open:false,e:null});
+  };
 
   const delProject  = (id:string) => askDelete("Excluir este projeto? Esta ação não pode ser desfeita.",   ()=>deleteProjectM.mutate(id));
   const delClient   = (id:string) => askDelete("Excluir este cliente? Esta ação não pode ser desfeita.",   ()=>deleteClientM.mutate(id));
@@ -1114,7 +1138,7 @@ function PropostasScreen({ propostas, clients, onNew, onEdit, onDelete }: any) {
 
 /* ══ FINANCEIRO ══ */
 function FinanceiroScreen({ lancamentos, dividas, onNew, onEdit, onDelete, onNewDivida, onEditDivida, onDeleteDivida }: { lancamentos:LancamentoRow[]; dividas:DividaFixaRow[]; onNew:()=>void; onEdit:(l:LancamentoRow)=>void; onDelete:(id:string)=>void; onNewDivida:()=>void; onEditDivida:(d:DividaFixaRow)=>void; onDeleteDivida:(id:string)=>void }) {
-  const [tab,setTab]=useState<"resumo"|"lancamentos"|"dividas">("resumo");
+  const [tab,setTab]=useState<"resumo"|"lancamentos"|"dividas"|"caixa">("resumo");
   const fmt = (n:number) => `R$ ${n.toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2})}`;
   const fmtDate = (d:string) => { try { const [y,m,day]=d.split("-"); const months=["jan","fev","mar","abr","mai","jun","jul","ago","set","out","nov","dez"]; return `${day} ${months[+m-1]}`; } catch { return d; } };
   const num = (l:LancamentoRow) => Number(l.valor) || 0;
@@ -1149,10 +1173,10 @@ function FinanceiroScreen({ lancamentos, dividas, onNew, onEdit, onDelete, onNew
         ))}
       </div>
       <div className="flex gap-1 mb-4 flex-wrap">
-        {(["resumo","lancamentos","dividas"] as const).map(t=>(
+        {(["resumo","lancamentos","dividas","caixa"] as const).map(t=>(
           <button key={t} onClick={()=>setTab(t)} className="px-4 py-2 rounded-xl text-[13px] font-medium transition-all active:scale-95"
             style={tab===t?{background:C.em,color:"#fff"}:{background:C.card,border:`1px solid ${C.border}`,color:C.muted}}>
-            {t==="resumo"?"Resumo":t==="lancamentos"?"Lançamentos":"Dívidas fixas"}
+            {t==="resumo"?"Resumo":t==="lancamentos"?"Lançamentos":t==="dividas"?"Dívidas fixas":"Caixa"}
           </button>
         ))}
       </div>
@@ -1203,6 +1227,7 @@ function FinanceiroScreen({ lancamentos, dividas, onNew, onEdit, onDelete, onNew
       {tab==="dividas" && (
         <DividasFixasList dividas={dividas} onNew={onNewDivida} onEdit={onEditDivida} onDelete={onDeleteDivida} />
       )}
+      {tab==="caixa" && <CaixaScreen lancamentos={lancamentos} />}
     </div>
   );
 }
@@ -1580,6 +1605,90 @@ function LancamentoModal({ editing, onSave, onClose }: { editing:LancamentoRow|n
 }
 
 function categoriaColor(c:string){ return ({Recorrente:C.em,Freelancer:C.info,Fixo:C.warn,Avulso:"#A78BFA",Outro:C.muted} as Record<string,string>)[c]||C.muted; }
+
+/* ══ CAIXA ══ */
+function CaixaScreen({ lancamentos }: { lancamentos: LancamentoRow[] }) {
+  const fmt = (n:number) => `R$ ${n.toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2})}`;
+  const fmtDate = (d:string) => { try { const [y,m,day]=d.split("-"); const months=["jan","fev","mar","abr","mai","jun","jul","ago","set","out","nov","dez"]; return `${day} ${months[+m-1]}`; } catch { return d; } };
+  const num = (l:LancamentoRow) => Number(l.valor) || 0;
+
+  if (lancamentos.length === 0) {
+    return <EmptyState icon={Wallet} title="Caixa vazio" subtitle="Registre entradas e saídas para visualizar o saldo do caixa." />;
+  }
+
+  const totalEntradas = lancamentos.filter(l => l.tipo === "Entrada" && l.status === "Recebido").reduce((s,l)=>s+num(l),0);
+  const totalSaidas   = lancamentos.filter(l => l.tipo === "Saída" && l.status === "Pago").reduce((s,l)=>s+num(l),0);
+  const saldoCaixa    = totalEntradas - totalSaidas;
+
+  const now = new Date();
+  const isSameMonth = (d:string) => { const dt = new Date(d); return dt.getMonth() === now.getMonth() && dt.getFullYear() === now.getFullYear(); };
+  const faturamentoMes = lancamentos.filter(l => l.tipo === "Entrada" && l.status === "Recebido" && isSameMonth(l.data)).reduce((s,l)=>s+num(l),0);
+  const saidasMes = lancamentos.filter(l => l.tipo === "Saída" && l.status === "Pago" && isSameMonth(l.data)).reduce((s,l)=>s+num(l),0);
+
+  const maxBar = Math.max(faturamentoMes, saidasMes, 1);
+  const ultimos = [...lancamentos].sort((a,b)=> new Date(b.data).getTime() - new Date(a.data).getTime()).slice(0,5);
+
+  const kpis = [
+    { label: "Faturamento do mês", value: fmt(faturamentoMes), color: C.em },
+    { label: "Saídas do mês", value: fmt(saidasMes), color: C.danger },
+    { label: "Total entradas", value: fmt(totalEntradas), color: C.em },
+    { label: "Total saídas", value: fmt(totalSaidas), color: C.danger },
+  ];
+
+  return (
+    <div className="space-y-6">
+      <Card className="p-6" style={{background:`linear-gradient(135deg,${C.emDim},transparent)`}}>
+        <div className="text-[10px] uppercase tracking-[0.16em] font-semibold mb-3" style={{color:C.muted}}>Saldo em caixa</div>
+        <div className="text-[36px] md:text-[44px] font-semibold tabular-nums leading-none" style={{color: saldoCaixa >= 0 ? C.em : C.danger}}>{fmt(saldoCaixa)}</div>
+        <div className="text-[12.5px] mt-3" style={{color:C.muted}}>Entradas recebidas menos saídas pagas</div>
+      </Card>
+
+      <div className="grid grid-cols-2 xl:grid-cols-4 gap-3">
+        {kpis.map(k=>(
+          <Card key={k.label} className="p-4">
+            <div className="text-[10px] uppercase tracking-[0.16em] font-semibold mb-3" style={{color:C.muted}}>{k.label}</div>
+            <div className="text-[20px] md:text-[22px] font-semibold tabular-nums leading-none" style={{color:k.color}}>{k.value}</div>
+          </Card>
+        ))}
+      </div>
+
+      <Card className="p-5">
+        <div className="text-[13px] font-semibold mb-6" style={{color:C.fg}}>Entradas vs Saídas — mês atual</div>
+        <div className="flex items-end justify-around gap-8" style={{height:200}}>
+          {[
+            { label: "Entradas", v: faturamentoMes, color: C.em },
+            { label: "Saídas", v: saidasMes, color: C.danger },
+          ].map(b => (
+            <div key={b.label} className="flex flex-col items-center flex-1 max-w-[140px]">
+              <div className="w-full rounded-t-xl transition-all" style={{height:`${(b.v/maxBar)*160}px`, minHeight:4, background:`linear-gradient(180deg,${b.color},${b.color}88)`}} />
+              <div className="mt-3 text-[12px] font-medium" style={{color:C.muted}}>{b.label}</div>
+              <div className="text-[13px] font-semibold tabular-nums mt-1" style={{color:b.color}}>{fmt(b.v)}</div>
+            </div>
+          ))}
+        </div>
+      </Card>
+
+      <Card>
+        <div className="px-5 py-4" style={{borderBottom:`1px solid ${C.border}`}}>
+          <div className="text-[13px] font-semibold" style={{color:C.fg}}>Últimas movimentações</div>
+        </div>
+        {ultimos.map((l,i)=>(
+          <div key={l.id} className="flex items-center gap-3 px-4 py-3.5" style={{borderBottom:i<ultimos.length-1?`1px solid ${C.border}`:"none"}}>
+            <div className="h-8 w-8 rounded-xl flex items-center justify-center shrink-0" style={{background:l.tipo==="Entrada"?C.emDim:C.dangerDim,color:l.tipo==="Entrada"?C.em:C.danger}}>
+              {l.tipo==="Entrada"?<ArrowUpRight className="h-4 w-4" strokeWidth={1.75}/>:<ArrowRight className="h-4 w-4 rotate-180" strokeWidth={1.75}/>}
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="text-[13px] font-medium truncate" style={{color:C.fg}}>{l.descricao}</div>
+              <div className="text-[11.5px] mt-0.5" style={{color:C.muted}}>{fmtDate(l.data)} · {l.tipo}</div>
+            </div>
+            <div className="text-[13px] font-semibold tabular-nums" style={{color:l.tipo==="Entrada"?C.em:C.danger}}>{l.tipo==="Saída"&&"−"}{fmt(num(l))}</div>
+            {l.categoria && <Badge label={l.categoria} color={categoriaColor(l.categoria)} />}
+          </div>
+        ))}
+      </Card>
+    </div>
+  );
+}
 
 function DividaFixaModal({ editing, onSave, onClose }: { editing:DividaFixaRow|null; onSave:(d:Omit<DividaFixaRow,"id">)=>void; onClose:()=>void }) {
   const [f,setF]=useState<{descricao:string;valor:string;vencimento:string;status:"Em dia"|"Atrasada"|"Paga";recorrente:boolean}>({
