@@ -235,6 +235,8 @@ function App() {
   const lancamentos = (lancamentosQ.data ?? []) as LancamentoRow[];
   const metas       = (metasQ.data ?? []) as MetaRow[];
   const mensagens   = (mensagensQ.data ?? []) as MensagemRow[];
+  const dividasFixas= (dividasFixasQ.data ?? []) as DividaFixaRow[];
+  const prolabore   = (prolaboreQ.data ?? []) as ProlaboreRow[];
 
   const saveProjectM   = projectsApi.useSave();
   const deleteProjectM = projectsApi.useRemove();
