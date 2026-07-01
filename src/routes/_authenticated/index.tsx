@@ -1606,6 +1606,90 @@ function LancamentoModal({ editing, onSave, onClose }: { editing:LancamentoRow|n
 
 function categoriaColor(c:string){ return ({Recorrente:C.em,Freelancer:C.info,Fixo:C.warn,Avulso:"#A78BFA",Outro:C.muted} as Record<string,string>)[c]||C.muted; }
 
+/* ══ CAIXA ══ */
+function CaixaScreen({ lancamentos }: { lancamentos: LancamentoRow[] }) {
+  const fmt = (n:number) => `R$ ${n.toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2})}`;
+  const fmtDate = (d:string) => { try { const [y,m,day]=d.split("-"); const months=["jan","fev","mar","abr","mai","jun","jul","ago","set","out","nov","dez"]; return `${day} ${months[+m-1]}`; } catch { return d; } };
+  const num = (l:LancamentoRow) => Number(l.valor) || 0;
+
+  if (lancamentos.length === 0) {
+    return <EmptyState icon={Wallet} title="Caixa vazio" subtitle="Registre entradas e saídas para visualizar o saldo do caixa." />;
+  }
+
+  const totalEntradas = lancamentos.filter(l => l.tipo === "Entrada" && l.status === "Recebido").reduce((s,l)=>s+num(l),0);
+  const totalSaidas   = lancamentos.filter(l => l.tipo === "Saída" && l.status === "Pago").reduce((s,l)=>s+num(l),0);
+  const saldoCaixa    = totalEntradas - totalSaidas;
+
+  const now = new Date();
+  const isSameMonth = (d:string) => { const dt = new Date(d); return dt.getMonth() === now.getMonth() && dt.getFullYear() === now.getFullYear(); };
+  const faturamentoMes = lancamentos.filter(l => l.tipo === "Entrada" && l.status === "Recebido" && isSameMonth(l.data)).reduce((s,l)=>s+num(l),0);
+  const saidasMes = lancamentos.filter(l => l.tipo === "Saída" && l.status === "Pago" && isSameMonth(l.data)).reduce((s,l)=>s+num(l),0);
+
+  const maxBar = Math.max(faturamentoMes, saidasMes, 1);
+  const ultimos = [...lancamentos].sort((a,b)=> new Date(b.data).getTime() - new Date(a.data).getTime()).slice(0,5);
+
+  const kpis = [
+    { label: "Faturamento do mês", value: fmt(faturamentoMes), color: C.em },
+    { label: "Saídas do mês", value: fmt(saidasMes), color: C.danger },
+    { label: "Total entradas", value: fmt(totalEntradas), color: C.em },
+    { label: "Total saídas", value: fmt(totalSaidas), color: C.danger },
+  ];
+
+  return (
+    <div className="space-y-6">
+      <Card className="p-6" style={{background:`linear-gradient(135deg,${C.emDim},transparent)`}}>
+        <div className="text-[10px] uppercase tracking-[0.16em] font-semibold mb-3" style={{color:C.muted}}>Saldo em caixa</div>
+        <div className="text-[36px] md:text-[44px] font-semibold tabular-nums leading-none" style={{color: saldoCaixa >= 0 ? C.em : C.danger}}>{fmt(saldoCaixa)}</div>
+        <div className="text-[12.5px] mt-3" style={{color:C.muted}}>Entradas recebidas menos saídas pagas</div>
+      </Card>
+
+      <div className="grid grid-cols-2 xl:grid-cols-4 gap-3">
+        {kpis.map(k=>(
+          <Card key={k.label} className="p-4">
+            <div className="text-[10px] uppercase tracking-[0.16em] font-semibold mb-3" style={{color:C.muted}}>{k.label}</div>
+            <div className="text-[20px] md:text-[22px] font-semibold tabular-nums leading-none" style={{color:k.color}}>{k.value}</div>
+          </Card>
+        ))}
+      </div>
+
+      <Card className="p-5">
+        <div className="text-[13px] font-semibold mb-6" style={{color:C.fg}}>Entradas vs Saídas — mês atual</div>
+        <div className="flex items-end justify-around gap-8" style={{height:200}}>
+          {[
+            { label: "Entradas", v: faturamentoMes, color: C.em },
+            { label: "Saídas", v: saidasMes, color: C.danger },
+          ].map(b => (
+            <div key={b.label} className="flex flex-col items-center flex-1 max-w-[140px]">
+              <div className="w-full rounded-t-xl transition-all" style={{height:`${(b.v/maxBar)*160}px`, minHeight:4, background:`linear-gradient(180deg,${b.color},${b.color}88)`}} />
+              <div className="mt-3 text-[12px] font-medium" style={{color:C.muted}}>{b.label}</div>
+              <div className="text-[13px] font-semibold tabular-nums mt-1" style={{color:b.color}}>{fmt(b.v)}</div>
+            </div>
+          ))}
+        </div>
+      </Card>
+
+      <Card>
+        <div className="px-5 py-4" style={{borderBottom:`1px solid ${C.border}`}}>
+          <div className="text-[13px] font-semibold" style={{color:C.fg}}>Últimas movimentações</div>
+        </div>
+        {ultimos.map((l,i)=>(
+          <div key={l.id} className="flex items-center gap-3 px-4 py-3.5" style={{borderBottom:i<ultimos.length-1?`1px solid ${C.border}`:"none"}}>
+            <div className="h-8 w-8 rounded-xl flex items-center justify-center shrink-0" style={{background:l.tipo==="Entrada"?C.emDim:C.dangerDim,color:l.tipo==="Entrada"?C.em:C.danger}}>
+              {l.tipo==="Entrada"?<ArrowUpRight className="h-4 w-4" strokeWidth={1.75}/>:<ArrowRight className="h-4 w-4 rotate-180" strokeWidth={1.75}/>}
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="text-[13px] font-medium truncate" style={{color:C.fg}}>{l.descricao}</div>
+              <div className="text-[11.5px] mt-0.5" style={{color:C.muted}}>{fmtDate(l.data)} · {l.tipo}</div>
+            </div>
+            <div className="text-[13px] font-semibold tabular-nums" style={{color:l.tipo==="Entrada"?C.em:C.danger}}>{l.tipo==="Saída"&&"−"}{fmt(num(l))}</div>
+            {l.categoria && <Badge label={l.categoria} color={categoriaColor(l.categoria)} />}
+          </div>
+        ))}
+      </Card>
+    </div>
+  );
+}
+
 function DividaFixaModal({ editing, onSave, onClose }: { editing:DividaFixaRow|null; onSave:(d:Omit<DividaFixaRow,"id">)=>void; onClose:()=>void }) {
   const [f,setF]=useState<{descricao:string;valor:string;vencimento:string;status:"Em dia"|"Atrasada"|"Paga";recorrente:boolean}>({
     descricao:editing?.descricao??"",
