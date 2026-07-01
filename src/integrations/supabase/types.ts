@@ -47,6 +47,42 @@ export type Database = {
         }
         Relationships: []
       }
+      dividas_fixas: {
+        Row: {
+          created_at: string
+          descricao: string
+          id: string
+          recorrente: boolean
+          status: string
+          updated_at: string
+          user_id: string
+          valor: number
+          vencimento: number | null
+        }
+        Insert: {
+          created_at?: string
+          descricao: string
+          id?: string
+          recorrente?: boolean
+          status?: string
+          updated_at?: string
+          user_id: string
+          valor?: number
+          vencimento?: number | null
+        }
+        Update: {
+          created_at?: string
+          descricao?: string
+          id?: string
+          recorrente?: boolean
+          status?: string
+          updated_at?: string
+          user_id?: string
+          valor?: number
+          vencimento?: number | null
+        }
+        Relationships: []
+      }
       entregas: {
         Row: {
           client: string | null
@@ -130,6 +166,7 @@ export type Database = {
       }
       lancamentos: {
         Row: {
+          categoria: string
           created_at: string
           data: string
           descricao: string
@@ -141,6 +178,7 @@ export type Database = {
           valor: number
         }
         Insert: {
+          categoria?: string
           created_at?: string
           data?: string
           descricao: string
@@ -152,6 +190,7 @@ export type Database = {
           valor?: number
         }
         Update: {
+          categoria?: string
           created_at?: string
           data?: string
           descricao?: string
@@ -311,6 +350,42 @@ export type Database = {
           status?: string | null
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      prolabore: {
+        Row: {
+          created_at: string
+          id: string
+          mes: string
+          observacao: string | null
+          socio: string
+          status: string
+          updated_at: string
+          user_id: string
+          valor: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          mes: string
+          observacao?: string | null
+          socio: string
+          status?: string
+          updated_at?: string
+          user_id: string
+          valor?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          mes?: string
+          observacao?: string | null
+          socio?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+          valor?: number
         }
         Relationships: []
       }
