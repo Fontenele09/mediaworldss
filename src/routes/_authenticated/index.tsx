@@ -1138,7 +1138,7 @@ function PropostasScreen({ propostas, clients, onNew, onEdit, onDelete }: any) {
 
 /* ══ FINANCEIRO ══ */
 function FinanceiroScreen({ lancamentos, dividas, onNew, onEdit, onDelete, onNewDivida, onEditDivida, onDeleteDivida }: { lancamentos:LancamentoRow[]; dividas:DividaFixaRow[]; onNew:()=>void; onEdit:(l:LancamentoRow)=>void; onDelete:(id:string)=>void; onNewDivida:()=>void; onEditDivida:(d:DividaFixaRow)=>void; onDeleteDivida:(id:string)=>void }) {
-  const [tab,setTab]=useState<"resumo"|"lancamentos"|"dividas">("resumo");
+  const [tab,setTab]=useState<"resumo"|"lancamentos"|"dividas"|"caixa">("resumo");
   const fmt = (n:number) => `R$ ${n.toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2})}`;
   const fmtDate = (d:string) => { try { const [y,m,day]=d.split("-"); const months=["jan","fev","mar","abr","mai","jun","jul","ago","set","out","nov","dez"]; return `${day} ${months[+m-1]}`; } catch { return d; } };
   const num = (l:LancamentoRow) => Number(l.valor) || 0;
