@@ -302,6 +302,8 @@ function App() {
   const saveGravacao = async (d:Omit<Gravacao,"id">) => { await saveGravacaoM.mutateAsync(gravModal.e?{...d,id:gravModal.e.id}:d);   setGravModal({open:false,e:null}); };
   const saveLancamento = async (d:Omit<LancamentoRow,"id">) => { await saveLancamentoM.mutateAsync(lancModal.e?{...d,id:lancModal.e.id}:d as any); setLancModal({open:false,e:null}); };
   const saveMeta = async (d:Omit<MetaRow,"id">) => { await saveMetaM.mutateAsync(metaModal.e?{...d,id:metaModal.e.id}:d as any); setMetaModal({open:false,e:null}); };
+  const saveDividaFixa = async (d:Omit<DividaFixaRow,"id">) => { await saveDividaFixaM.mutateAsync(dividaFixaModal.e?{...d,id:dividaFixaModal.e.id}:d as any); setDividaFixaModal({open:false,e:null}); };
+  const saveProlabore = async (d:Omit<ProlaboreRow,"id"|"created_at">) => { await saveProlaboreM.mutateAsync(prolaboreModal.e?{...d,id:prolaboreModal.e.id}:d as any); setProlaboreModal({open:false,e:null}); };
 
   const delProject  = (id:string) => askDelete("Excluir este projeto? Esta ação não pode ser desfeita.",   ()=>deleteProjectM.mutate(id));
   const delClient   = (id:string) => askDelete("Excluir este cliente? Esta ação não pode ser desfeita.",   ()=>deleteClientM.mutate(id));
@@ -310,6 +312,8 @@ function App() {
   const delGravacao = (id:string) => askDelete("Excluir esta gravação? Esta ação não pode ser desfeita.", ()=>deleteGravacaoM.mutate(id));
   const delLancamento = (id:string) => askDelete("Excluir este lançamento? Esta ação não pode ser desfeita.", ()=>deleteLancamentoM.mutate(id));
   const delMeta = (id:string) => askDelete("Excluir esta meta? Esta ação não pode ser desfeita.", ()=>deleteMetaM.mutate(id));
+  const delDividaFixa = (id:string) => askDelete("Excluir esta dívida fixa? Esta ação não pode ser desfeita.", ()=>deleteDividaFixaM.mutate(id));
+  const delProlabore = (id:string) => askDelete("Excluir este registro? Esta ação não pode ser desfeita.", ()=>deleteProlaboreM.mutate(id));
 
   const sendMsg = async (conversa_id:string, conversa_nome:string, conversa_projeto:string|null, texto:string) => {
     await saveMensagemM.mutateAsync({ conversa_id, conversa_nome, conversa_projeto, remetente:"Você", texto } as Partial<MensagemRow>);
