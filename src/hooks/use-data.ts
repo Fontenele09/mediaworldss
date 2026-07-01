@@ -121,3 +121,5 @@ export const gravacoesApi = makeHooks<GravacaoRow>("gravacoes");
 export const lancamentosApi = makeHooks<LancamentoRow>("lancamentos", "data");
 export const metasApi = makeHooks<MetaRow>("metas");
 export const mensagensApi = makeHooks<MensagemRow>("mensagens");
+export const dividasFixasApi = makeHooks<DividaFixaRow>("dividas_fixas");
+export const prolaboreApi = makeHooks<ProlaboreRow>("prolabore");
