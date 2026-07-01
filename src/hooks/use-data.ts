@@ -83,6 +83,18 @@ export type GravacaoRow = {
 export type LancamentoRow = {
   id: string; descricao: string; tipo: "Entrada" | "Saída"; valor: number;
   data: string; status: "Recebido" | "Pago" | "Pendente";
+  categoria: "Freelancer" | "Recorrente" | "Fixo" | "Avulso" | "Outro";
+};
+export type DividaFixaRow = {
+  id: string; descricao: string; valor: number;
+  vencimento: number | null;
+  status: "Em dia" | "Atrasada" | "Paga";
+  recorrente: boolean;
+};
+export type ProlaboreRow = {
+  id: string; socio: string; valor: number; mes: string;
+  status: "Pendente" | "Pago"; observacao: string | null;
+  created_at: string;
 };
 export type MetaRow = {
   id: string; tipo: "Financeiro" | "Equipamento" | "Cliente" | "Customizada";
