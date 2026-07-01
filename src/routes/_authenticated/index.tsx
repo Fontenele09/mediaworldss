@@ -1530,19 +1530,21 @@ function GravacaoModal({ editing, clients, onSave, onClose }: any) {
 }
 function LancamentoModal({ editing, onSave, onClose }: { editing:LancamentoRow|null; onSave:(d:Omit<LancamentoRow,"id">)=>void; onClose:()=>void }) {
   const today = new Date().toISOString().slice(0,10);
-  const [f,setF]=useState<{descricao:string;tipo:"Entrada"|"Saída";valor:string;data:string;status:"Recebido"|"Pago"|"Pendente"}>({
+  const [f,setF]=useState<{descricao:string;tipo:"Entrada"|"Saída";valor:string;data:string;status:"Recebido"|"Pago"|"Pendente";categoria:"Freelancer"|"Recorrente"|"Fixo"|"Avulso"|"Outro"}>({
     descricao:editing?.descricao??"",
     tipo:(editing?.tipo as "Entrada"|"Saída")??"Entrada",
     valor:editing?String(editing.valor):"",
     data:editing?.data??today,
     status:(editing?.status as "Recebido"|"Pago"|"Pendente")??"Pendente",
+    categoria:(editing?.categoria as any)??"Freelancer",
   });
   const s=(k:string,v:any)=>setF(p=>({...p,[k]:v}));
   return (
     <Modal title={editing?"Editar lançamento":"Novo lançamento"} onClose={onClose}
-      onSave={()=>{ if(!f.descricao.trim()) return; onSave({descricao:f.descricao.trim(),tipo:f.tipo,valor:Number(String(f.valor).replace(",","."))||0,data:f.data,status:f.status}); }}
+      onSave={()=>{ if(!f.descricao.trim()) return; onSave({descricao:f.descricao.trim(),tipo:f.tipo,valor:Number(String(f.valor).replace(",","."))||0,data:f.data,status:f.status,categoria:f.categoria}); }}
       saveLabel={editing?"Salvar":"Criar"}>
       <MInput label="Descrição" value={f.descricao} onChange={(v:string)=>s("descricao",v)} placeholder="Ex: Pagamento — Cliente X" />
+      <MSelect label="Categoria" value={f.categoria} onChange={(v:string)=>s("categoria",v)} options={["Freelancer","Recorrente","Fixo","Avulso","Outro"]} />
       <div className="grid grid-cols-2 gap-3">
         <MSelect label="Tipo" value={f.tipo} onChange={(v:string)=>s("tipo",v)} options={["Entrada","Saída"]} />
         <MInput label="Valor (R$)" type="number" value={f.valor} onChange={(v:string)=>s("valor",v)} placeholder="0,00" />
@@ -1552,6 +1554,161 @@ function LancamentoModal({ editing, onSave, onClose }: { editing:LancamentoRow|n
         <MSelect label="Status" value={f.status} onChange={(v:string)=>s("status",v)} options={["Recebido","Pago","Pendente"]} />
       </div>
     </Modal>
+  );
+}
+
+function categoriaColor(c:string){ return ({Recorrente:C.em,Freelancer:C.info,Fixo:C.warn,Avulso:"#A78BFA",Outro:C.muted} as Record<string,string>)[c]||C.muted; }
+
+function DividaFixaModal({ editing, onSave, onClose }: { editing:DividaFixaRow|null; onSave:(d:Omit<DividaFixaRow,"id">)=>void; onClose:()=>void }) {
+  const [f,setF]=useState<{descricao:string;valor:string;vencimento:string;status:"Em dia"|"Atrasada"|"Paga";recorrente:boolean}>({
+    descricao:editing?.descricao??"",
+    valor:editing?String(editing.valor):"",
+    vencimento:editing?.vencimento?String(editing.vencimento):"",
+    status:(editing?.status as any)??"Em dia",
+    recorrente:editing?.recorrente??true,
+  });
+  const s=(k:string,v:any)=>setF(p=>({...p,[k]:v}));
+  return (
+    <Modal title={editing?"Editar dívida fixa":"Nova dívida fixa"} onClose={onClose}
+      onSave={()=>{ if(!f.descricao.trim()) return;
+        const venc = f.vencimento ? Math.min(31,Math.max(1,Number(f.vencimento))) : null;
+        onSave({descricao:f.descricao.trim(),valor:Number(String(f.valor).replace(",","."))||0,vencimento:venc,status:f.status,recorrente:f.recorrente});
+      }}
+      saveLabel={editing?"Salvar":"Criar"}>
+      <MInput label="Descrição" value={f.descricao} onChange={(v:string)=>s("descricao",v)} placeholder="Ex: Aluguel do estúdio" />
+      <div className="grid grid-cols-2 gap-3">
+        <MInput label="Valor (R$)" type="number" value={f.valor} onChange={(v:string)=>s("valor",v)} placeholder="0,00" />
+        <MInput label="Dia de vencimento" type="number" value={f.vencimento} onChange={(v:string)=>s("vencimento",v)} placeholder="Ex: 10" />
+      </div>
+      <MSelect label="Status" value={f.status} onChange={(v:string)=>s("status",v)} options={["Em dia","Atrasada","Paga"]} />
+      <label className="flex items-center gap-2 cursor-pointer">
+        <input type="checkbox" checked={f.recorrente} onChange={e=>s("recorrente",e.target.checked)} style={{accentColor:C.em}} />
+        <span className="text-[13px]" style={{color:C.fgDim}}>Recorrente (repete todo mês)</span>
+      </label>
+    </Modal>
+  );
+}
+
+function ProlaboreModal({ editing, onSave, onClose }: { editing:ProlaboreRow|null; onSave:(d:Omit<ProlaboreRow,"id"|"created_at">)=>void; onClose:()=>void }) {
+  const [f,setF]=useState<{socio:string;valor:string;mes:string;status:"Pendente"|"Pago";observacao:string}>({
+    socio:editing?.socio??"",
+    valor:editing?String(editing.valor):"",
+    mes:editing?.mes??"",
+    status:(editing?.status as any)??"Pendente",
+    observacao:editing?.observacao??"",
+  });
+  const s=(k:string,v:any)=>setF(p=>({...p,[k]:v}));
+  return (
+    <Modal title={editing?"Editar pró-labore":"Novo registro"} onClose={onClose}
+      onSave={()=>{ if(!f.socio.trim()||!f.mes.trim()) return;
+        onSave({socio:f.socio.trim(),valor:Number(String(f.valor).replace(",","."))||0,mes:f.mes.trim(),status:f.status,observacao:f.observacao.trim()||null});
+      }}
+      saveLabel={editing?"Salvar":"Criar"}>
+      <MInput label="Nome do sócio" value={f.socio} onChange={(v:string)=>s("socio",v)} placeholder="Ex: João Silva" />
+      <div className="grid grid-cols-2 gap-3">
+        <MInput label="Valor (R$)" type="number" value={f.valor} onChange={(v:string)=>s("valor",v)} placeholder="0,00" />
+        <MInput label="Mês" value={f.mes} onChange={(v:string)=>s("mes",v)} placeholder="Ex: junho 2026" />
+      </div>
+      <MSelect label="Status" value={f.status} onChange={(v:string)=>s("status",v)} options={["Pendente","Pago"]} />
+      <MInput label="Observação" value={f.observacao} onChange={(v:string)=>s("observacao",v)} placeholder="Ex: Referente à campanha X" />
+    </Modal>
+  );
+}
+
+function DividasFixasList({ dividas, onNew, onEdit, onDelete }: { dividas:DividaFixaRow[]; onNew:()=>void; onEdit:(d:DividaFixaRow)=>void; onDelete:(id:string)=>void }) {
+  const fmt = (n:number) => `R$ ${n.toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2})}`;
+  const totalFixo = dividas.filter(d=>d.status!=="Paga").reduce((s,d)=>s+Number(d.valor||0),0);
+  const emDia = dividas.filter(d=>d.status==="Em dia").length;
+  const atrasadas = dividas.filter(d=>d.status==="Atrasada").length;
+  const statusColor = (s:string) => s==="Em dia"?C.em : s==="Atrasada"?C.danger : C.muted;
+  return (
+    <div>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
+        <Card className="p-4"><div className="text-[10px] uppercase tracking-[0.16em] font-semibold mb-2" style={{color:C.muted}}>Total fixo/mês</div><div className="text-[22px] font-semibold tabular-nums" style={{color:C.fg}}>{fmt(totalFixo)}</div></Card>
+        <Card className="p-4"><div className="text-[10px] uppercase tracking-[0.16em] font-semibold mb-2" style={{color:C.muted}}>Em dia</div><div className="text-[22px] font-semibold tabular-nums" style={{color:C.em}}>{emDia}</div></Card>
+        <Card className="p-4"><div className="text-[10px] uppercase tracking-[0.16em] font-semibold mb-2" style={{color:C.muted}}>Atrasadas</div><div className="text-[22px] font-semibold tabular-nums" style={{color:C.danger}}>{atrasadas}</div></Card>
+      </div>
+      <div className="flex justify-end mb-3">
+        <Btn onClick={onNew}><Plus className="h-4 w-4" strokeWidth={2} />Nova dívida</Btn>
+      </div>
+      {dividas.length===0 ? (
+        <EmptyState icon={CreditCard} title="Sem dívidas fixas" subtitle="Cadastre suas despesas fixas mensais para nunca perder um vencimento." actionLabel="Nova dívida" onAction={onNew} />
+      ) : (
+        <div className="space-y-2.5">
+          {dividas.map(d=>(
+            <Card key={d.id} className="p-4 flex items-center gap-3">
+              <div className="h-10 w-10 rounded-xl flex items-center justify-center shrink-0" style={{background:C.warnDim,color:C.warn}}>
+                <CreditCard className="h-4.5 w-4.5" strokeWidth={1.75} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-3 flex-wrap">
+                  <div className="text-[13.5px] font-medium truncate" style={{color:C.fg}}>{d.descricao}</div>
+                  <div className="text-[13px] font-semibold tabular-nums" style={{color:C.fg}}>{fmt(Number(d.valor||0))}</div>
+                </div>
+                <div className="flex items-center gap-2 mt-1 flex-wrap">
+                  <span className="text-[11.5px]" style={{color:C.muted}}>{d.vencimento?`Vence dia ${d.vencimento}`:"Sem vencimento"}</span>
+                  <Badge label={d.status} color={statusColor(d.status)} />
+                  {d.recorrente && <Badge label="Recorrente" color={C.em} />}
+                </div>
+              </div>
+              <ActionButtons onEdit={()=>onEdit(d)} onDelete={()=>onDelete(d.id)} />
+            </Card>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ProlaboreScreen({ prolabore, onNew, onEdit, onDelete }: { prolabore:ProlaboreRow[]; onNew:()=>void; onEdit:(p:ProlaboreRow)=>void; onDelete:(id:string)=>void }) {
+  const fmt = (n:number) => `R$ ${n.toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2})}`;
+  const now = new Date();
+  const months=["janeiro","fevereiro","março","abril","maio","junho","julho","agosto","setembro","outubro","novembro","dezembro"];
+  const currentMonthLabel = `${months[now.getMonth()]} ${now.getFullYear()}`;
+  const pagosMes = prolabore.filter(p=>p.status==="Pago" && p.mes.toLowerCase().includes(months[now.getMonth()])).reduce((s,p)=>s+Number(p.valor||0),0);
+  const pendente = prolabore.filter(p=>p.status==="Pendente").reduce((s,p)=>s+Number(p.valor||0),0);
+  return (
+    <div>
+      <PageHeader eyebrow="Financeiro" title="Pró-labore" sub="Remuneração dos sócios"
+        action={<Btn onClick={onNew}><Plus className="h-4 w-4" strokeWidth={2} />Novo registro</Btn>} />
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-6">
+        <Card className="p-4">
+          <div className="text-[10px] uppercase tracking-[0.16em] font-semibold mb-2" style={{color:C.muted}}>Total pago ({currentMonthLabel})</div>
+          <div className="text-[22px] font-semibold tabular-nums" style={{color:C.em}}>{fmt(pagosMes)}</div>
+        </Card>
+        <Card className="p-4">
+          <div className="text-[10px] uppercase tracking-[0.16em] font-semibold mb-2" style={{color:C.muted}}>Pendente</div>
+          <div className="text-[22px] font-semibold tabular-nums" style={{color:C.warn}}>{fmt(pendente)}</div>
+        </Card>
+        <Card className="p-4">
+          <div className="text-[10px] uppercase tracking-[0.16em] font-semibold mb-2" style={{color:C.muted}}>Total de registros</div>
+          <div className="text-[22px] font-semibold tabular-nums" style={{color:C.fg}}>{prolabore.length}</div>
+        </Card>
+      </div>
+      {prolabore.length===0 ? (
+        <EmptyState icon={Users} title="Sem registros de pró-labore" subtitle="Registre a remuneração mensal dos sócios aqui." actionLabel="Novo registro" onAction={onNew} />
+      ) : (
+        <div className="space-y-2.5">
+          {prolabore.map(p=>(
+            <Card key={p.id} className="p-4 flex items-center gap-3">
+              <div className="h-10 w-10 rounded-full flex items-center justify-center font-semibold shrink-0" style={{background:`linear-gradient(135deg,${C.em},#6B8EFF)`,color:"#fff"}}>
+                {p.socio.charAt(0).toUpperCase()}
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-3 flex-wrap">
+                  <div className="text-[13.5px] font-medium truncate" style={{color:C.fg}}>{p.socio}</div>
+                  <span className="text-[11.5px]" style={{color:C.muted}}>{p.mes}</span>
+                </div>
+                {p.observacao && <div className="text-[11.5px] mt-1" style={{color:C.muted}}>{p.observacao}</div>}
+              </div>
+              <div className="text-[14px] font-semibold tabular-nums" style={{color:p.status==="Pago"?C.em:C.warn}}>{fmt(Number(p.valor||0))}</div>
+              <Badge label={p.status} color={p.status==="Pago"?C.em:C.warn} />
+              <ActionButtons onEdit={()=>onEdit(p)} onDelete={()=>onDelete(p.id)} />
+            </Card>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }
 
