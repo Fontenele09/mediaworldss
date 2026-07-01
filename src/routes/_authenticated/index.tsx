@@ -1173,10 +1173,10 @@ function FinanceiroScreen({ lancamentos, dividas, onNew, onEdit, onDelete, onNew
         ))}
       </div>
       <div className="flex gap-1 mb-4 flex-wrap">
-        {(["resumo","lancamentos","dividas"] as const).map(t=>(
+        {(["resumo","lancamentos","dividas","caixa"] as const).map(t=>(
           <button key={t} onClick={()=>setTab(t)} className="px-4 py-2 rounded-xl text-[13px] font-medium transition-all active:scale-95"
             style={tab===t?{background:C.em,color:"#fff"}:{background:C.card,border:`1px solid ${C.border}`,color:C.muted}}>
-            {t==="resumo"?"Resumo":t==="lancamentos"?"Lançamentos":"Dívidas fixas"}
+            {t==="resumo"?"Resumo":t==="lancamentos"?"Lançamentos":t==="dividas"?"Dívidas fixas":"Caixa"}
           </button>
         ))}
       </div>
