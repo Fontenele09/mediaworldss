@@ -1227,6 +1227,7 @@ function FinanceiroScreen({ lancamentos, dividas, onNew, onEdit, onDelete, onNew
       {tab==="dividas" && (
         <DividasFixasList dividas={dividas} onNew={onNewDivida} onEdit={onEditDivida} onDelete={onDeleteDivida} />
       )}
+      {tab==="caixa" && <CaixaScreen lancamentos={lancamentos} />}
     </div>
   );
 }
