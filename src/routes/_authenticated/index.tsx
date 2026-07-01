@@ -1174,12 +1174,16 @@ function FinanceiroScreen({ lancamentos, dividas, onNew, onEdit, onDelete, onNew
                 </div>
                 <div className="flex-1 min-w-0"><div className="text-[13px] font-medium truncate" style={{color:C.fg}}>{l.descricao}</div><div className="text-[11.5px] mt-0.5" style={{color:C.muted}}>{fmtDate(l.data)} · {l.tipo}</div></div>
                 <div className="text-[13px] font-semibold tabular-nums" style={{color:l.tipo==="Entrada"?C.em:C.danger}}>{l.tipo==="Saída"&&"−"}{fmt(num(l))}</div>
+                {l.categoria && <Badge label={l.categoria} color={categoriaColor(l.categoria)} />}
                 <Badge label={l.status} color={l.status==="Recebido"?C.em:l.status==="Pago"?C.info:C.warn} />
                 <ActionButtons onEdit={()=>onEdit(l)} onDelete={()=>onDelete(l.id)} />
               </div>
             ))}
           </Card>
         )
+      )}
+      {tab==="dividas" && (
+        <DividasFixasList dividas={dividas} onNew={onNewDivida} onEdit={onEditDivida} onDelete={onDeleteDivida} />
       )}
     </div>
   );
