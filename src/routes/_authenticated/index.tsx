@@ -253,6 +253,10 @@ function App() {
   const saveMetaM        = metasApi.useSave();
   const deleteMetaM      = metasApi.useRemove();
   const saveMensagemM    = mensagensApi.useSave();
+  const saveDividaFixaM   = dividasFixasApi.useSave();
+  const deleteDividaFixaM = dividasFixasApi.useRemove();
+  const saveProlaboreM    = prolaboreApi.useSave();
+  const deleteProlaboreM  = prolaboreApi.useRemove();
 
   const [notifs,   setNotifs]   = useState<Notif[]>([]);
   const [searchQ,  setSearchQ]  = useState("");
