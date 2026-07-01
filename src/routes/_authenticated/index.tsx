@@ -42,7 +42,7 @@ const C = {
   infoDim:  "#00C8FF20",
 };
 
-type Screen = "dashboard"|"clientes"|"projetos"|"pipeline"|"agenda"|"entregas"|"propostas"|"financeiro"|"metas"|"mensagens"|"configuracoes";
+type Screen = "dashboard"|"clientes"|"projetos"|"pipeline"|"agenda"|"entregas"|"propostas"|"financeiro"|"metas"|"prolabore"|"mensagens"|"configuracoes";
 type ProjectStatus = "Pré-produção"|"Gravação"|"Edição"|"Pós-produção"|"Aprovação"|"Entregue";
 
 interface Project { id:string; name:string; client:string; status:ProjectStatus; deadline:string; owner:string; progress:number; }
