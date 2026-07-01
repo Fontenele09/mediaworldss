@@ -369,8 +369,9 @@ function App() {
             {screen==="agenda"       && renderScreen(gravacoesQ,<AgendaScreen gravacoes={gravacoes} clients={clients} onNew={()=>setGravModal({open:true,e:null})} onEdit={(g:any)=>setGravModal({open:true,e:g})} onDelete={delGravacao} />)}
             {screen==="entregas"     && renderScreen(entregasQ, <EntregasScreen entregas={entregas} projects={projects} onNew={()=>setEntregaModal({open:true,e:null})} onEdit={(e:any)=>setEntregaModal({open:true,e:e})} onDelete={delEntrega} />)}
             {screen==="propostas"    && renderScreen(propostasQ,<PropostasScreen propostas={propostas} clients={clients} onNew={()=>setPropModal({open:true,e:null})} onEdit={(p:any)=>setPropModal({open:true,e:p})} onDelete={delProposta} />)}
-            {screen==="financeiro"   && renderScreen(lancamentosQ,<FinanceiroScreen lancamentos={lancamentos} onNew={()=>setLancModal({open:true,e:null})} onEdit={(l:LancamentoRow)=>setLancModal({open:true,e:l})} onDelete={delLancamento} />)}
+            {screen==="financeiro"   && renderScreen(lancamentosQ,<FinanceiroScreen lancamentos={lancamentos} dividas={dividasFixas} onNew={()=>setLancModal({open:true,e:null})} onEdit={(l:LancamentoRow)=>setLancModal({open:true,e:l})} onDelete={delLancamento} onNewDivida={()=>setDividaFixaModal({open:true,e:null})} onEditDivida={(d:DividaFixaRow)=>setDividaFixaModal({open:true,e:d})} onDeleteDivida={delDividaFixa} />)}
             {screen==="metas"        && renderScreen(metasQ,      <MetasScreen metas={metas} onNew={()=>setMetaModal({open:true,e:null})} onEdit={(m:MetaRow)=>setMetaModal({open:true,e:m})} onDelete={delMeta} />)}
+            {screen==="prolabore"    && renderScreen(prolaboreQ,  <ProlaboreScreen prolabore={prolabore} onNew={()=>setProlaboreModal({open:true,e:null})} onEdit={(p:ProlaboreRow)=>setProlaboreModal({open:true,e:p})} onDelete={delProlabore} />)}
             {screen==="mensagens"    && renderScreen(mensagensQ, <MensagensScreen mensagens={mensagens} onSend={sendMsg} onRefetch={()=>mensagensQ.refetch()} />)}
             {screen==="configuracoes"&& <ConfiguracoesScreen user={userProfile} onSignOut={handleSignOut} onProfileUpdate={loadProfile} />}
           </div>
@@ -384,6 +385,8 @@ function App() {
       {gravModal.open    && <GravacaoModal  editing={gravModal.e}    clients={clients}   onSave={saveGravacao} onClose={()=>setGravModal({open:false,e:null})} />}
       {lancModal.open    && <LancamentoModal editing={lancModal.e}                       onSave={saveLancamento} onClose={()=>setLancModal({open:false,e:null})} />}
       {metaModal.open    && <MetaModal      editing={metaModal.e}                       onSave={saveMeta}       onClose={()=>setMetaModal({open:false,e:null})} />}
+      {dividaFixaModal.open && <DividaFixaModal editing={dividaFixaModal.e}              onSave={saveDividaFixa} onClose={()=>setDividaFixaModal({open:false,e:null})} />}
+      {prolaboreModal.open  && <ProlaboreModal  editing={prolaboreModal.e}               onSave={saveProlabore}  onClose={()=>setProlaboreModal({open:false,e:null})} />}
       {confirm.open && <ConfirmModal msg={confirm.msg} onCancel={()=>setConfirm({open:false,msg:"",onConfirm:()=>{}})} onConfirm={()=>{confirm.onConfirm(); setConfirm({open:false,msg:"",onConfirm:()=>{}});}} />}
     </div>
   );
