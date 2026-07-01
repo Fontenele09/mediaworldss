@@ -224,6 +224,8 @@ function App() {
   const lancamentosQ = lancamentosApi.useList();
   const metasQ       = metasApi.useList();
   const mensagensQ   = mensagensApi.useList();
+  const dividasFixasQ= dividasFixasApi.useList();
+  const prolaboreQ   = prolaboreApi.useList();
 
   const projects  = (projectsQ.data  ?? []) as unknown as Project[];
   const clients   = (clientsQ.data   ?? []) as unknown as Client[];
