@@ -302,8 +302,32 @@ function App() {
   const saveGravacao = async (d:Omit<Gravacao,"id">) => { await saveGravacaoM.mutateAsync(gravModal.e?{...d,id:gravModal.e.id}:d);   setGravModal({open:false,e:null}); };
   const saveLancamento = async (d:Omit<LancamentoRow,"id">) => { await saveLancamentoM.mutateAsync(lancModal.e?{...d,id:lancModal.e.id}:d as any); setLancModal({open:false,e:null}); };
   const saveMeta = async (d:Omit<MetaRow,"id">) => { await saveMetaM.mutateAsync(metaModal.e?{...d,id:metaModal.e.id}:d as any); setMetaModal({open:false,e:null}); };
-  const saveDividaFixa = async (d:Omit<DividaFixaRow,"id">) => { await saveDividaFixaM.mutateAsync(dividaFixaModal.e?{...d,id:dividaFixaModal.e.id}:d as any); setDividaFixaModal({open:false,e:null}); };
-  const saveProlabore = async (d:Omit<ProlaboreRow,"id"|"created_at">) => { await saveProlaboreM.mutateAsync(prolaboreModal.e?{...d,id:prolaboreModal.e.id}:d as any); setProlaboreModal({open:false,e:null}); };
+  const saveDividaFixa = async (d:Omit<DividaFixaRow,"id">) => {
+    const prev = dividaFixaModal.e;
+    await saveDividaFixaM.mutateAsync(prev?{...d,id:prev.id}:d as any);
+    if (d.status === "Paga" && prev?.status !== "Paga") {
+      await saveLancamentoM.mutateAsync({
+        descricao: `Dívida fixa: ${d.descricao}`,
+        tipo: "Saída", valor: d.valor,
+        data: new Date().toISOString().slice(0,10),
+        status: "Pago", categoria: "Fixo",
+      } as any);
+    }
+    setDividaFixaModal({open:false,e:null});
+  };
+  const saveProlabore = async (d:Omit<ProlaboreRow,"id"|"created_at">) => {
+    const prev = prolaboreModal.e;
+    await saveProlaboreM.mutateAsync(prev?{...d,id:prev.id}:d as any);
+    if (d.status === "Pago" && prev?.status !== "Pago") {
+      await saveLancamentoM.mutateAsync({
+        descricao: `Pró-labore: ${d.socio} — ${d.mes}`,
+        tipo: "Saída", valor: d.valor,
+        data: new Date().toISOString().slice(0,10),
+        status: "Pago", categoria: "Fixo",
+      } as any);
+    }
+    setProlaboreModal({open:false,e:null});
+  };
 
   const delProject  = (id:string) => askDelete("Excluir este projeto? Esta ação não pode ser desfeita.",   ()=>deleteProjectM.mutate(id));
   const delClient   = (id:string) => askDelete("Excluir este cliente? Esta ação não pode ser desfeita.",   ()=>deleteClientM.mutate(id));
